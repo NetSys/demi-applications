@@ -6,6 +6,8 @@ final case class Start (prop: Props, name: String) {}
 final case class Kill (name: String) {}
 final case class Send (name: String, message: Any) {}
 final case object EnvAck;
+final case class Wait (duration: FiniteDuration)
+
 final case class Killed (name: String) {}
 final case class Started (name: String) {}
 final case class GroupMembership (members: Iterable[String]) {}
@@ -91,6 +93,7 @@ class Environment extends Actor {
   }
 }
 class TestDriver(env: ActorRef, trace: Stack[Any]) extends Actor {
+  import context._
   run
   def run = {
     println("Trace replay starting")
@@ -106,7 +109,12 @@ class TestDriver(env: ActorRef, trace: Stack[Any]) extends Actor {
         context.stop(self)
       else {
         val obj = trace.pop()
-        env ! obj
+        obj match {
+          case Wait(duration) => 
+            // Use system dispatcher
+            context.system.scheduler.scheduleOnce(duration, self, EnvAck)
+          case _ => env ! obj
+        }
       }
   }
 }
@@ -119,10 +127,13 @@ object BcastTest extends App {
     List(
       Start(Props[ReliableBCast], "bcast1"),
       Send ("bcast1", Bcast("/user/td", Msg("hi", 1))),
+      Wait(100 millis),
       Start(Props[ReliableBCast], "bcast2"),
+      Wait(100 millis),
+      Kill("bcast1"),
+      Wait(100 millis),
       Start(Props[ReliableBCast], "bcast3"),
-      Start(Props[ReliableBCast], "bcast4"),
-      Kill("bcast3")
+      Start(Props[ReliableBCast], "bcast4")
     ).reverse
   )
   val td = sys.actorOf(Props(classOf[TestDriver], env, trace), name="td")
