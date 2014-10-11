@@ -1,17 +1,16 @@
 import akka.actor._
 import scala.concurrent.duration._
-import scala.collection.mutable.{OpenHashMap, HashSet}
+import scala.collection.mutable.{OpenHashMap, HashSet, Stack}
 
 final case class Start (prop: Props, name: String) {}
 final case class Kill (name: String) {}
+final case class Send (name: String, message: Any) {}
+final case object EnvAck;
 final case class Killed (name: String) {}
 final case class Started (name: String) {}
 final case class GroupMembership (members: Iterable[String]) {}
 
-final class Msg(_msg: String, _id: Int) {
-  val id = _id
-  val msg = _msg
-}
+final case class Msg(msg: String, id: Int) {}
 final case class Ack(from: String, id: Int) {}
 final case class Bcast(from: String, msg: Msg) {}
 
@@ -68,10 +67,19 @@ class Environment extends Actor {
       val started = Started(o.name)
       active.values.foreach(_ ! started)
       active += (o.name -> child)
+      sender ! EnvAck 
     case o:Kill =>
       if (active contains o.name) {
         context.stop(active(o.name))
       }
+      sender ! EnvAck
+    case Send(name, msg) =>
+      println("Received send message current members are " + active.keys.mkString(", "))
+      if (active contains name) {
+        println("Sending message")
+        active(name) ! msg
+      }
+      sender ! EnvAck
     case Terminated(a: ActorRef) =>
       active -= (a.path.name)
       if (active.keys.size == 0) {
@@ -82,25 +90,40 @@ class Environment extends Actor {
       }
   }
 }
-
-class TestDriver(env:ActorRef) extends Actor {
+class TestDriver(env: ActorRef, trace: Stack[Any]) extends Actor {
   run
   def run = {
-    env ! Start(Props[ReliableBCast], "bcast1")
-    val x = new Msg("Hello", 1)
-    context.actorFor("/user/env/bcast1") ! Bcast("/user/td", x)
-    env ! Start(Props[ReliableBCast], "bcast2")
-    env ! Start(Props[ReliableBCast], "bcast3")
-    env ! Start(Props[ReliableBCast], "bcast4")
-    env ! Kill("bcast3")
+    println("Trace replay starting")
+    if (trace.isEmpty)
+      context.stop(self)
+    val obj = trace.pop()
+    env ! obj
+
   }
   def receive = {
-    case _ => println("TD message")
+    case EnvAck =>
+      if (trace.isEmpty)
+        context.stop(self)
+      else {
+        val obj = trace.pop()
+        env ! obj
+      }
   }
 }
 
 object BcastTest extends App {
   val sys = ActorSystem("PP")
   val env = sys.actorOf(Props[Environment], name="env")
-  val td = sys.actorOf(Props(classOf[TestDriver], env), name="td")
+  val trace = new Stack[Any]
+  trace.pushAll(
+    List(
+      Start(Props[ReliableBCast], "bcast1"),
+      Send ("bcast1", Bcast("/user/td", Msg("hi", 1))),
+      Start(Props[ReliableBCast], "bcast2"),
+      Start(Props[ReliableBCast], "bcast3"),
+      Start(Props[ReliableBCast], "bcast4"),
+      Kill("bcast3")
+    ).reverse
+  )
+  val td = sys.actorOf(Props(classOf[TestDriver], env, trace), name="td")
 }
