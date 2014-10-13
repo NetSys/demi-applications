@@ -6,6 +6,7 @@ import scala.concurrent.Await
 import akka.pattern.ask
 import akka.util.Timeout
 
+// Control messages
 final case class Start (prop: Props, name: String) {}
 final case class Kill (name: String) {}
 final case class Send (name: String, message: Any) {}
@@ -13,59 +14,12 @@ final case object EnvAck;
 final case class Wait (duration: FiniteDuration)
 final case class Verify (message: Any) {}
 
+// Failure detector messages (the FD is perfect in this case)
 final case class Killed (name: String) {}
 final case class Started (name: String) {}
 final case class GroupMembership (members: Iterable[String]) {}
 
-final case class Msg(msg: String, id: Int) {}
-final case class Ack(from: String, id: Int) {}
-final case class Bcast(from: String, msg: Msg) {}
-final case object MsgIds;
-
-class ReliableBCast extends Actor {
-  private[this] val other = new HashSet[String]
-  private[this] val msgIds = new HashSet[Int]
-  private[this] val messages = new OpenHashMap[Int, Msg]
-  private[this] val sendTo = new OpenHashMap[Int, HashSet[String]]
-  private[this] val name = self.path.name
-  private[this] def bcast(id:Int) = {
-    val message = Bcast(name, messages(id))
-    sendTo(id).foreach((act:String) => context.actorFor("../" + act) ! message)
-  }
-  def receive = {
-    case GroupMembership(members) =>
-      other ++= members
-      // Nothing to bcast here, don't know what to do
-    case Started(actor) =>
-      other += actor
-      // New actor, send messages
-      for (m <- msgIds) {
-        sendTo(m) += actor
-        bcast(m)
-      }
-    case Killed(actor) =>
-      other -= actor
-    case Bcast(from, msg) =>
-      context.actorFor("../" + from) ! Ack(name, msg.id)
-      if (msgIds contains msg.id) {
-        println("[" + name + "] Received dup broadcast from " + from + " id " + msg.id + " " + msg.msg)
-        bcast(msg.id)
-      } else {
-        println("[" + name + "] Received broadcast from " + from + " id " + msg.id + " " + msg.msg)
-        msgIds += msg.id
-        messages += (msg.id -> msg)
-        sendTo += (msg.id -> other.clone)
-        sendTo(msg.id) -= from
-        bcast(msg.id)
-      }
-    case Ack(from, id) =>
-      sendTo(id) -= from
-    case MsgIds =>
-      sender ! msgIds
-  }
-}
-
-
+// Test environment: responsible for external events.
 class Environment extends Actor {
   private[this] val active = new OpenHashMap[String, ActorRef]
   def receive = {
@@ -106,6 +60,7 @@ class Environment extends Actor {
       sender ! cf
   }
 }
+
 class TestDriver(env: ActorRef,
                  trace: Stack[Any],
                  verificationMsg: Any,
@@ -170,7 +125,11 @@ object BcastTest extends App {
       Kill("bcast1"),
       Wait(100 millis),
       Start(Props[ReliableBCast], "bcast3"),
-      Start(Props[ReliableBCast], "bcast4")
+      Start(Props[ReliableBCast], "bcast4"),
+      Start(Props[ReliableBCast], "bcast5"),
+      Start(Props[ReliableBCast], "bcast6"),
+      Start(Props[ReliableBCast], "bcast7"),
+      Start(Props[ReliableBCast], "bcast8")
     ).reverse
   )
   private[this] def messageVerify (a: Map[String, Any]) = {
