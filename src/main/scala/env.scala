@@ -5,6 +5,7 @@ import scala.collection.MapLike
 import scala.concurrent.Await
 import akka.pattern.ask
 import akka.util.Timeout
+import com.typesafe.config.ConfigFactory
 
 // Control messages
 final case class Start (prop: Props, name: String) {}
@@ -112,7 +113,7 @@ class TestDriver(env: ActorRef,
 }
 
 object BcastTest extends App {
-  val sys = ActorSystem("PP")
+  val sys = ActorSystem("PP", ConfigFactory.load())
   val env = sys.actorOf(Props[Environment], name="env")
   val trace = new Stack[Any]
   trace.pushAll(
