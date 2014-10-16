@@ -41,7 +41,9 @@ class ReliableBCast extends Actor {
       // An actor was killed.
       other -= actor
     case Bcast(from, msg) =>
-      context.actorFor("../" + from) ! Ack(name, msg.id)
+      if (from != null) {
+        context.actorFor("../" + from) ! Ack(name, msg.id)
+      }
       if (msgIds contains msg.id) {
         println("[" + name + "] Received dup broadcast from " + from + " id " + msg.id + " " + msg.msg)
         bcast(msg.id)

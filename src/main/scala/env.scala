@@ -1,4 +1,5 @@
 import akka.actor._
+import akka.dispatch.Envelope
 import scala.concurrent.duration._
 import scala.collection.mutable.{OpenHashMap, HashSet, Stack}
 import scala.collection.MapLike
@@ -20,7 +21,7 @@ final case class Killed (name: String) {}
 final case class Started (name: String) {}
 final case class GroupMembership (members: Iterable[String]) {}
 
-// Test environment: responsible for external events.
+// Test environment: responsible for executing external events.
 class Environment extends Actor {
   private[this] val active = new OpenHashMap[String, ActorRef]
   def receive = {
@@ -63,12 +64,9 @@ class Environment extends Actor {
 }
 
 class TestDriver(env: ActorRef,
-                 trace: Stack[Any],
+                 trace: List[Any],
                  verificationMsg: Any,
-                 verificationFun: Map[String, Any] => Boolean)
-                 extends Actor {
-  import context._
-  run
+                 verificationFun: Map[String, Any] => Boolean) {
   private[this] var verificationPhase = false
   def verify () = {
     assert (verificationPhase)
@@ -80,46 +78,33 @@ class TestDriver(env: ActorRef,
     //println(verification)
     assert(verificationFun(v))
     println("Verification succeeded, dying")
-    context.stop(self)
-    context.stop(env)
-    
+
   }
   def run = {
     println("Trace replay starting")
-    if (trace.isEmpty) {
-      verificationPhase = true
-      verify()
+    for (t <- trace) {
+      t match {
+        // Remove this once we have more control over message sending and
+        // delivery; in particular just wait for quiscence or something.
+        case Wait(duration) =>
+          Thread.sleep(duration.toMillis)
+        case _ =>
+          implicit val timeout = Timeout(5 minutes)
+          val f = env ? t
+          Await.result(f, timeout.duration)
+      }
     }
-    val obj = trace.pop()
-    env ! obj
-
-  }
-  def receive = {
-    case EnvAck =>
-      if (trace.isEmpty) {
-        verificationPhase = true
-        verify()
-      }
-      else {
-        val obj = trace.pop()
-        obj match {
-          case Wait(duration) =>
-            // Use system dispatcher
-            context.system.scheduler.scheduleOnce(duration, self, EnvAck)
-          case _ => env ! obj
-        }
-      }
+    verificationPhase = true
+    verify()
   }
 }
 
 object BcastTest extends App {
   val sys = ActorSystem("PP", ConfigFactory.load())
   val env = sys.actorOf(Props[Environment], name="env")
-  val trace = new Stack[Any]
-  trace.pushAll(
-    List(
+  val trace = List(
       Start(Props[ReliableBCast], "bcast1"),
-      Send ("bcast1", Bcast("/user/td", Msg("hi", 1))),
+      Send ("bcast1", Bcast(null, Msg("hi", 1))),
       Wait(100 millis),
       Start(Props[ReliableBCast], "bcast2"),
       Wait(100 millis),
@@ -131,8 +116,7 @@ object BcastTest extends App {
       Start(Props[ReliableBCast], "bcast6"),
       Start(Props[ReliableBCast], "bcast7"),
       Start(Props[ReliableBCast], "bcast8")
-    ).reverse
-  )
+    )
   private[this] def messageVerify (a: Map[String, Any]) = {
     val all_sets = List(a.values.map(_.asInstanceOf[HashSet[Int]]))
     val first_set  = all_sets(0)
@@ -142,11 +126,7 @@ object BcastTest extends App {
     }
     result
   }
-  val td = sys.actorOf(
-            Props(classOf[TestDriver],
-                  env,
-                  trace,
-                  MsgIds,
-                  (a: Map[String, Any]) => messageVerify(a)),
-                name="td")
+  val td = new TestDriver(env, trace, MsgIds, (a: Map[String, Any]) => messageVerify(a))
+  td.run
+  sys.shutdown()
 }

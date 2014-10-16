@@ -22,9 +22,9 @@ class InstrumentedDispatcher(
   extends Dispatcher(_configurator, _id, throughput, throughputDeadlineTime, _executorServiceFactoryProvider,
 _shutdownTimeout) {
   protected[akka] override def dispatch(receiver: ActorCell, invocation: Envelope): Unit = {
-    println("Dispatch called for " + receiver.actor.self.path.name + " " + invocation)
+    //println("Dispatch called for " + receiver.actor.self.path.name + " " + invocation)
     super.dispatch(receiver, invocation)
-    println("Done dispatching")
+    //println("Done dispatching")
   }
 }
 
