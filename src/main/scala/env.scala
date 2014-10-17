@@ -1,5 +1,5 @@
 import akka.actor._
-import akka.dispatch.Envelope
+import akka.dispatch.{Dispatcher, InstrumentedDispatcher}
 import scala.concurrent.duration._
 import scala.collection.mutable.{OpenHashMap, HashSet, Stack}
 import scala.collection.MapLike
@@ -14,6 +14,7 @@ final case class Kill (name: String) {}
 final case class Send (name: String, message: Any) {}
 final case object EnvAck;
 final case class Wait (duration: FiniteDuration)
+final case class WaitQuiescence ()
 final case class Verify (message: Any) {}
 
 // Failure detector messages (the FD is perfect in this case)
@@ -66,8 +67,10 @@ class Environment extends Actor {
 class TestDriver(env: ActorRef,
                  trace: List[Any],
                  verificationMsg: Any,
-                 verificationFun: Map[String, Any] => Boolean) {
+                 verificationFun: Map[String, Any] => Boolean,
+                 _dispatcher: Dispatcher) {
   private[this] var verificationPhase = false
+  private[this] var dispatcher = _dispatcher.asInstanceOf[InstrumentedDispatcher]
   def verify () = {
     assert (verificationPhase)
     implicit val timeout = Timeout(5 seconds)
@@ -88,6 +91,8 @@ class TestDriver(env: ActorRef,
         // delivery; in particular just wait for quiscence or something.
         case Wait(duration) =>
           Thread.sleep(duration.toMillis)
+        case WaitQuiescence() =>
+          val finishedWait = dispatcher.awaitQuiscence()
         case _ =>
           implicit val timeout = Timeout(5 minutes)
           val f = env ? t
@@ -101,21 +106,23 @@ class TestDriver(env: ActorRef,
 
 object BcastTest extends App {
   val sys = ActorSystem("PP", ConfigFactory.load())
+  //println("Dispatcher " + sys.dispatcher)
   val env = sys.actorOf(Props[Environment], name="env")
   val trace = List(
       Start(Props[ReliableBCast], "bcast1"),
       Send ("bcast1", Bcast(null, Msg("hi", 1))),
-      Wait(100 millis),
+      WaitQuiescence(),
       Start(Props[ReliableBCast], "bcast2"),
-      Wait(100 millis),
+      WaitQuiescence(),
       Kill("bcast1"),
-      Wait(100 millis),
+      WaitQuiescence(),
       Start(Props[ReliableBCast], "bcast3"),
       Start(Props[ReliableBCast], "bcast4"),
       Start(Props[ReliableBCast], "bcast5"),
       Start(Props[ReliableBCast], "bcast6"),
       Start(Props[ReliableBCast], "bcast7"),
-      Start(Props[ReliableBCast], "bcast8")
+      Start(Props[ReliableBCast], "bcast8"),
+      WaitQuiescence()
     )
   private[this] def messageVerify (a: Map[String, Any]) = {
     val all_sets = List(a.values.map(_.asInstanceOf[HashSet[Int]]))
@@ -126,7 +133,11 @@ object BcastTest extends App {
     }
     result
   }
-  val td = new TestDriver(env, trace, MsgIds, (a: Map[String, Any]) => messageVerify(a))
+  val td = new TestDriver(env, 
+              trace, 
+              MsgIds, 
+              (a: Map[String, Any]) => messageVerify(a), 
+              sys.dispatcher.asInstanceOf[Dispatcher])
   td.run
   sys.shutdown()
 }
