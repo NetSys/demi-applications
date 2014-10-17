@@ -32,11 +32,11 @@ class ReliableBCast extends Actor {
     case Started(actor) =>
       // A new actor was started
       other += actor
-      // New actor, send messages
-      //for (m <- msgIds) {
-        //sendTo(m) += actor
-        //bcast(m)
-      //}
+      //// New actor, send messages
+      for (m <- msgIds) {
+        sendTo(m) += actor
+        bcast(m)
+      }
     case Killed(actor) =>
       // An actor was killed.
       other -= actor
@@ -45,10 +45,8 @@ class ReliableBCast extends Actor {
         context.actorFor("../" + from) ! Ack(name, msg.id)
       }
       if (msgIds contains msg.id) {
-        println("[" + name + "] Received dup broadcast from " + from + " id " + msg.id + " " + msg.msg)
         bcast(msg.id)
       } else {
-        println("[" + name + "] Received broadcast from " + from + " id " + msg.id + " " + msg.msg)
         msgIds += msg.id
         messages += (msg.id -> msg)
         sendTo += (msg.id -> other.clone)

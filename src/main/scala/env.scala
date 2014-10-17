@@ -7,6 +7,7 @@ import scala.concurrent.Await
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
+import scala.annotation.tailrec
 
 // Control messages
 final case class Start (prop: Props, name: String) {}
@@ -41,20 +42,16 @@ class Environment extends Actor {
       }
       sender ! EnvAck
     case Send(name, msg) =>
-      println("Received send message current members are " + active.keys.mkString(", "))
+      //println("Received send message current members are " + active.keys.mkString(", "))
       if (active contains name) {
-        println("Sending message")
+        //println("Sending message")
         active(name) ! msg
       }
       sender ! EnvAck
     case Terminated(a: ActorRef) =>
       active -= (a.path.name)
-      if (active.keys.size == 0) {
-        context.stop(self)
-      } else {
-        val terminated = Killed(a.path.name)
-        active.values.foreach(_ ! terminated)
-      }
+      val terminated = Killed(a.path.name)
+      active.values.foreach(_ ! terminated)
     case Verify(verificationMsg) =>
       implicit val timeout = Timeout(5 seconds)
       val f = active.mapValues(_ ? verificationMsg)
@@ -65,26 +62,24 @@ class Environment extends Actor {
 }
 
 class TestDriver(env: ActorRef,
-                 trace: List[Any],
+                 trace: Array[_ <: Any],
                  verificationMsg: Any,
                  verificationFun: Map[String, Any] => Boolean,
                  _dispatcher: Dispatcher) {
   private[this] var verificationPhase = false
   private[this] var dispatcher = _dispatcher.asInstanceOf[InstrumentedDispatcher]
-  def verify () = {
+  def verify (): Boolean = {
     assert (verificationPhase)
     implicit val timeout = Timeout(5 seconds)
     val f = env ? new Verify(verificationMsg)
-    println("Starting to wait")
     val verification = Await.result(f, 5 seconds)
     val v = verification.asInstanceOf[collection.immutable.Map[String, Any]]
-    //println(verification)
-    assert(verificationFun(v))
-    println("Verification succeeded, dying")
+    val res =  verificationFun(v)
+    return res
 
   }
-  def run = {
-    println("Trace replay starting")
+  def run: Boolean = {
+    println("Trace replay starting, trace is of length " + trace.size)
     for (t <- trace) {
       t match {
         // Remove this once we have more control over message sending and
@@ -100,18 +95,73 @@ class TestDriver(env: ActorRef,
       }
     }
     verificationPhase = true
-    verify()
+    println("Trace done")
+    return verify()
   }
 }
 
 object BcastTest extends App {
-  val sys = ActorSystem("PP", ConfigFactory.load())
-  //println("Dispatcher " + sys.dispatcher)
-  val env = sys.actorOf(Props[Environment], name="env")
-  val trace = List(
+  @tailrec
+  def minimizeLoop(input: Array[_ <: Any], removed: Any, index: Int) {
+
+    val sys = ActorSystem("PP", ConfigFactory.load())
+    val env = sys.actorOf(Props[Environment], name="env")
+
+    def messageVerify (a: Map[String, Any]) : Boolean = {
+      val all_sets = a.values.map(_.asInstanceOf[HashSet[Int]]).toList
+      val first_set  = all_sets(0)
+      var result = true
+      for (set <- all_sets) {
+        val t = first_set.equals(set)
+        result = result & t
+      }
+      return result
+    }
+    
+    val td = new TestDriver(env, 
+                input, 
+                MsgIds, 
+                (a: Map[String, Any]) => messageVerify(a), 
+                sys.dispatcher.asInstanceOf[Dispatcher])
+    
+    val verify = td.run
+    
+    sys.shutdown()
+    
+    
+    // Does the bug still occur
+    var newInput: Array[_ <: Any] = null
+    var nindex = index
+    if (!verify) {
+      // Yes
+      println("Found bug")
+      newInput = input      
+    } else {
+      // No
+      println("Did not find bug")
+      nindex += 1
+      newInput = input.slice(0, index) ++ Array(removed) ++ input.slice(index, input.size)
+    }
+    if (nindex >= newInput.size) {
+      // Done
+      println("Done, final size is " + newInput.size)
+      println("Trace is ")
+      for (inp <- newInput) {
+        println(inp)
+      }
+    } else {
+      val actNewInput = newInput.slice(0, nindex) ++ newInput.slice(nindex + 1, newInput.size)
+      minimizeLoop(actNewInput, newInput(nindex), nindex)
+    }
+  }
+
+  def minimize(input: Array[_ <: Any]) = {
+    minimizeLoop(input.slice(1, input.size), input(0), 0)
+
+  }
+  val trace = Array(
       Start(Props[ReliableBCast], "bcast1"),
       Send ("bcast1", Bcast(null, Msg("hi", 1))),
-      WaitQuiescence(),
       Start(Props[ReliableBCast], "bcast2"),
       WaitQuiescence(),
       Kill("bcast1"),
@@ -124,20 +174,6 @@ object BcastTest extends App {
       Start(Props[ReliableBCast], "bcast8"),
       WaitQuiescence()
     )
-  private[this] def messageVerify (a: Map[String, Any]) = {
-    val all_sets = List(a.values.map(_.asInstanceOf[HashSet[Int]]))
-    val first_set  = all_sets(0)
-    var result = true
-    for (set <- all_sets) {
-      result |= first_set.equals(all_sets)
-    }
-    result
-  }
-  val td = new TestDriver(env, 
-              trace, 
-              MsgIds, 
-              (a: Map[String, Any]) => messageVerify(a), 
-              sys.dispatcher.asInstanceOf[Dispatcher])
-  td.run
-  sys.shutdown()
+  minimize(trace)
 }
+
