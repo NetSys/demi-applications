@@ -33,10 +33,10 @@ class ReliableBCast extends Actor {
       // A new actor was started
       other += actor
       // New actor, send messages
-      for (m <- msgIds) {
-        sendTo(m) += actor
-        bcast(m)
-      }
+      //for (m <- msgIds) {
+        //sendTo(m) += actor
+        //bcast(m)
+      //}
     case Killed(actor) =>
       // An actor was killed.
       other -= actor
