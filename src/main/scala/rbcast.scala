@@ -1,6 +1,6 @@
 import akka.actor._
 import scala.concurrent.duration._
-import scala.collection.mutable.{OpenHashMap, HashSet, Stack}
+import scala.collection.mutable.{OpenHashMap, HashSet, Stack, ListBuffer}
 import scala.collection.MapLike
 import scala.concurrent.Await
 import akka.pattern.ask
@@ -16,6 +16,7 @@ final case object MsgIds;
 class ReliableBCast extends Actor {
   private[this] val other = new HashSet[String]
   private[this] val msgIds = new HashSet[Int]
+  private[this] val msgOrder = new ListBuffer[Int]
   private[this] val messages = new OpenHashMap[Int, Msg]
   private[this] val sendTo = new OpenHashMap[Int, HashSet[String]]
   private[this] val name = self.path.name
@@ -48,6 +49,7 @@ class ReliableBCast extends Actor {
         bcast(msg.id)
       } else {
         msgIds += msg.id
+        msgOrder += msg.id
         messages += (msg.id -> msg)
         sendTo += (msg.id -> other.clone)
         sendTo(msg.id) -= from
@@ -56,6 +58,6 @@ class ReliableBCast extends Actor {
     case Ack(from, id) =>
       sendTo(id) -= from
     case MsgIds =>
-      sender ! msgIds
+      sender ! msgOrder.toList
   }
 }

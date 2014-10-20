@@ -108,11 +108,12 @@ object BcastTest extends App {
     val env = sys.actorOf(Props[Environment], name="env")
 
     def messageVerify (a: Map[String, Any]) : Boolean = {
-      val all_sets = a.values.map(_.asInstanceOf[HashSet[Int]]).toList
-      val first_set  = all_sets(0)
+      println(a)
+      val all_orders = a.values.map(_.asInstanceOf[List[Int]]).toList
+      val first_order  = all_orders(0)
       var result = true
-      for (set <- all_sets) {
-        val t = first_set.equals(set)
+      for (order <- all_orders) {
+        val t = first_order.equals(order)
         result = result & t
       }
       return result
@@ -161,13 +162,14 @@ object BcastTest extends App {
   }
   val trace = Array(
       Start(Props[ReliableBCast], "bcast1"),
-      Send ("bcast1", Bcast(null, Msg("hi", 1))),
       Start(Props[ReliableBCast], "bcast2"),
-      WaitQuiescence(),
-      Kill("bcast1"),
-      WaitQuiescence(),
       Start(Props[ReliableBCast], "bcast3"),
       Start(Props[ReliableBCast], "bcast4"),
+      WaitQuiescence(),
+      Send ("bcast1", Bcast(null, Msg("hi", 1))),
+      Send ("bcast2", Bcast(null, Msg("bye", 2))),
+      Send ("bcast3", Bcast(null, Msg("bye", 3))),
+      Send ("bcast4", Bcast(null, Msg("b", 4))),
       Start(Props[ReliableBCast], "bcast5"),
       Start(Props[ReliableBCast], "bcast6"),
       Start(Props[ReliableBCast], "bcast7"),
@@ -176,4 +178,3 @@ object BcastTest extends App {
     )
   minimize(trace)
 }
-
