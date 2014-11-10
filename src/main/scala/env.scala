@@ -42,10 +42,8 @@ class Environment extends Actor {
       }
       sender ! EnvAck
     case Send(name, msg) =>
-      //println("Received send message current members are " + active.keys.mkString(", "))
       if (active contains name) {
-        //println("Sending message")
-        active(name) ! msg
+        context.actorFor(name) ! msg
       }
       sender ! EnvAck
     case Terminated(a: ActorRef) =>
@@ -96,14 +94,16 @@ class TestDriver(env: ActorRef,
     }
     verificationPhase = true
     println("Trace done")
+    println("Schedule was")
+    for (s <- dispatcher.sched) {
+      println(s)
+    }
     return verify()
   }
 }
 
 object BcastTest extends App {
-  @tailrec
-  def minimizeLoop(input: Array[_ <: Any], removed: Any, index: Int) {
-
+  def run(input: Array[_ <: Any]): Boolean = {
     val sys = ActorSystem("PP", ConfigFactory.load())
     val env = sys.actorOf(Props[Environment], name="env")
 
@@ -128,8 +128,11 @@ object BcastTest extends App {
     val verify = td.run
     
     sys.shutdown()
-    
-    
+    return verify
+  }
+  @tailrec
+  def minimizeLoop(input: Array[_ <: Any], removed: Any, index: Int) {
+    val verify = run(input) 
     // Does the bug still occur
     var newInput: Array[_ <: Any] = null
     var nindex = index
@@ -157,7 +160,13 @@ object BcastTest extends App {
   }
 
   def minimize(input: Array[_ <: Any]) = {
-    minimizeLoop(input.slice(1, input.size), input(0), 0)
+    // First run the whole thing
+    val bug = run(input)
+    if (!bug) {
+      println("No problem found on the whole trace")
+    } else {
+      minimizeLoop(input.slice(1, input.size), input(0), 0)
+    }
 
   }
   val trace = Array(
