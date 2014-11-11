@@ -205,8 +205,12 @@ class Instrumenter {
     val snd = envelope.sender.path.name
     val rcv = receiver.path.name
     
+    // If this is a system message just let it through.
     if (isSystemMessage(snd, rcv)) { return true }
     
+    // If this is not a system message then check if we have already recorded
+    // this event. Recorded => we are injecting this event (as opposed to some 
+    // actor doing it in which case we need to report it)
     if (allowedEvents contains value) {
       allowedEvents.remove(value) match {
         case true => 
@@ -215,13 +219,18 @@ class Instrumenter {
       }
     }
     
+    // Record the dispatcher for the current receiver.
     dispatchers(receiver) = dispatcher
+
+    // Have we started dispatching messages (i.e., is the loop in after_message_receive
+    // running?). If not then dispatch the current message and start the loop.
     if (!started) {
       started = true
       dispatch_new_message(cell, envelope)
       return false
     }
     
+    // Record that this event was produced
     scheduler.event_produced(cell, envelope)
     
     println(Console.BLUE + "enqueue: " + snd + " -> " + rcv + Console.RESET);
