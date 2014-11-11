@@ -167,7 +167,7 @@ class Instrumenter {
           counter += 1
           println("Nothing to run.")
           started = false
-          //scheduler.notify_quiscence()
+          scheduler.notify_quiescence()
       }
     }
   }

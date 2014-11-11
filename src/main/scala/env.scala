@@ -124,45 +124,45 @@ object BcastTest extends App {
     sys.shutdown()
     return verify
   }
-  @tailrec
-  def minimizeLoop(input: Array[_ <: Any], removed: Any, index: Int) {
-    val verify = run(input) 
-    // Does the bug still occur
-    var newInput: Array[_ <: Any] = null
-    var nindex = index
-    if (!verify) {
-      // Yes
-      println("Found bug")
-      newInput = input      
-    } else {
-      // No
-      println("Did not find bug")
-      nindex += 1
-      newInput = input.slice(0, index) ++ Array(removed) ++ input.slice(index, input.size)
-    }
-    if (nindex >= newInput.size) {
-      // Done
-      println("Done, final size is " + newInput.size)
-      //println("Trace is ")
-      //for (inp <- newInput) {
-        //println(inp)
-      //}
-    } else {
-      val actNewInput = newInput.slice(0, nindex) ++ newInput.slice(nindex + 1, newInput.size)
-      minimizeLoop(actNewInput, newInput(nindex), nindex)
-    }
-  }
+  //@tailrec
+  //def minimizeLoop(input: Array[_ <: Any], removed: Any, index: Int) {
+    //val verify = run(input) 
+    //// Does the bug still occur
+    //var newInput: Array[_ <: Any] = null
+    //var nindex = index
+    //if (!verify) {
+      //// Yes
+      //println("Found bug")
+      //newInput = input      
+    //} else {
+      //// No
+      //println("Did not find bug")
+      //nindex += 1
+      //newInput = input.slice(0, index) ++ Array(removed) ++ input.slice(index, input.size)
+    //}
+    //if (nindex >= newInput.size) {
+      //// Done
+      //println("Done, final size is " + newInput.size)
+      ////println("Trace is ")
+      ////for (inp <- newInput) {
+        ////println(inp)
+      ////}
+    //} else {
+      //val actNewInput = newInput.slice(0, nindex) ++ newInput.slice(nindex + 1, newInput.size)
+      //minimizeLoop(actNewInput, newInput(nindex), nindex)
+    //}
+  //}
 
-  def minimize(input: Array[_ <: Any]) = {
-    // First run the whole thing
-    val bug = run(input)
-    if (!bug) {
-      println("No problem found on the whole trace")
-    } else {
-      minimizeLoop(input.slice(1, input.size), input(0), 0)
-    }
+  //def minimize(input: Array[_ <: Any]) = {
+    //// First run the whole thing
+    //val bug = run(input)
+    //if (!bug) {
+      //println("No problem found on the whole trace")
+    //} else {
+      //minimizeLoop(input.slice(1, input.size), input(0), 0)
+    //}
 
-  }
+  //}
   val trace = Array(
       Start(Props[ReliableBCast], "bcast1"),
       Start(Props[ReliableBCast], "bcast2"),
@@ -179,6 +179,6 @@ object BcastTest extends App {
       Start(Props[ReliableBCast], "bcast8"),
       WaitQuiescence()
     )
-  Instrumenter().scheduler = new akka.dispatch.verification.Scheduler
-  minimize(trace)
+  Instrumenter().scheduler = new BasicScheduler
+  run(trace)
 }
