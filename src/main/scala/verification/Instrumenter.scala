@@ -82,60 +82,68 @@ class Instrumenter {
   //  - Send the first message received by this actor.
   //  This is all assuming that we don't control replay of main
   //  so this is a way to replay the first message that started it all.
-  //def restart_system(sys: ActorSystem, argQueue: Queue[Any]) {
+  def reinitialize_system(sys: ActorSystem, argQueue: Queue[Any]) {
     
-    //val newSystem = ActorSystem("new-system-" + counter)
-    //counter += 1
-    //println("Started a new actor system.")
+    val newSystem = ActorSystem("new-system-" + counter)
+    counter += 1
+    println("Started a new actor system.")
 
-    //scheduler.start_trace()
+    // Tell scheduler that we are done restarting and it should prepare
+    // to start the system
+    // TODO: This should probably take sys as an argument or something
+    scheduler.start_trace()
     
-    //val first_spawn = scheduler.next_event() match {
-      //case e: SpawnEvent => e
-      //case _ => throw new Exception("not a spawn")
-    //}
+    // We expect the first event to be an actor spawn (not actors exist, nothing
+    // to run).
+    val first_spawn = scheduler.next_event() match {
+      case e: SpawnEvent => e
+      case _ => throw new Exception("not a spawn")
+    }
     
-    
-    //for (args <- argQueue) {
-      //args match {
-        //case (actor: ActorRef, props: Props, first_spawn.name) =>
-          //println("starting " + first_spawn.name)
-          //newSystem.actorOf(props, first_spawn.name)
-      //}
-    //}
+    // Start the actor using a new actor system. (All subsequent actors
+    // are expected to spawn from here, so they will automatically inherit
+    // the new actor system)
+    for (args <- argQueue) {
+      args match {
+        case (actor: ActorRef, props: Props, first_spawn.name) =>
+          println("starting " + first_spawn.name)
+          newSystem.actorOf(props, first_spawn.name)
+      }
+    }
 
+    // TODO: Maybe we should do this differently (the same way we inject external
+    // events, etc.)
+    // Kick off the system by replaying a message
+    val first_msg = scheduler.next_event() match {
+      case e: MsgEvent => e
+      case _ => throw new Exception("not a message")
+    }
     
-    //val first_msg = scheduler.next_event() match {
-      //case e: MsgEvent => e
-      //case _ => throw new Exception("not a message")
-    //}
-    
-    //actorMappings.get(first_msg.receiver) match {
-      //case Some(ref) => ref ! first_msg.msg
-      //case None => throw new Exception("no such actor " + first_msg.receiver)
-    //}
-  //}
+    actorMappings.get(first_msg.receiver) match {
+      case Some(ref) => ref ! first_msg.msg
+      case None => throw new Exception("no such actor " + first_msg.receiver)
+    }
+  }
   
-  // Finalize things because the trace is done.
-  //def trace_finished() = {
-    //println("Done executing the trace.")
-    //started = false
-    //scheduler.trace_finished()
+  // Signal to the instrumenter that the scheduler wants to restart the system
+  def restart_system() = {
+    println("Restarting system")
+    started = false
     
-    //val allSystems = new HashMap[ActorSystem, Queue[Any]]
-    //for ((system, args) <- seenActors) {
-      //val argQueue = allSystems.getOrElse(system, new Queue[Any])
-      //argQueue.enqueue(args)
-      //allSystems(system) = argQueue
-    //}
+    val allSystems = new HashMap[ActorSystem, Queue[Any]]
+    for ((system, args) <- seenActors) {
+      val argQueue = allSystems.getOrElse(system, new Queue[Any])
+      argQueue.enqueue(args)
+      allSystems(system) = argQueue
+    }
 
-    //seenActors.clear()
-    //for ((system, argQueue) <- allSystems) {
-        //println("Shutting down the actor system. " + argQueue.size)
-        //system.shutdown()
-        ////system.registerOnTermination(restart_system(system, argQueue))
-    //}
-  //}
+    seenActors.clear()
+    for ((system, argQueue) <- allSystems) {
+        println("Shutting down the actor system. " + argQueue.size)
+        system.shutdown()
+        system.registerOnTermination(reinitialize_system(system, argQueue))
+    }
+  }
   
   // Called before a message is received
   def beforeMessageReceive(cell: ActorCell) {
