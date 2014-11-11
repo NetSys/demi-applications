@@ -1,5 +1,5 @@
 import akka.actor._
-import akka.dispatch.{Dispatcher, InstrumentedDispatcher}
+import akka.dispatch.Dispatcher
 import scala.concurrent.duration._
 import scala.collection.mutable.{OpenHashMap, HashSet, Stack}
 import scala.collection.MapLike
@@ -42,10 +42,8 @@ class Environment extends Actor {
       }
       sender ! EnvAck
     case Send(name, msg) =>
-      //println("Received send message current members are " + active.keys.mkString(", "))
       if (active contains name) {
-        //println("Sending message")
-        active(name) ! msg
+        context.actorFor(name) ! msg
       }
       sender ! EnvAck
     case Terminated(a: ActorRef) =>
@@ -64,10 +62,8 @@ class Environment extends Actor {
 class TestDriver(env: ActorRef,
                  trace: Array[_ <: Any],
                  verificationMsg: Any,
-                 verificationFun: Map[String, Any] => Boolean,
-                 _dispatcher: Dispatcher) {
+                 verificationFun: Map[String, Any] => Boolean) {
   private[this] var verificationPhase = false
-  private[this] var dispatcher = _dispatcher.asInstanceOf[InstrumentedDispatcher]
   def verify (): Boolean = {
     assert (verificationPhase)
     implicit val timeout = Timeout(5 seconds)
@@ -87,7 +83,7 @@ class TestDriver(env: ActorRef,
         case Wait(duration) =>
           Thread.sleep(duration.toMillis)
         case WaitQuiescence() =>
-          val finishedWait = dispatcher.awaitQuiscence()
+          //val finishedWait = dispatcher.awaitQuiscence()
         case _ =>
           implicit val timeout = Timeout(5 minutes)
           val f = env ? t
@@ -101,9 +97,7 @@ class TestDriver(env: ActorRef,
 }
 
 object BcastTest extends App {
-  @tailrec
-  def minimizeLoop(input: Array[_ <: Any], removed: Any, index: Int) {
-
+  def run(input: Array[_ <: Any]): Boolean = {
     val sys = ActorSystem("PP", ConfigFactory.load())
     val env = sys.actorOf(Props[Environment], name="env")
 
@@ -122,14 +116,16 @@ object BcastTest extends App {
     val td = new TestDriver(env, 
                 input, 
                 MsgIds, 
-                (a: Map[String, Any]) => messageVerify(a), 
-                sys.dispatcher.asInstanceOf[Dispatcher])
+                (a: Map[String, Any]) => messageVerify(a))
     
     val verify = td.run
     
     sys.shutdown()
-    
-    
+    return verify
+  }
+  @tailrec
+  def minimizeLoop(input: Array[_ <: Any], removed: Any, index: Int) {
+    val verify = run(input) 
     // Does the bug still occur
     var newInput: Array[_ <: Any] = null
     var nindex = index
@@ -146,10 +142,10 @@ object BcastTest extends App {
     if (nindex >= newInput.size) {
       // Done
       println("Done, final size is " + newInput.size)
-      println("Trace is ")
-      for (inp <- newInput) {
-        println(inp)
-      }
+      //println("Trace is ")
+      //for (inp <- newInput) {
+        //println(inp)
+      //}
     } else {
       val actNewInput = newInput.slice(0, nindex) ++ newInput.slice(nindex + 1, newInput.size)
       minimizeLoop(actNewInput, newInput(nindex), nindex)
@@ -157,7 +153,13 @@ object BcastTest extends App {
   }
 
   def minimize(input: Array[_ <: Any]) = {
-    minimizeLoop(input.slice(1, input.size), input(0), 0)
+    // First run the whole thing
+    val bug = run(input)
+    if (!bug) {
+      println("No problem found on the whole trace")
+    } else {
+      minimizeLoop(input.slice(1, input.size), input(0), 0)
+    }
 
   }
   val trace = Array(
