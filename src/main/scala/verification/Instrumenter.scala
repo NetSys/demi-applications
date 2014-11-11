@@ -28,7 +28,7 @@ case class SpawnEvent(parent: String,
 
 class Instrumenter {
 
-  val scheduler = new Scheduler
+  var scheduler : Scheduler = null
   val dispatchers = new HashMap[ActorRef, MessageDispatcher]
   
   val allowedEvents = new HashSet[(ActorCell, Envelope)]  
@@ -44,34 +44,26 @@ class Instrumenter {
   
   // Callbacks for new actors being created
   def new_actor(system: ActorSystem, 
-      props: Props, name: String, actor: ActorRef) = {
+      props: Props, name: String, actor: ActorRef) : Unit = {
     
-    println("System has created a new actor: " + actor.path.name)
-    
-    val event = new SpawnEvent(currentActor, props, name, actor)
-    scheduler.event_produced(event)
-    scheduler.event_consumed(event)
-    
-    if (!started) {
-      seenActors += ((system, (actor, props, name)))
+    if (scheduler != null) {  
+      val event = new SpawnEvent(currentActor, props, name, actor)
+      scheduler.event_produced(event)
+      scheduler.event_consumed(event)
+
+      if (!started) {
+        seenActors += ((system, (actor, props, name)))
+      }
+      
+      actorMappings(name) = actor
+      actorNames += name
     }
-    
-    actorMappings(name) = actor
-    actorNames += name
+    println("System has created a new actor: " + actor.path.name)
   }
   
   def new_actor(system: ActorSystem, 
-      props: Props, actor: ActorRef) = {
-    
-    println("System has created a new actor: " + actor.path.name)
-    
-    val event = new SpawnEvent(currentActor, props, actor.path.name, actor)
-    scheduler.event_produced(event)
-    scheduler.event_consumed(event)
-
-    if (started) {
-      seenActors += ((system, (actor, props)))
-    }
+      props: Props, actor: ActorRef) : Unit = {
+    new_actor(system, props, actor.path.name, actor)
   }
   
   
@@ -83,7 +75,7 @@ class Instrumenter {
   //  This is all assuming that we don't control replay of main
   //  so this is a way to replay the first message that started it all.
   def reinitialize_system(sys: ActorSystem, argQueue: Queue[Any]) {
-    
+    require(scheduler != null)
     val newSystem = ActorSystem("new-system-" + counter)
     counter += 1
     println("Started a new actor system.")
@@ -127,6 +119,7 @@ class Instrumenter {
   
   // Signal to the instrumenter that the scheduler wants to restart the system
   def restart_system() = {
+    require(scheduler != null)
     println("Restarting system")
     started = false
     
@@ -149,30 +142,33 @@ class Instrumenter {
   def beforeMessageReceive(cell: ActorCell) {
     
     if (isSystemMessage(cell.sender.path.name, cell.self.path.name)) return
-
-    scheduler.before_receive(cell)
-    currentActor = cell.self.path.name
-    
-    println(Console.GREEN 
-        + " ↓↓↓↓↓↓↓↓↓ ⌚  " + scheduler.currentTime + " | " + cell.self.path.name + " ↓↓↓↓↓↓↓↓↓ " + 
-        Console.RESET)
+    if (scheduler != null) {
+      scheduler.before_receive(cell)
+      currentActor = cell.self.path.name
+      
+      println(Console.GREEN 
+          + " ↓↓↓↓↓↓↓↓↓ ⌚  " + scheduler.currentTime + " | " + cell.self.path.name + " ↓↓↓↓↓↓↓↓↓ " + 
+          Console.RESET)
+    }
   }
   
   // Called after the message receive is done.
   def afterMessageReceive(cell: ActorCell) {
     if (isSystemMessage(cell.sender.path.name, cell.self.path.name)) return
-    println(Console.RED 
-        + " ↑↑↑↑↑↑↑↑↑ ⌚  " + scheduler.currentTime + " | " + cell.self.path.name + " ↑↑↑↑↑↑↑↑↑ " 
-        + Console.RESET)
-        
-    scheduler.after_receive(cell)          
-    scheduler.schedule_new_message() match {
-      case Some((new_cell, envelope)) => dispatch_new_message(new_cell, envelope)
-      case None =>
-        counter += 1
-        println("Nothing to run.")
-        started = false
-        //scheduler.notify_quiscence()
+    if (scheduler != null) {
+      println(Console.RED 
+          + " ↑↑↑↑↑↑↑↑↑ ⌚  " + scheduler.currentTime + " | " + cell.self.path.name + " ↑↑↑↑↑↑↑↑↑ " 
+          + Console.RESET)
+          
+      scheduler.after_receive(cell)          
+      scheduler.schedule_new_message() match {
+        case Some((new_cell, envelope)) => dispatch_new_message(new_cell, envelope)
+        case None =>
+          counter += 1
+          println("Nothing to run.")
+          started = false
+          //scheduler.notify_quiscence()
+      }
     }
   }
 
@@ -207,7 +203,8 @@ class Instrumenter {
   // Called when dispatch is called.
   def aroundDispatch(dispatcher: MessageDispatcher, cell: ActorCell, 
       envelope: Envelope): Boolean = {
-    
+
+    if (scheduler == null) { return true }
     val value: (ActorCell, Envelope) = (cell, envelope)
     val receiver = cell.self
     val snd = envelope.sender.path.name

@@ -1,5 +1,6 @@
 import akka.actor._
 import akka.dispatch.Dispatcher
+import akka.dispatch.verification._
 import scala.concurrent.duration._
 import scala.collection.mutable.{OpenHashMap, HashSet, Stack}
 import scala.collection.MapLike
@@ -178,5 +179,6 @@ object BcastTest extends App {
       Start(Props[ReliableBCast], "bcast8"),
       WaitQuiescence()
     )
+  Instrumenter().scheduler = new akka.dispatch.verification.Scheduler
   minimize(trace)
 }

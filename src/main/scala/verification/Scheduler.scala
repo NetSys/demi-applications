@@ -41,6 +41,14 @@ class Scheduler {
   // Current set of enabled events.
   val pendingEvents = new HashMap[String, Queue[(ActorCell, Envelope)]]  
 
+  // Notification that the system has been reset
+  def start_trace() : Unit = {
+    prevProducedEvents = producedEvents
+    prevConsumedEvents = consumedEvents
+    producedEvents = new Queue[ (Integer, CurrentTimeQueueT) ]
+    consumedEvents = new Queue[ (Integer, CurrentTimeQueueT) ]
+  }
+
   // When executing a trace, find the next trace event
   def trace_iterator() : Option[Event] = { 
     if(prevConsumedEvents.isEmpty)
@@ -160,12 +168,4 @@ class Scheduler {
   def after_receive(cell: ActorCell) {
   }
 
-  // Called as a part of starting a new trace run
-  // TODO: Move this
-  def start_trace() : Unit = {
-    prevProducedEvents = producedEvents
-    prevConsumedEvents = consumedEvents
-    producedEvents = new Queue[ (Integer, CurrentTimeQueueT) ]
-    consumedEvents = new Queue[ (Integer, CurrentTimeQueueT) ]
-  }
 }
