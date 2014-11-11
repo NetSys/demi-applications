@@ -1,5 +1,5 @@
 import akka.actor._
-import akka.dispatch.{Dispatcher, InstrumentedDispatcher}
+import akka.dispatch.Dispatcher
 import scala.concurrent.duration._
 import scala.collection.mutable.{OpenHashMap, HashSet, Stack}
 import scala.collection.MapLike
@@ -62,10 +62,8 @@ class Environment extends Actor {
 class TestDriver(env: ActorRef,
                  trace: Array[_ <: Any],
                  verificationMsg: Any,
-                 verificationFun: Map[String, Any] => Boolean,
-                 _dispatcher: Dispatcher) {
+                 verificationFun: Map[String, Any] => Boolean) {
   private[this] var verificationPhase = false
-  private[this] var dispatcher = _dispatcher.asInstanceOf[InstrumentedDispatcher]
   def verify (): Boolean = {
     assert (verificationPhase)
     implicit val timeout = Timeout(5 seconds)
@@ -85,7 +83,7 @@ class TestDriver(env: ActorRef,
         case Wait(duration) =>
           Thread.sleep(duration.toMillis)
         case WaitQuiescence() =>
-          val finishedWait = dispatcher.awaitQuiscence()
+          //val finishedWait = dispatcher.awaitQuiscence()
         case _ =>
           implicit val timeout = Timeout(5 minutes)
           val f = env ? t
@@ -94,10 +92,6 @@ class TestDriver(env: ActorRef,
     }
     verificationPhase = true
     println("Trace done")
-    println("Schedule was")
-    for (s <- dispatcher.sched) {
-      println(s)
-    }
     return verify()
   }
 }
@@ -122,8 +116,7 @@ object BcastTest extends App {
     val td = new TestDriver(env, 
                 input, 
                 MsgIds, 
-                (a: Map[String, Any]) => messageVerify(a), 
-                sys.dispatcher.asInstanceOf[Dispatcher])
+                (a: Map[String, Any]) => messageVerify(a))
     
     val verify = td.run
     
@@ -149,10 +142,10 @@ object BcastTest extends App {
     if (nindex >= newInput.size) {
       // Done
       println("Done, final size is " + newInput.size)
-      println("Trace is ")
-      for (inp <- newInput) {
-        println(inp)
-      }
+      //println("Trace is ")
+      //for (inp <- newInput) {
+        //println(inp)
+      //}
     } else {
       val actNewInput = newInput.slice(0, nindex) ++ newInput.slice(nindex + 1, newInput.size)
       minimizeLoop(actNewInput, newInput(nindex), nindex)

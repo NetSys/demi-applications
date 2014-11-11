@@ -22,7 +22,7 @@ import scala.concurrent.impl.CallbackRunnable;
 
 privileged public aspect WeaveActor {
 
-  Instrumenter inst = new Instrumenter();
+  Instrumenter inst = Instrumenter.apply();
     
   pointcut enqueueOperation(MessageQueue me, ActorRef receiver, Envelope handle): 
   execution(public * akka.dispatch.MessageQueue.enqueue(ActorRef, Envelope)) &&
