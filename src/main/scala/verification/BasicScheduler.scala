@@ -167,5 +167,4 @@ class BasicScheduler extends Scheduler {
 
   def notify_quiescence () {
   }
-
 }

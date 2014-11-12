@@ -4,14 +4,12 @@ import akka.actor.ActorCell
 import akka.actor.ActorSystem
 import akka.actor.ActorRef
 import akka.actor.Actor
-import akka.actor.PoisonPill
-import akka.actor.Props;
+import akka.actor.Props
 
 import akka.dispatch.Envelope
 import akka.dispatch.MessageQueue
 import akka.dispatch.MessageDispatcher
 
-import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.Queue
 import scala.collection.mutable.Stack
 import scala.collection.mutable.HashMap
