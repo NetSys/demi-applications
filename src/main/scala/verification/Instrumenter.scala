@@ -143,10 +143,6 @@ class Instrumenter {
     if (scheduler != null) {
       scheduler.before_receive(cell)
       currentActor = cell.self.path.name
-      
-      println(Console.GREEN 
-          + " ↓↓↓↓↓↓↓↓↓ ⌚  " + scheduler.currentTime + " | " + cell.self.path.name + " ↓↓↓↓↓↓↓↓↓ " + 
-          Console.RESET)
     }
   }
   
@@ -154,10 +150,6 @@ class Instrumenter {
   def afterMessageReceive(cell: ActorCell) {
     if (isSystemMessage(cell.sender.path.name, cell.self.path.name)) return
     if (scheduler != null) {
-      println(Console.RED 
-          + " ↑↑↑↑↑↑↑↑↑ ⌚  " + scheduler.currentTime + " | " + cell.self.path.name + " ↑↑↑↑↑↑↑↑↑ " 
-          + Console.RESET)
-          
       scheduler.after_receive(cell)          
       scheduler.schedule_new_message() match {
         case Some((new_cell, envelope)) => dispatch_new_message(new_cell, envelope)

@@ -159,10 +159,17 @@ class BasicScheduler extends Scheduler {
     currentlyProduced = new CurrentTimeQueueT
     currentlyConsumed = new CurrentTimeQueueT
     currentTime += 1
+    println(Console.GREEN 
+        + " ↓↓↓↓↓↓↓↓↓ ⌚  " + currentTime + " | " + cell.self.path.name + " ↓↓↓↓↓↓↓↓↓ " + 
+        Console.RESET)
   }
   
   // Called after receive is done being processed 
   def after_receive(cell: ActorCell) {
+    println(Console.RED 
+        + " ↑↑↑↑↑↑↑↑↑ ⌚  " + currentTime + " | " + cell.self.path.name + " ↑↑↑↑↑↑↑↑↑ " 
+        + Console.RESET)
+          
   }
 
   def notify_quiescence () {

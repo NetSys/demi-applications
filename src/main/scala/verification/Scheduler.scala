@@ -8,7 +8,6 @@ import akka.dispatch.Envelope
 
 // The interface for schedulers
 trait Scheduler {
-  var currentTime : Int
   // Notification that the system has been reset
   def start_trace() : Unit
   // Get the next message to schedule
