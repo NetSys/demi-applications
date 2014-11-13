@@ -20,7 +20,7 @@ import scala.collection.Iterator
 import scala.collection.generic.GenericTraversableTemplate
 
 // Just a very simple, non-null scheduler
-class TemplateScheduler extends Scheduler {
+class FairScheduler extends Scheduler {
   
   var intrumenter = Instrumenter
   var currentTime = 0
@@ -45,7 +45,6 @@ class TemplateScheduler extends Scheduler {
   
   def nextActor () : String = {
     val next = actorQueue(index)
-    println("Actor queue = " + actorQueue + " actorNames = " + actorNames + " index = " + index)
     index = (index + 1) % actorQueue.size
     next
   }
@@ -61,26 +60,21 @@ class TemplateScheduler extends Scheduler {
     // Do we have some pending events
     if (pendingEvents.isEmpty) {
       None
-    } else {
-      println("Active actors = " + pendingEvents.keys + " receiver = " + receiver)
-    }
-
-    pendingEvents.get(receiver) match {
-      case Some(queue) =>
-        if (queue.isEmpty == true) {
-          pendingEvents.remove(receiver) match {
-            case Some(key) => schedule_new_message()
-            case None => throw new Exception("Internal error")
+    } else { 
+      pendingEvents.get(receiver) match {
+        case Some(queue) =>
+          if (queue.isEmpty == true) {
+            pendingEvents.remove(receiver) match {
+              case Some(key) => schedule_new_message()
+              case None => throw new Exception("Internal error") // Really this is saying pendingEvents does not have 
+                                                                 // receiver as a key
+            }
+          } else {
+            Some(queue.dequeue())
           }
-        } else {
-          Some(queue.dequeue())
-        }
-      case None =>
-        if (pendingEvents.isEmpty) {
-          None
-        } else {
-           schedule_new_message()
-        }
+        case None =>
+          schedule_new_message()
+      }
     }
   }
   
@@ -103,7 +97,6 @@ class TemplateScheduler extends Scheduler {
   def event_produced(event: Event) = {
     event match {
       case event : SpawnEvent => 
-        println("Spawned a new actor " + event.name)
         if (!(actorNames contains event.name)) {
           actorQueue += event.name
           actorNames += event.name
@@ -136,5 +129,6 @@ class TemplateScheduler extends Scheduler {
   }
   
   def notify_quiescence () {
+    println("No more messages to process")
   }
 }
