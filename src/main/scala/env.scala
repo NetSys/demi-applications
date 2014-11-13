@@ -29,7 +29,7 @@ class Environment extends Actor {
   private[this] val active = new OpenHashMap[String, ActorRef]
   def receive = {
     case o:Start =>
-      val child = context.actorOf(o.prop, name=o.name)
+      val child = context.actorOf(o.prop, o.name)
       context.watch(child)
       val gm = GroupMembership(active.keys.toList)
       child ! gm
@@ -100,7 +100,7 @@ class TestDriver(env: ActorRef,
 object BcastTest extends App {
   def run(input: Array[_ <: Any]): Boolean = {
     val sys = ActorSystem("PP", ConfigFactory.load())
-    val env = sys.actorOf(Props[Environment], name="env")
+    val env = sys.actorOf(Props[Environment], "env")
 
     def messageVerify (a: Map[String, Any]) : Boolean = {
       println(a)
