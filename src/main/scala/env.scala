@@ -179,6 +179,6 @@ object BcastTest extends App {
       Start(Props[ReliableBCast], "bcast8"),
       WaitQuiescence()
     )
-  Instrumenter().scheduler = new BasicScheduler
+  Instrumenter().scheduler = new TemplateScheduler
   run(trace)
 }
