@@ -46,7 +46,9 @@ object Test extends App {
     ("bcast8", "bcast6"),
     ("bcast8", "bcast7")
   )
-  Instrumenter().scheduler = new PartitioningFairScheduler(partition)
+  val sched = new PartitioningFairScheduler
+  Instrumenter().scheduler = sched
+  sched.add_to_partition(partition)
   val sys = ActorSystem("TestAs", ConfigFactory.load())
   val initial = sys.actorOf(Props(classOf[TestAgent], actors), "initial")
   initial ! Start
