@@ -1,23 +1,12 @@
 package akka.dispatch.verification
 
 import akka.actor.ActorCell
-import akka.actor.ActorSystem
-import akka.actor.ActorRef
-import akka.actor.Actor
-import akka.actor.PoisonPill
-import akka.actor.Props;
 
 import akka.dispatch.Envelope
-import akka.dispatch.MessageQueue
-import akka.dispatch.MessageDispatcher
 
-import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.Queue
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
-import scala.collection.Iterator
-
-import scala.collection.generic.GenericTraversableTemplate
 
 // Just a very simple, non-null scheduler
 class FairScheduler extends Scheduler {
@@ -57,6 +46,7 @@ class FairScheduler extends Scheduler {
   // Figure out what is the next message to schedule.
   def schedule_new_message() : Option[(ActorCell, Envelope)] = {
     val receiver = nextActor()
+    //println("NA: " + receiver)
     // Do we have some pending events
     if (pendingEvents.isEmpty) {
       None
@@ -115,20 +105,20 @@ class FairScheduler extends Scheduler {
   // Called before we start processing a newly received event
   def before_receive(cell: ActorCell) {
     currentTime += 1
-    println(Console.GREEN 
-        + " ↓↓↓↓↓↓↓↓↓ ⌚  " + currentTime + " | " + cell.self.path.name + " ↓↓↓↓↓↓↓↓↓ " + 
-        Console.RESET)
+    //println(Console.GREEN 
+        //+ " ↓↓↓↓↓↓↓↓↓ ⌚  " + currentTime + " | " + cell.self.path.name + " ↓↓↓↓↓↓↓↓↓ " + 
+        //Console.RESET)
   }
   
   // Called after receive is done being processed 
   def after_receive(cell: ActorCell) {
-    println(Console.RED 
-        + " ↑↑↑↑↑↑↑↑↑ ⌚  " + currentTime + " | " + cell.self.path.name + " ↑↑↑↑↑↑↑↑↑ " 
-        + Console.RESET)
+    //println(Console.RED 
+        //+ " ↑↑↑↑↑↑↑↑↑ ⌚  " + currentTime + " | " + cell.self.path.name + " ↑↑↑↑↑↑↑↑↑ " 
+        //+ Console.RESET)
         
   }
   
   def notify_quiescence () {
-    println("No more messages to process")
+    println("No more messages to process " + pendingEvents)
   }
 }

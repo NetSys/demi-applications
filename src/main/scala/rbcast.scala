@@ -48,6 +48,7 @@ class ReliableBCast extends Actor {
       if (msgIds contains msg.id) {
         bcast(msg.id)
       } else {
+        println(name + " received " + msg)
         msgIds += msg.id
         msgOrder += msg.id
         messages += (msg.id -> msg)
