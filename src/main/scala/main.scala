@@ -11,6 +11,7 @@ import com.typesafe.config.ConfigFactory
 import scala.annotation.tailrec
 
 final case object Start
+final case class Send(name: String, message: String, id: Int)
 // Failure detector messages (the FD is perfect in this case)
 final case class Killed (name: String) {}
 final case class Started (name: String) {}
@@ -24,6 +25,8 @@ class TestAgent(actors: Array[String])  extends Actor {
         actor ! GroupMembership(actors)
       }
       context.actorFor(actors(0)) ! Bcast(null, Msg("Hello", 1)) 
+    case Send(name, message, id) =>
+      context.actorFor(name) ! Bcast(null, Msg(message, id))
   }
 }
 
@@ -51,5 +54,8 @@ object Test extends App {
   sched.add_to_partition(partition)
   val sys = ActorSystem("TestAs", ConfigFactory.load())
   val initial = sys.actorOf(Props(classOf[TestAgent], actors), "initial")
-  initial ! Start
+  //initial ! Start
+  val ret = sched.enqueue_message(initial, Start)
+  require(ret)
+  sched.enqueue_message(initial, Send("bcast5", "Hi", 2))
 }

@@ -1,6 +1,6 @@
 package akka.dispatch.verification
 
-import akka.actor.ActorCell
+import akka.actor.{ActorCell, ActorRef}
 
 import akka.dispatch.Envelope
 
@@ -11,7 +11,7 @@ import scala.collection.mutable.HashSet
 // Just a very simple, non-null scheduler
 class FairScheduler extends Scheduler {
   
-  var intrumenter = Instrumenter
+  var instrumenter = Instrumenter()
   var currentTime = 0
   var index = 0
   
@@ -25,6 +25,11 @@ class FairScheduler extends Scheduler {
   
   
   // Is this message a system message
+  def isSystemCommunication(sender: ActorRef, receiver: ActorRef): Boolean = {
+    if (sender == null || receiver == null) return true
+    return isSystemMessage(sender.path.name, receiver.path.name)
+  }
+
   def isSystemMessage(src: String, dst: String): Boolean = {
     if ((actorNames contains src) || (actorNames contains dst))
       return false
