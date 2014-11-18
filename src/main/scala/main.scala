@@ -25,7 +25,7 @@ object Test extends App {
                      "bcast7",
                      "bcast8")
 
-  val trace = Array[TraceEvent](
+  val trace = Array[ExternalEvent](
     Start(Props[ReliableBCast], "bcast1"),
     Start(Props[ReliableBCast], "bcast2"),
     Start(Props[ReliableBCast], "bcast3"),

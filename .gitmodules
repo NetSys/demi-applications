@@ -1,3 +1,3 @@
 [submodule "interposition"]
 	path = interposition
-	url = git@github.com:NetSys/sts2-interposition.git
+	url = git@github.com:apanda/sts2-interposition.git
