@@ -52,8 +52,11 @@ object Test extends App {
     Partition("bcast8", "bcast6"),
     Partition("bcast8", "bcast7")
   )
-  val sched = new TraceFairScheduler
+  val sched = new PeekScheduler
   Instrumenter().scheduler = sched
   val events = sched.peek(trace)
   println("Returned to main with events")
+  println("Shutting down")
+  sched.shutdown
+  println("Shutdown successful")
 }
