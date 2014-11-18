@@ -15,8 +15,6 @@ class FairScheduler extends Scheduler {
   var currentTime = 0
   var index = 0
   
-  type CurrentTimeQueueT = Queue[Event]
-  
   // Current set of enabled events.
   val pendingEvents = new HashMap[String, Queue[(ActorCell, Envelope)]]  
 
@@ -51,7 +49,6 @@ class FairScheduler extends Scheduler {
   // Figure out what is the next message to schedule.
   def schedule_new_message() : Option[(ActorCell, Envelope)] = {
     val receiver = nextActor()
-    //println("NA: " + receiver)
     // Do we have some pending events
     if (pendingEvents.isEmpty) {
       None
@@ -73,17 +70,14 @@ class FairScheduler extends Scheduler {
     }
   }
   
-  
   // Get next event
   def next_event() : Event = {
     throw new Exception("NYI")
   }
-  
 
   // Record that an event was consumed
   def event_consumed(event: Event) = {
   }
-  
   
   def event_consumed(cell: ActorCell, envelope: Envelope) = {
   }
@@ -93,6 +87,7 @@ class FairScheduler extends Scheduler {
     event match {
       case event : SpawnEvent => 
         if (!(actorNames contains event.name)) {
+          println("Sched knows about actor " + event.name)
           actorQueue += event.name
           actorNames += event.name
         }
@@ -110,17 +105,10 @@ class FairScheduler extends Scheduler {
   // Called before we start processing a newly received event
   def before_receive(cell: ActorCell) {
     currentTime += 1
-    //println(Console.GREEN 
-        //+ " ↓↓↓↓↓↓↓↓↓ ⌚  " + currentTime + " | " + cell.self.path.name + " ↓↓↓↓↓↓↓↓↓ " + 
-        //Console.RESET)
   }
   
   // Called after receive is done being processed 
   def after_receive(cell: ActorCell) {
-    //println(Console.RED 
-        //+ " ↑↑↑↑↑↑↑↑↑ ⌚  " + currentTime + " | " + cell.self.path.name + " ↑↑↑↑↑↑↑↑↑ " 
-        //+ Console.RESET)
-        
   }
   
   def notify_quiescence () {
