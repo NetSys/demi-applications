@@ -4,6 +4,14 @@ import akka.dispatch.verification._
 import scala.collection.mutable.{HashSet, Stack, Queue, MutableList, HashMap}
 
 object DependencyGraph {
+  private[this] def contextPredicate (currentContext: String, 
+                                      list: List[Event], 
+                                      lastMsg: Any) : Boolean = {
+    currentContext != "scheduler" || 
+      list.size > 0 || 
+      lastMsg == Quiescence
+  }
+
   // Analyze a trace to figure out causal links. Quiescent states are currently
   // treated as sources and sinks.
   def analyzeTrace (eventTrace: Queue[Event]) {
@@ -26,7 +34,7 @@ object DependencyGraph {
           messageSendTime((m.sender, m.receiver, m.msg)) = currentStep
           list += m
         case ChangeContext(actor) =>
-          if (currentContext != "scheduler" || list.size > 0 || lastMsg == Quiescence) {
+          if (contextPredicate(currentContext, list.toList, lastMsg)) {
             if (currentContext == "scheduler" && lastMsg != Quiescence) {
               // Everything the scheduler does must causally happen after the last quiescent
               // period
@@ -62,7 +70,7 @@ object DependencyGraph {
     enabledByStep += (((currentStep, currentContext, lastMsg), list.toList))
     println("============================================================================")
     for(((time, actor, msg), queue) <- enabledByStep) {
-      if (actor != "scheduler" || list.size > 0 || lastMsg == Quiescence) {
+      if (contextPredicate(actor, queue.toList, msg)) {
         println(time + " " + actor + " ↢ " + msg + "  [" + causalLinks(time) + "]")
         for (en <- queue) {
           println("\t" + en)
