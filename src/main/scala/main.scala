@@ -52,7 +52,7 @@ object Test extends App {
     Partition("bcast8", "bcast6"),
     Partition("bcast8", "bcast7")
   )
-  while (true) {
+  //while (true) {
     val sched = new PeekScheduler
     Instrumenter().scheduler = sched
     val events = sched.peek(trace)
@@ -70,7 +70,7 @@ object Test extends App {
     replaySched.shutdown
     println("Shutdown successful")
     
-  }
+  //}
   //println("Events are: ")
   //println("==================================================================")
   //for (e <- events) {
