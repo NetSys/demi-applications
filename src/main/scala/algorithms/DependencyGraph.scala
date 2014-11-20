@@ -2,6 +2,8 @@ package akka.dispatch.verification.algorithm
 
 import akka.dispatch.verification._
 import scala.collection.mutable.{HashSet, Stack, Queue, MutableList, HashMap}
+case class TraceAnalysisResult (enabledEvents: Queue[((Int, String, Any),  List[Event])],
+                                eventLinks: HashMap[Int, Queue[Int]])
 
 object DependencyGraph {
   private[this] def contextPredicate (currentContext: String, 
@@ -12,9 +14,9 @@ object DependencyGraph {
       lastMsg == Quiescence
   }
 
-  // Analyze a trace to figure out causal links. Quiescent states are currently
-  // treated as sources and sinks.
-  def analyzeTrace (eventTrace: Queue[Event]) {
+  // Analyze a trace to figure out the set of events enabled at each step and the step at which a particular step was
+  // enabled. Quiescent states are currently treated as sources and sinks.
+  def analyzeTrace (eventTrace: Queue[Event]) : TraceAnalysisResult =  {
     var currentContext = "scheduler"
     var currentStep = 1
     val enabledByStep = new Queue[((Int, String, Any),  List[Event])]
@@ -68,16 +70,6 @@ object DependencyGraph {
       }
     }
     enabledByStep += (((currentStep, currentContext, lastMsg), list.toList))
-    println("============================================================================")
-    for(((time, actor, msg), queue) <- enabledByStep) {
-      if (contextPredicate(actor, queue.toList, msg)) {
-        println(time + " " + actor + " ↢ " + msg + "  [" + causalLinks(time) + "]")
-        for (en <- queue) {
-          println("\t" + en)
-        }
-      }
-    }
-    println("============================================================================")
+    TraceAnalysisResult(enabledByStep, causalLinks)
   }
-
 }
