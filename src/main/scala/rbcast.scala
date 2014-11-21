@@ -1,6 +1,6 @@
 import akka.actor._
 import scala.concurrent.duration._
-import scala.collection.mutable.{OpenHashMap, HashSet, Stack, ListBuffer}
+import scala.collection.mutable.{OpenHashMap, HashSet, Stack, ListBuffer, Queue}
 import scala.collection.MapLike
 import scala.concurrent.Await
 import akka.pattern.ask
@@ -13,7 +13,14 @@ final case class Ack(from: String, id: Int) {}
 final case class Bcast(from: String, msg: Msg) {}
 final case object MsgIds;
 
-class ReliableBCast extends Actor {
+class BCastState {
+  val messages = new Queue[Msg]
+  def reset  = {
+    messages.clear()
+  }
+}
+
+class ReliableBCast (state: BCastState) extends Actor {
   private[this] val other = new HashSet[String]
   private[this] val msgIds = new HashSet[Int]
   private[this] val msgOrder = new ListBuffer[Int]
@@ -48,7 +55,7 @@ class ReliableBCast extends Actor {
       if (msgIds contains msg.id) {
         bcast(msg.id)
       } else {
-        println(name + " received " + msg)
+        state.messages += msg
         msgIds += msg.id
         msgOrder += msg.id
         messages += (msg.id -> msg)
