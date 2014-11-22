@@ -64,6 +64,10 @@ object Test extends App {
   val state1 = HashMap[String, BCastState]() ++
               actors.map((_, new BCastState()))
 
+  val actorProps = HashMap[String, Props]() ++
+                   actors.map(name => (name, Props.create(classOf[ReliableBCast],
+            state(name))))
+
   val trace1 = Array[ExternalEvent]() ++
     actors.map(
       act => Start(Props.create(classOf[ReliableBCast],
@@ -80,7 +84,9 @@ object Test extends App {
     Partition("bcast8", "bcast6"),
     Partition("bcast8", "bcast7")
   )
-  val removed = trace0.indexOf(Send("bcast8", Bcast(null, Msg("Bar", 2))))
+  val removed = Array() ++
+                Array(trace0.indexOf(Send("bcast8", Bcast(null, Msg("Bar", 2)))))
+                //Array(trace0.indexOf(Send("bcast5", Bcast(null, Msg("Foo", 1)))))
 
   val sched = new PeekScheduler
   Instrumenter().scheduler = sched
@@ -95,23 +101,13 @@ object Test extends App {
   val events1 = sched.peek(trace1)
   sched.shutdown
   verifyState(actors, state1)
+  for (st <- state.values) {
+    st.reset
+  }
 
-  DependencyGraph.recreateSchedule(trace0, Array(removed), events, events1) 
-  
-  //// Reset state
-  //for (s <- state.values) {
-    //s.reset
-  //}
-  
-  //// Now try
-  //val replaySched = new ReplayScheduler
-  //Instrumenter().scheduler = replaySched
-  //val eventsAsArray = events.toArray
-  //val replayedEvents = replaySched.replay(eventsAsArray)
-  //println("Done replaying")
-  //println("Shutting down")
-  //replaySched.shutdown
-  //println("Shutdown successful")
-  //verifyState(actors, state) 
-  //DependencyGraph.analyzeTrace(replayedEvents)
+  val newSched = DependencyGraph.recreateSchedule(trace0, removed, events, events1) 
+  val replaySched = new ReplayScheduler()
+  Instrumenter().scheduler = replaySched
+  replaySched.replay(newSched.toArray, actorProps)
+  verifyState(actors, state)
 }
