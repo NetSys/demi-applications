@@ -5,6 +5,7 @@ import scala.collection.mutable.{HashSet, Stack, Queue, MutableList, HashMap}
 import scala.util.control.Breaks._
 
 case class CurrentDispatch (time: Int, actor: String, msg: Any)
+
 case class IdxedEvent (schedIdx: Int, event: Event) 
 case class LocatedIdx (schedIdx: Int, time: Int)
 case class TraceAnalysisResult (trace: Array[Event],
@@ -21,73 +22,6 @@ object DependencyGraph {
       lastMsg == Quiescence
   }
 
-  private[this] def extIsInt(ext: ExternalEvent, internal: Event) : Boolean = {
-      ext match {
-        case Start(_, name) =>
-          internal match {
-            case SpawnEvent(_, _, name, _) =>
-              true
-            case _ =>
-              false
-          }
-        case Kill(name) =>
-          internal match {
-            case KillEvent(name) =>
-              true
-            case _ =>
-              false
-          }
-        case Send(name, msg) =>
-          internal match {
-            case MsgSend("deadLetters", name, msg) =>
-              true
-            case _ =>
-              false
-          }
-        case WaitQuiescence =>
-          internal match {
-            case Quiescence =>
-              true
-            case _ =>
-              false
-          }
-        case Partition(a, b) =>
-          internal match {
-            case PartitionEvent((a, b)) =>
-              true
-            case _ =>
-              false
-          }
-        case UnPartition(a, b) =>
-          internal match {
-            case UnPartitionEvent((a, b)) =>
-              true
-            case _ =>
-              false
-          }
-      }
-  }
-
-  private[this] def alignSchedules(trace: Array[ExternalEvent],
-                                   sched: Queue[Event]) : HashMap[Int, Int] = {
-    val eventTime = new HashMap[Int, Int]
-    var idx = 0
-    var externEvent = 0
-
-    // Align schedule to external events
-    while (idx < sched.length && 
-            externEvent < trace.length)  {
-
-      if (extIsInt(trace(externEvent), 
-                   sched(idx))) {
-        eventTime(externEvent) = idx
-        externEvent += 1
-      }
-      idx += 1
-    }
-    eventTime
-  }
-
   // Given an old trace and schedule that leads to a bug, create a new one that is similar to the original
   def recreateSchedule (origTrace : Array[ExternalEvent],
                         removeFromOrig: Array[Int],
@@ -96,7 +30,7 @@ object DependencyGraph {
     val shortSched = new Queue[Event]
     val origTraceAnalysis = analyzeTrace(origSched)
     val origReverse = reverseLinks(origTraceAnalysis)
-    val origAligned = alignSchedules(origTrace, origSched)
+    val origAligned = Utilities.alignSchedules(origTrace, origSched)
     val removeIndices = new HashSet[Int]
     val toVisit = new HashSet[Int]
     val visited = new HashSet[Int]
@@ -125,8 +59,15 @@ object DependencyGraph {
         }
       }
     }
-    
-    // Reproduce the original schedule without the missing elements. This is not enough in reality we want to med the 
+    // Analysis for the peeked schedule
+    val peekAnalysis = analyzeTrace(peekedSched)
+    val peekReverse = reverseLinks(peekAnalysis)
+    val keepIndices = (0 until origTrace.length).filter(idx => !(removeFromOrig contains idx))
+    // New external trace after things have been removed 
+    val newExt = keepIndices.map(origTrace(_)).toArray
+    val newAligned = Utilities.alignSchedules(newExt, peekedSched)
+
+    // Reproduce the original schedule without the missing elements. This is not enough in reality we want to meld the 
     // new one the appropriate way, but is a good start.
     for (eidx <- 0 until origSched.length) {
       if (!(removeIndices contains eidx)) {
