@@ -11,3 +11,9 @@ git subtree pull --prefix=interposition interposition master
 ```
 
 sbt and most of the other goodies are set up correctly
+
+Branches:
+
+Branch | Application
+-------|------------
+panda-rbcast | One of three reliable broadcast applications
