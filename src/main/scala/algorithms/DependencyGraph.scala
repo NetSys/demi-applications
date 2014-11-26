@@ -1,3 +1,4 @@
+// Be somewhat suspicious of this file
 package akka.dispatch.verification.algorithm 
 
 import akka.dispatch.verification._
