@@ -12,6 +12,8 @@ object STS2Application extends Build {
       version := "0.1",
       scalaVersion := "2.11.2",
       libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.3.6",
+      libraryDependencies += "com.typesafe.akka" %% "akka-cluster" % "2.3.6",
+      libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.2",
 
       // add akka-actor as an aspectj input (find it in the update report)
       inputs in Aspectj <++= update map { report =>
