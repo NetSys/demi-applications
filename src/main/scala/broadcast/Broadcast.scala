@@ -14,6 +14,9 @@ import scala.concurrent.duration._
 import scala.util.parsing.json.JSONObject
 
 // -- Initialization messages --
+// TODO(cs): AddLink's should be dynamically sent to BroadcastNodes throughout
+// the execution, as the group membership changes.
+// Right now they are statically sent, all-to-all, at the beginning of the execution.
 case class AddLink(link: ActorRef)
 case class SetVectorClock(vc: VectorClock)
 
@@ -86,7 +89,7 @@ object PerfectLink {
 }
 
 /**
- * PerfectLink. Attached to Nodes.
+ * PerfectLink. Attached to BroadcastNodes.
  */
 class PerfectLink(parent: BroadcastNode, destination: ActorRef, name: String) {
   var parentName = parent.name
