@@ -1,7 +1,5 @@
 package broadcast;
 
-// Possible bug: Nodes don't send broadcasts to themselves.
-
 import akka.actor.{ Actor, ActorRef }
 import akka.actor.{ ActorSystem, Scheduler, Props }
 import akka.pattern.ask
@@ -14,13 +12,10 @@ import scala.concurrent.duration._
 import scala.util.parsing.json.JSONObject
 
 // -- Initialization messages --
-// TODO(cs): AddLink's should be dynamically sent to BroadcastNodes throughout
-// the execution, as the group membership changes.
-// Right now they are statically sent, all-to-all, at the beginning of the execution.
-case class AddLink(link: ActorRef)
+case class GroupMembership(members: Iterable[String])
 case class SetVectorClock(vc: VectorClock)
 
-// -- Base message type --
+// -- Application message type --
 object DataMessage {
   // Global static variable to simplify creation of unique IDs.
   private var next_id = 0
@@ -70,6 +65,7 @@ trait FailureDetector {}
  * FailureDetector implementation meant to be integrated directly into a model checker or
  * testing framework. Doubles as a mechanism for killing nodes.
  */
+// TODO(cs): change List[ActorRef] to List[String]
 class HackyFailureDetector(nodes: List[ActorRef]) extends FailureDetector {
   var liveNodes : Set[ActorRef] = Set() ++ nodes
 
@@ -198,7 +194,7 @@ class TimerQueue(scheduler: Scheduler, source: ActorRef) {
 /**
  * BroadcastNode Actor. Implements Reliable Broadcast.
  */
-class BroadcastNode(id: Int) extends Actor {
+class BroadcastNode extends Actor {
   var name = self.path.name
   val timerQueue = new TimerQueue(context.system.scheduler, self)
   var allLinks: Set[PerfectLink] = Set()
@@ -207,10 +203,16 @@ class BroadcastNode(id: Int) extends Actor {
   var vc = new VectorClock()
   val log = Logging(context.system, this)
 
-  def add_link(dst: ActorRef) {
-    val link = new PerfectLink(this, dst, name + "-" + dst.path.name)
+  def handle_group_membership(group: Iterable[String]) {
+    // TODO(cs): create a vector clock.
+    group.map(node => add_link(node))
+  }
+
+  def add_link(dst: String) {
+    val dst_ref = context.actorFor("../" + dst)
+    val link = new PerfectLink(this, dst_ref, name + "-" + dst)
     allLinks = allLinks + link
-    dst2link += (dst.path.name -> link)
+    dst2link += (dst -> link)
   }
 
   def rb_broadcast(msg: DataMessage) {
@@ -235,7 +237,6 @@ class BroadcastNode(id: Int) extends Actor {
     vcLog("RBDeliver of message " + msg + " from " + senderName)
     beb_broadcast(msg)
   }
-  
 
   def vcLog(msg: String, otherVC:VectorClock = null) {
     vc = vc :+ name
@@ -274,7 +275,7 @@ class BroadcastNode(id: Int) extends Actor {
 
   def receive = {
     // Node messages:
-    case AddLink(dst) => add_link(dst)
+    case GroupMembership(group) => handle_group_membership(group)
     case Stop => stop
     case RBBroadcast(msg) => rb_broadcast(msg)
     // Link messages:
@@ -290,49 +291,5 @@ class BroadcastNode(id: Int) extends Actor {
     case Tick => handle_tick
     case StillActiveQuery => handle_active_query
     case unknown => log.error("Unknown message " + unknown)
-  }
-}
-
-class FireStarter(numNodes:Int = 4) extends Actor {
-  def receive = {
-    case _ => start()
-  }
-
-  def start() = {
-    val system = context.system;
-
-    val nodes = List.range(0, numNodes).map(i =>
-      system.actorOf(Props(classOf[BroadcastNode], i), name="node" + i))
-
-    val createLinksForNodes = (src: ActorRef, dst: ActorRef) => {
-      src ! AddLink(dst)
-      dst ! AddLink(src)
-    }
-    val srcDstPairs  = for (i <- 0 to numNodes-1; j <- i+1 to numNodes-1) yield (nodes(i), nodes(j))
-    srcDstPairs.map(tuple => createLinksForNodes(tuple._1, tuple._2))
-
-    val fd = new HackyFailureDetector(nodes)
-
-    // TODO(cs): technically we should block here until all configuration
-    // messages have been delivered. i.e. check that all Nodes have all their
-    // Links.
-
-    // Sample Execution:
-
-    nodes(0) ! RBBroadcast(DataMessage("Message1"))
-    // fd.kill(nodes(1))
-    // nodes(numNodes-1) ! RBBroadcast(DataMessage("Message2"))
-    // nodes(0) ! RBBroadcast(DataMessage("Message3"))
-
-    // Wait for execution to terminate.
-    // TODO(cs): uncomment when we figure out how to play nicely with model
-    // checker.
-    // implicit val timeout = Timeout(2 seconds)
-    // while (fd.liveNodes.map(
-    //        n => Await.result(n.ask(StillActiveQuery), 500 milliseconds).
-    //             asInstanceOf[Boolean]).reduceLeft(_ | _)) {
-    //   Thread sleep 500
-    // }
-    // system.shutdown()
   }
 }
