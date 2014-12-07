@@ -33,7 +33,6 @@ case class DataMessage(data: String) {
 }
 
 // -- main() -> Node messages --
-case class Stop()
 case class StillActiveQuery()
 case class RBBroadcast(msg: DataMessage)
 
@@ -215,11 +214,6 @@ class BroadcastNode extends Actor {
     timerQueue.maybe_schedule(timerMillis)
   }
 
-  def stop() {
-    vcLog("Crashing")
-    context.stop(self)
-  }
-
   def handle_tick() {
     vcLog("Handle Tick()")
     timerQueue.handle_tick
@@ -240,7 +234,6 @@ class BroadcastNode extends Actor {
 
   def receive = {
     // Node messages:
-    case Stop => stop
     case RBBroadcast(msg) => rb_broadcast(msg)
     // Link messages:
     case SLDeliver(senderName, msg, vc) => {
