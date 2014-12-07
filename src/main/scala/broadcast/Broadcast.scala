@@ -13,11 +13,8 @@ import scala.util.parsing.json.JSONObject
 // TODO(cs): change this when we factor the failure detector out of
 // akka.dispatch.verification.PeekScheduler
 import akka.dispatch.verification.{ NodeUnreachable, NodeReachable, FailureDetectorOnline }
+import akka.dispatch.verification.{ QueryReachableGroup, ReachableGroup }
 
-
-// -- Initialization messages --
-case class GroupMembership(members: Iterable[String])
-case class SetVectorClock(vc: VectorClock)
 
 // -- Application message type --
 object DataMessage {
@@ -243,7 +240,6 @@ class BroadcastNode extends Actor {
 
   def receive = {
     // Node messages:
-    case GroupMembership(group) => handle_group_membership(group)
     case Stop => stop
     case RBBroadcast(msg) => rb_broadcast(msg)
     // Link messages:
@@ -256,7 +252,8 @@ class BroadcastNode extends Actor {
     // FailureDetector messages:
     case NodeUnreachable(destination) => handle_suspected_failure(destination)
     case NodeReachable(destination) => handle_suspected_recovery(destination)
-    case FailureDetectorOnline(fdName) => println(name + ": FD online at " + fdName)
+    case FailureDetectorOnline(fdName) => context.actorFor("../" + fdName) ! QueryReachableGroup
+    case ReachableGroup(group) => handle_group_membership(group)
     case Tick => handle_tick
     case StillActiveQuery => handle_active_query
     case unknown => log.error("Unknown message " + unknown)

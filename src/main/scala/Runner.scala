@@ -1,4 +1,4 @@
-import broadcast.{ BroadcastNode, GroupMembership, RBBroadcast, DataMessage }
+import broadcast.{ BroadcastNode, RBBroadcast, DataMessage }
 import akka.actor.{ Actor, ActorRef, DeadLetter }
 import akka.actor.ActorSystem
 import akka.actor.Props
@@ -15,9 +15,6 @@ object Main extends App {
     // Start Actors.
     actors.map(actor_name =>
       Start(Props.create(classOf[BroadcastNode]), actor_name)) ++
-    // Wire them up
-    actors.map(actor_name =>
-      Send(actor_name, GroupMembership(actors))) ++
     // Execute the interesting events.
     Array[ExternalEvent](
     WaitQuiescence,
