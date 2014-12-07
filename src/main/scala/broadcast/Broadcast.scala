@@ -10,6 +10,10 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.parsing.json.JSONObject
+// TODO(cs): change this when we factor the failure detector out of
+// akka.dispatch.verification.PeekScheduler
+import akka.dispatch.verification.{ NodeUnreachable, NodeReachable, FailureDetectorOnline }
+
 
 // -- Initialization messages --
 case class GroupMembership(members: Iterable[String])
@@ -42,42 +46,6 @@ case class ACK(senderName: String, msgID: Int, vc: VectorClock)
 
 // -- Node -> Node messages --
 case class Tick()
-
-// -- FailureDetector -> Node messages --
-case class SuspectedFailure(actor: ActorRef)
-// N.B. even in a crash-stop failure model, SuspectedRecovery might still
-// occur in the case that the FD realized that it made a mistake.
-case class SuspectedRecovery(actor: ActorRef)
-
-/**
- * FailureDetector interface.
- *
- * Guarentee: eventually all suspects are correctly suspected. We don't know
- * when that point will be though.
- *
- * We use an unorthodox "push" interface for notifying clients of suspected
- * failures, rather than the traditional "pull" interface. This is to achieve
- * quiescence.
- */
-trait FailureDetector {}
-
-/**
- * FailureDetector implementation meant to be integrated directly into a model checker or
- * testing framework. Doubles as a mechanism for killing nodes.
- */
-// TODO(cs): change List[ActorRef] to List[String]
-class HackyFailureDetector(nodes: List[ActorRef]) extends FailureDetector {
-  var liveNodes : Set[ActorRef] = Set() ++ nodes
-
-  def kill(node: ActorRef) {
-    liveNodes = liveNodes - node
-    node ! Stop
-    val otherNodes = nodes.filter(n => n.compareTo(node) != 0)
-    otherNodes.map(n => n ! SuspectedFailure(node))
-  }
-
-  // TODO(cs): support recovery. Upon recovering a node, send SuspectedRecovery messages to all links.
-}
 
 // Class variable for PerfectLink.
 object PerfectLink {
@@ -135,15 +103,15 @@ class PerfectLink(parent: BroadcastNode, destination: ActorRef, name: String) {
     unacked -= msgID
   }
 
-  def handle_suspected_failure(suspect: ActorRef) {
-    if (suspect.compareTo(destination) == 0) {
+  def handle_suspected_failure(suspect: String) {
+    if (suspect.compareTo(destinationName) == 0) {
       parent.vcLog("Suspected crash of " + destinationName)
       destinationSuspected = true
     }
   }
 
-  def handle_suspected_recovery(suspect: ActorRef) {
-    if (suspect.compareTo(destination) == 0) {
+  def handle_suspected_recovery(suspect: String) {
+    if (suspect.compareTo(destinationName) == 0) {
       parent.vcLog("Suspected recovery of " + destinationName)
       destinationSuspected = false
       deliveryRefused.values.map(msg => sl_send(msg))
@@ -261,11 +229,11 @@ class BroadcastNode extends Actor {
     allLinks.map(link => link.handle_tick)
   }
 
-  def handle_suspected_failure(destination: ActorRef) {
+  def handle_suspected_failure(destination: String) {
     allLinks.map(link => link.handle_suspected_failure(destination))
   }
 
-  def handle_suspected_recovery(destination: ActorRef) {
+  def handle_suspected_recovery(destination: String) {
     allLinks.map(link => link.handle_suspected_recovery(destination))
   }
 
@@ -286,8 +254,9 @@ class BroadcastNode extends Actor {
       dst2link.getOrElse(senderName, null).handle_ack(senderName, msgID, vc)
     }
     // FailureDetector messages:
-    case SuspectedFailure(destination) => handle_suspected_failure(destination)
-    case SuspectedRecovery(destination) => handle_suspected_recovery(destination)
+    case NodeUnreachable(destination) => handle_suspected_failure(destination)
+    case NodeReachable(destination) => handle_suspected_recovery(destination)
+    case FailureDetectorOnline(fdName) => println(name + ": FD online at " + fdName)
     case Tick => handle_tick
     case StillActiveQuery => handle_active_query
     case unknown => log.error("Unknown message " + unknown)

@@ -11,9 +11,6 @@ object Main extends App {
                      "bcast3")
   val numNodes = actors.length
 
-  // TODO(cs): integrate failure detector into the model checker.
-  //val fd = new HackyFailureDetector(nodes)
-
   val trace = Array[ExternalEvent]() ++
     // Start Actors.
     actors.map(actor_name =>
@@ -24,8 +21,9 @@ object Main extends App {
     // Execute the interesting events.
     Array[ExternalEvent](
     WaitQuiescence,
-    Send("bcast0", RBBroadcast(DataMessage("Message1")))
-    // TODO(cs): add FailureDetector events here.
+    Send("bcast0", RBBroadcast(DataMessage("Message1"))),
+    Kill("bcast2"),
+    WaitQuiescence
   )
 
   val sched = new PeekScheduler
