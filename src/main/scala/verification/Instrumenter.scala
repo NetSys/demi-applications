@@ -139,6 +139,11 @@ class Instrumenter {
     if (scheduler.isSystemMessage(cell.sender.path.name, cell.self.path.name)) return
    
     scheduler.before_receive(cell)
+    // TODO(cs): is this guarenteed to arrive right away?
+    // TODO(cs): should this be in the Scheduler instead of Instrumnter?
+    // If so, need to change the interface of before_receive() to include src as well as dst.
+    actorSystem().actorFor(AuxiliaryActors.logSinkName) !
+      MergeVectorClocks(cell.sender.path.name, cell.self.path.name)
     currentActor = cell.self.path.name
     inActor = true
   }

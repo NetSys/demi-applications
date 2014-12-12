@@ -17,7 +17,7 @@ import scala.util.control.Breaks._
 
 // Just a very simple, non-null scheduler that supports
 // partitions and injecting external events.
-class ReplayScheduler() extends Scheduler {
+class ReplayScheduler() extends AbstractScheduler {
 
   var instrumenter = Instrumenter()
   var currentTime = 0
@@ -147,6 +147,7 @@ class ReplayScheduler() extends Scheduler {
     breakable {
       while (loop && traceIdx < trace.size) {
         trace(traceIdx) match {
+          // TODO(cs): factor this code out. Currently redundant with PeekScheduler's advanceTrace().
           case SpawnEvent (_, _, name, _) =>
             events += actorToSpawnEvent(name)
             unisolate_node(name)
@@ -320,7 +321,9 @@ class ReplayScheduler() extends Scheduler {
     return isSystemMessage(senderPath, receiverPath)
   }
 
+  override
   def isSystemMessage(src: String, dst: String): Boolean = {
+    if (super.isSystemMessage(src, dst)) return true
     if ((actorNames contains src) || (actorNames contains dst))
       return false
 
