@@ -17,7 +17,7 @@ import scala.util.control.Breaks._
 
 // Just a very simple, non-null scheduler that supports
 // partitions and injecting external events.
-class ReplayScheduler() extends Scheduler {
+class ReplayScheduler() extends AbstractScheduler {
 
   var instrumenter = Instrumenter()
   var currentTime = 0
@@ -147,6 +147,7 @@ class ReplayScheduler() extends Scheduler {
     breakable {
       while (loop && traceIdx < trace.size) {
         trace(traceIdx) match {
+          // TODO(cs): factor this code out. Currently redundant with PeekScheduler's advanceTrace().
           case SpawnEvent (_, _, name, _) =>
             events += actorToSpawnEvent(name)
             unisolate_node(name)
@@ -233,14 +234,14 @@ class ReplayScheduler() extends Scheduler {
     advanceTrace
     if (traceIdx >= trace.size) {
       // We are done, let us wait for notify_quiescence to notice this
+      // FIXME: We could check here to see if there are any pending messages.
       None
     } else {
       // Ensure that only one thread is accessing shared scheduler structures
       schedSemaphore.acquire
 
-      // Pick next message based on trace
-      // Since advanceTrace moves one beyond where it saw a message receive, we
-      // move
+      // Pick next message based on trace. We are guaranteed to be at a MsgEvent
+      // unless something else went wrong.
       val key = trace(traceIdx) match {
         case MsgEvent(snd, rcv, msg) =>
           (snd, rcv, msg)
@@ -320,7 +321,9 @@ class ReplayScheduler() extends Scheduler {
     return isSystemMessage(senderPath, receiverPath)
   }
 
+  override
   def isSystemMessage(src: String, dst: String): Boolean = {
+    if (super.isSystemMessage(src, dst)) return true
     if ((actorNames contains src) || (actorNames contains dst))
       return false
 

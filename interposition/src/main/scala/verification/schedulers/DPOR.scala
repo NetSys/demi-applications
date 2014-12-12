@@ -30,7 +30,7 @@ import com.typesafe.scalalogging.LazyLogging,
 
 
 // DPOR scheduler.
-class DPOR extends Scheduler with LazyLogging {
+class DPOR extends AbstractScheduler with LazyLogging {
   
   var instrumenter = Instrumenter
   var started = false
@@ -75,13 +75,17 @@ class DPOR extends Scheduler with LazyLogging {
 
   
   // Is this message a system message
-  def isSystemMessage(sender: String, receiver: String): Boolean = 
-  ((actorNames contains sender) || (actorNames contains receiver)) match {
-    case true => return false
-    case _ => return true
+  override
+  def isSystemMessage(sender: String, receiver: String): Boolean = {
+    if (super.isSystemMessage(sender, receiver)) return true
+    ((actorNames contains sender) || (actorNames contains receiver)) match
+    {
+      case true => return false
+      case _ => return true
+    }
   }
-  
-  
+
+
   // Notification that the system has been reset
   def start_trace() : Unit = {
     
