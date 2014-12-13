@@ -17,7 +17,7 @@ import scala.util.control.Breaks._
 
 // Just a very simple, non-null scheduler that supports
 // partitions and injecting external events.
-class ReplayScheduler() extends AbstractScheduler {
+class ReplayScheduler() extends Scheduler {
 
   var instrumenter = Instrumenter()
   var currentTime = 0
@@ -321,9 +321,7 @@ class ReplayScheduler() extends AbstractScheduler {
     return isSystemMessage(senderPath, receiverPath)
   }
 
-  override
   def isSystemMessage(src: String, dst: String): Boolean = {
-    if (super.isSystemMessage(src, dst)) return true
     if ((actorNames contains src) || (actorNames contains dst))
       return false
 

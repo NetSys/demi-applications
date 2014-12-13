@@ -26,6 +26,7 @@ class LogSink () extends Actor {
       vc :+ senderName
       // Then print it, along with the message.
       println(JSONObject(vc.versions).toString() + " " + senderName + ": " + msg)
+      actor2vc = actor2vc + (senderName -> vc)
     case MergeVectorClocks(src, dst) =>
       val srcVC = ensureKeyExists(src)
       var dstVC = ensureKeyExists(dst)
