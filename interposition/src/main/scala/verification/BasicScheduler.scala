@@ -21,7 +21,7 @@ import scala.collection.generic.GenericTraversableTemplate
 
 // A basic scheduler
 // TODO(cs): what's the difference between BasicScheduler and FairScheduler?
-class BasicScheduler extends AbstractScheduler {
+class BasicScheduler extends Scheduler {
   
   var instrumenter = Instrumenter()
   var currentTime = 0
@@ -49,9 +49,7 @@ class BasicScheduler extends AbstractScheduler {
   }
   
   // Is this message a system message
-  override
   def isSystemMessage(src: String, dst: String): Boolean = {
-    if (super.isSystemMessage(src, dst)) return true
     if ((actorNames contains src) || (actorNames contains dst))
       return false
     

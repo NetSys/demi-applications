@@ -9,7 +9,7 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
 
 // Just a very simple, non-null scheduler
-class FairScheduler extends AbstractScheduler {
+class FairScheduler extends Scheduler {
   
   var instrumenter = Instrumenter()
   var currentTime = 0
@@ -30,9 +30,7 @@ class FairScheduler extends AbstractScheduler {
     return isSystemMessage(senderPath, receiverPath)
   }
 
-  override
   def isSystemMessage(src: String, dst: String): Boolean = {
-    if (super.isSystemMessage(src, dst)) return true
     if ((actorNames contains src) || (actorNames contains dst))
       return false
     
