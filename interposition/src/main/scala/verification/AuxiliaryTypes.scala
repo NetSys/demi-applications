@@ -49,13 +49,6 @@ case object QueryReachableGroup extends FDMessage
 // Response to failure detector queries.
 case class ReachableGroup(actors: Array[String]) extends FDMessage
 
-// To print a message to the console, Actors send this message to the LogSink.
-case class LogMessage(msg: String)
-
-// The scheduler sends a MergeVectorClock message to the LogSink prior to delivering a message
-// to an actor, to merge the source's vector clock with the destination's vector clock.
-case class MergeVectorClocks(src: String, dst: String)
-
 trait TellEnqueue {
   def tell()
   def enqueue()
