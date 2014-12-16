@@ -71,7 +71,8 @@ class PerfectLink(parent: BroadcastNode, destination: ActorRef, name: String) {
       return
     }
     parent.log("Sending SLDeliver(" + msg + ") to " + destinationName)
-    destination ! SLDeliver(parentName, msg)
+    parent.send(destination, SLDeliver(parentName, msg))
+
     if (unacked.size == 0) {
       parent.schedule_timer(PerfectLink.timerMillis)
     }
@@ -82,7 +83,7 @@ class PerfectLink(parent: BroadcastNode, destination: ActorRef, name: String) {
     parent.log("Received SLDeliver(" + msg + ") from " +
                  destinationName)
     parent.log("Sending ACK(" + msg.id + ") to " + destinationName)
-    destination ! ACK(parentName, msg.id)
+    parent.send(destination, ACK(parentName, msg.id))
 
     if (delivered contains msg.id) {
       return
@@ -218,6 +219,10 @@ class BroadcastNode extends Actor {
 
   def handle_active_query() {
     sender() ! timerQueue.active
+  }
+
+  def send(destination: ActorRef, msg: Any) {
+    destination ! msg
   }
 
   def log(msg: String) {
