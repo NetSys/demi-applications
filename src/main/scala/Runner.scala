@@ -17,18 +17,20 @@ object Main extends App {
       Start(Props.create(classOf[BroadcastNode]), actor_name)) ++
     // Execute the interesting events.
     Array[ExternalEvent](
-    WaitQuiescence,
-    Send("bcast0", RBBroadcast(DataMessage("Message1"))),
-    Kill("bcast2"),
-    WaitQuiescence
+    //WaitQuiescence,
+    Send("bcast0", RBBroadcast(DataMessage("Message1"))) //,
+    //Kill("bcast2"),
+    //WaitQuiescence
   )
 
-  val sched = new PeekScheduler
+  // val sched = new PeekScheduler
+  val sched = new DPOR
   Instrumenter().scheduler = sched
-  val events = sched.peek(trace)
+  // val events = sched.peek(trace)
+  sched.run(trace)
   println("Returned to main with events")
   println("Shutting down")
-  sched.shutdown
+  //sched.shutdown
   println("Shutdown successful")
 
   // TODO(cs): either remove this code from the Broadcast nodes, or add it to the scheduler.

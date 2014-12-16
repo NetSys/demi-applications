@@ -1,2 +1,4 @@
 TODO:
   - Add failure events to logged events.
+  - Visualization shell script.
+  - Start DPOR on my broadcast implementation.
