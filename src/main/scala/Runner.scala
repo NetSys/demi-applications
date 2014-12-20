@@ -11,27 +11,43 @@ object Main extends App {
                      "bcast3")
   val numNodes = actors.length
 
-  val trace = Array[ExternalEvent]() ++
-    // Start Actors.
-    actors.map(actor_name =>
-      Start(Props.create(classOf[BroadcastNode]), actor_name)) ++
-    // Execute the interesting events.
-    Array[ExternalEvent](
-    //WaitQuiescence,
-    Send("bcast0", RBBroadcast(DataMessage("Message1"))) //,
-    //Kill("bcast2"),
-    //WaitQuiescence
-  )
+  val dpor = true
 
-  // val sched = new PeekScheduler
-  val sched = new DPOR
-  Instrumenter().scheduler = sched
-  // val events = sched.peek(trace)
-  sched.run(trace)
-  println("Returned to main with events")
-  println("Shutting down")
-  //sched.shutdown
-  println("Shutdown successful")
+  if (dpor) {
+    val trace = Array[ExternalEvent]() ++
+      // Start Actors.
+      actors.map(actor_name =>
+        Start(Props.create(classOf[BroadcastNode]), actor_name)) ++
+      // Execute the interesting events.
+      Array[ExternalEvent](
+      Send("bcast0", RBBroadcast(DataMessage("Message1")))
+    )
+
+    val sched = new DPOR
+    Instrumenter().scheduler = sched
+    sched.run(trace)
+    println("Returned to main with events")
+  } else {
+    val trace = Array[ExternalEvent]() ++
+      // Start Actors.
+      actors.map(actor_name =>
+        Start(Props.create(classOf[BroadcastNode]), actor_name)) ++
+      // Execute the interesting events.
+      Array[ExternalEvent](
+      WaitQuiescence,
+      Send("bcast0", RBBroadcast(DataMessage("Message1"))),
+      Kill("bcast2"),
+      WaitQuiescence
+    )
+
+    val sched = new PeekScheduler
+    Instrumenter().scheduler = sched
+    val events = sched.peek(trace)
+    println("Returned to main with events")
+    println("Shutting down")
+    sched.shutdown
+    println("Shutdown successful")
+  }
 
   // TODO(cs): either remove this code from the Broadcast nodes, or add it to the scheduler.
   // Wait for execution to terminate.
