@@ -8,7 +8,7 @@ import scala.collection.mutable.Queue
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
 
-// Just a very simple, non-null scheduler
+// Schedules events in a round-robin fashion.
 class FairScheduler extends Scheduler {
   
   var instrumenter = Instrumenter()
@@ -55,6 +55,7 @@ class FairScheduler extends Scheduler {
     if (pendingEvents.isEmpty) {
       None
     } else { 
+      // TODO(cs): This code is incomprehensible to me...
       pendingEvents.get(receiver) match {
         case Some(queue) =>
           if (queue.isEmpty == true) {
@@ -119,5 +120,9 @@ class FairScheduler extends Scheduler {
   
   def notify_quiescence () {
     println("No more messages to process " + pendingEvents)
+  }
+
+  def enqueue_message(receiver: String, msg: Any) {
+    throw new Exception("NYI")
   }
 }

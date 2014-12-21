@@ -3,6 +3,8 @@ package akka.dispatch.verification
 import akka.actor.ActorCell,
        akka.actor.ActorSystem,
        akka.actor.ActorRef,
+       akka.actor.LocalActorRef,
+       akka.actor.ActorRefWithCell,
        akka.actor.Actor,
        akka.actor.PoisonPill,
        akka.actor.Props
@@ -17,7 +19,7 @@ import scala.collection.concurrent.TrieMap,
        scala.collection.mutable.HashSet,
        scala.collection.mutable.ArrayBuffer,
        scala.collection.mutable.ArraySeq,
-       scala.collection.Iterator
+       scala.collection.mutable.Stack
 
 import scalax.collection.mutable.Graph,
        scalax.collection.GraphEdge.DiEdge,
@@ -28,12 +30,60 @@ import com.typesafe.scalalogging.LazyLogging,
        ch.qos.logback.classic.Level,
        ch.qos.logback.classic.Logger
 
+import java.util.concurrent.Semaphore
+import java.util.concurrent.atomic.AtomicBoolean
+
+       
+class ExploredTacker {
+  
+  var exploredStack = new HashMap[Int, HashSet[(Unique, Unique)] ]
+
+  
+  def setExplored(index: Int, pair: (Unique, Unique)) =
+  exploredStack.get(index) match {
+    case Some(set) => set += pair
+    case None =>
+      val newElem = new HashSet[(Unique, Unique)] + pair
+      exploredStack(index) = newElem
+  }
+  
+  
+  def isExplored(pair: (Unique, Unique)): Boolean = {
+
+    for ((index, set) <- exploredStack) set.contains(pair) match {
+      case true => return true
+      case false =>
+    }
+
+    return false
+  }
+
+  
+  def trimExplored(index: Int) = {
+    exploredStack = exploredStack.filter { other => other._1 <= index }
+  }
+
+  
+  def printExplored() = {
+    for ((index, set) <- exploredStack) {
+      println(index + ": " + set.size)
+    }
+  }
+
+}
+       
 
 // DPOR scheduler.
 class DPOR extends Scheduler with LazyLogging {
   
   var instrumenter = Instrumenter
-  var started = false
+
+  // Ensure exactly one thread in the scheduler at a time
+  private[this] val schedSemaphore = new Semaphore(1)
+  // Are we expecting message receives
+  private[this] val started = new AtomicBoolean(false)
+
+  var externalEventList : Seq[ExternalEvent] = Vector()
   
   var currentTime = 0
   var interleavingCounter = 0
@@ -43,25 +93,30 @@ class DPOR extends Scheduler with LazyLogging {
   
   val pendingEvents = new HashMap[String, Queue[(Unique, ActorCell, Envelope)]]  
   val actorNames = new HashSet[String]
+  val actorToActorRef = new HashMap[String, ActorRef]
  
   val depGraph = Graph[Unique, DiEdge]()
-  var depMap = new HashMap[Unique, HashMap[Event, Unique]]
   
-  //val backTrack = new ArraySeq[ ((Event, Event), List[Event]) ](100)
-  val backTrack = new HashMap[Int, ((Unique, Unique), List[Unique]) ] 
-  val freezeSet = new HashSet[Integer]
-  val alreadyExplored = new HashSet[(Unique, Unique)]
+  val backTrack = new HashMap[Int, HashMap[(Unique, Unique), List[Unique]] ]
   var invariant : Queue[Unique] = Queue()
+  var exploredTacker = new ExploredTacker
   
   val currentTrace = new Queue[Unique]
   val nextTrace = new Queue[Unique]
   var parentEvent = getRootEvent
+
+  // Handler for FailureDetector messages
+  val fd = new FDMessageOrchestrator(this)
+
+  // A set of external messages to send. Messages sent between actors are not
+  // queued here.
+  val messagesToSend = new HashSet[(ActorRef, Any)]
+
   
   
   def getRootEvent : Unique = {
     var root = Unique(MsgEvent("null", "null", null), 0)
     depGraph.add(root)
-    depMap.getOrElseUpdate(root, new HashMap[Event, Unique])
     return root
   }
   
@@ -75,29 +130,23 @@ class DPOR extends Scheduler with LazyLogging {
 
   
   // Is this message a system message
-  def isSystemMessage(sender: String, receiver: String): Boolean = 
-  ((actorNames contains sender) || (actorNames contains receiver)) match {
-    case true => return false
-    case _ => return true
+  def isSystemMessage(sender: String, receiver: String): Boolean = {
+    ((actorNames contains sender) || (actorNames contains receiver)) match
+    {
+      case true => return false
+      case _ => return true
+    }
   }
-  
-  
+
+
   // Notification that the system has been reset
   def start_trace() : Unit = {
     
-    started = false
+    started.set(false)
+    fd.clear
     actorNames.clear
     
-    val firstActor = nextTrace.dequeue() match {
-      case Unique( firstSpawn : SpawnEvent, _ ) => 
-        instrumenter().actorSystem().actorOf(firstSpawn.props, firstSpawn.name)
-      case _ => throw new Exception("cannot find the first spawn")
-    }
-    
-    nextTrace.head match {
-      case Unique( firstMsg : MsgEvent, _ ) => firstActor ! firstMsg.msg
-      case _ => throw new Exception("cannot find the first message")
-    }
+    runExternal()
   }
   
   
@@ -113,7 +162,8 @@ class DPOR extends Scheduler with LazyLogging {
   // Get next message event from the trace.
   def get_next_trace_message() : Option[Unique] =
   mutableTraceIterator(nextTrace) match {
-    case some @ Some(Unique(m : MsgEvent, id)) => some 
+    case some @ Some(Unique(m : MsgEvent, 0)) => get_next_trace_message()
+    case some @ Some(Unique(m : MsgEvent, id)) => some
     case some @ Some(Unique(s: SpawnEvent, id)) => get_next_trace_message()
     case _ => None
   }
@@ -124,6 +174,26 @@ class DPOR extends Scheduler with LazyLogging {
   // Figure out what is the next message to schedule.
   def schedule_new_message() : Option[(ActorCell, Envelope)] = {
     
+    // While we deal with external messages,
+    // ensure that only one thread is accessing shared scheduler structures.
+    schedSemaphore.acquire
+    assert(started.get)
+    
+    // Send all pending fd responses
+    fd.send_all_pending_responses()
+    // Drain message queue 
+    for ((receiver, msg) <- messagesToSend) {
+      receiver ! msg
+    }
+    messagesToSend.clear()
+
+    // Wait to make sure all messages are enqueued
+    instrumenter().await_enqueue()
+    // schedule_new_message is reenterant, hence release before proceeding.
+    schedSemaphore.release
+
+    // Now proceed with DPOR-controlled messages.
+
     // Filter messages belonging to a particular actor.
     def is_the_same(u1: Unique, other: (Unique, ActorCell, Envelope)) : 
     Boolean = (u1, other) match {
@@ -149,7 +219,10 @@ class DPOR extends Scheduler with LazyLogging {
             }
 
           } else {
-            Some(queue.dequeue())
+            val next @ (Unique(MsgEvent(snd, rcv, msg), id), cell, env) = queue.dequeue()
+            logger.trace( Console.GREEN + "Now playing pending: " +
+              "(" + snd + " -> " + rcv + ") " +  + id + Console.RESET )
+            Some(next)
           }
           
         case None => None
@@ -178,7 +251,7 @@ class DPOR extends Scheduler with LazyLogging {
       // There is a pending event that matches a message in our trace.
       // We call this a convergent state.
       case Some((u @ Unique(MsgEvent(snd, rcv, msg), id), cell, env)) =>
-        logger.trace( Console.GREEN + "Now playing: " +
+        logger.trace( Console.GREEN + "Replaying the exact message: " +
             "(" + snd + " -> " + rcv + ") " +  + id + Console.RESET )
         Some((u, cell, env))
         
@@ -193,11 +266,12 @@ class DPOR extends Scheduler with LazyLogging {
 
     result match {
       
-      case Some((nextEvent @ Unique(MsgEvent(snd, rcv, msg), id), cell, env)) =>
-        
+      case Some((nextEvent @ Unique(MsgEvent(snd, rcv, msg), nID), cell, env)) =>
+
         invariant.headOption match {
-          case Some(Unique(m : MsgEvent, id)) =>
-            logger.trace("Replaying message event " + id)
+          case Some(Unique(m : MsgEvent, invID)) if (nID == invID) =>
+            logger.trace( Console.RED + "Managed to replay the intended message: " +
+            "(" + snd + " -> " + rcv + ") " +  + nID + Console.RESET )
             invariant.dequeue()
           case _ =>
         }
@@ -205,6 +279,7 @@ class DPOR extends Scheduler with LazyLogging {
         currentTrace += nextEvent
         (depGraph get nextEvent)
         parentEvent = nextEvent
+        //println("parentEvent " + parentEvent)
         return Some((cell, env))
         
       case _ => return None
@@ -214,10 +289,9 @@ class DPOR extends Scheduler with LazyLogging {
   }
   
   
-  // Get next event
-  def next_event() : Event = mutableTraceIterator(nextTrace) match {
-    case Some(Unique(e, id)) => e
-    case None => throw new Exception("no previously consumed events")
+  // XXX: Not used
+  def next_event() : Event = {
+    throw new Exception("not implemented next_event()")
   }
 
   
@@ -239,13 +313,50 @@ class DPOR extends Scheduler with LazyLogging {
   def event_produced(event: Event) = {
         
     event match {
-      case event : SpawnEvent => actorNames += event.name
+      case event : SpawnEvent =>
+        actorNames += event.name
+        actorToActorRef(event.name) = event.actor
+        fd.create_node(event.name)
       case msg : MsgEvent => 
     }
     
     producedEvents.enqueue( event )
   }
   
+  
+  def runExternal() = {
+    started.set(true)
+    fd.startFD(instrumenter().actorSystem())
+
+    currentTrace += getRootEvent
+    
+    for(event <- externalEventList) event match {
+      case Start(props, name) => 
+        instrumenter().actorSystem().actorOf(props, name)
+        fd.handle_start_event(name)
+        
+      case Send(rcv, msg) =>
+        val ref = instrumenter().actorMappings(rcv)
+        instrumenter().actorMappings(rcv) ! msg
+        
+      case _ => throw new Exception("unsuported external event")
+    }
+    
+    instrumenter().tellEnqueue.await()
+    
+    schedule_new_message() match {
+      case Some((cell, env)) =>
+        instrumenter().dispatch_new_message(cell, env)
+      case None => 
+        throw new Exception("internal error")
+    }
+  }
+        
+
+  def run(externalEvents: Seq[ExternalEvent]) = {
+    externalEventList = externalEvents
+    instrumenter().reinitialize_system(null, null)
+  }
   
   
   def getMessage(cell: ActorCell, envelope: Envelope) : Unique = {
@@ -271,12 +382,18 @@ class DPOR extends Scheduler with LazyLogging {
         return newMsg
       case _ => throw new Exception("wrong type")
     }
-    
+      
   }
   
   
   
-  def event_produced(cell: ActorCell, envelope: Envelope) = {
+  def event_produced(cell: ActorCell, envelope: Envelope) : Unit = {
+    // TODO(cs): route failure detector messages as normal DPOR-controlled
+    // messages, rather than special casing them?
+    if (cell.self.path.name == FailureDetector.fdName) {
+      fd.handle_fd_message(envelope.message, envelope.sender.path.name)
+      return
+    }
 
     val unique @ Unique(msg : MsgEvent , id) = getMessage(cell, envelope)
     val msgs = pendingEvents.getOrElse(msg.receiver, new Queue[(Unique, ActorCell, Envelope)])
@@ -290,20 +407,18 @@ class DPOR extends Scheduler with LazyLogging {
     producedEvents.enqueue( msg )
 
     depGraph.addEdge(unique, parentEvent)(DiEdge)
-    
-    if (!started) {
-      started = true
-      instrumenter().start_dispatch()
-    }
+
   }
   
   
   // Called before we start processing a newly received event
-  def before_receive(cell: ActorCell) {}
+  def before_receive(cell: ActorCell) {
+  }
   
   
   // Called after receive is done being processed 
-  def after_receive(cell: ActorCell) {}
+  def after_receive(cell: ActorCell) {
+  }
   
 
   
@@ -328,13 +443,8 @@ class DPOR extends Scheduler with LazyLogging {
     logger.debug(Console.BLUE + "Current trace: " +
         Util.traceStr(currentTrace) + Console.RESET)
 
-    val firstSpawn = consumedEvents.find( x => x.isInstanceOf[SpawnEvent]) match {
-      case Some(s: SpawnEvent) => s
-      case _ => throw new Exception("first event not a spawn")
-    }
     
     nextTrace.clear()
-    nextTrace += Unique(firstSpawn)
     nextTrace ++= dpor(currentTrace)
     
     logger.debug(Console.BLUE + "Next trace:  " + 
@@ -361,14 +471,13 @@ class DPOR extends Scheduler with LazyLogging {
       case _ => throw new Exception("internal error not a message")
     }
   }
+  
 
-  
-  
   def dpor(trace: Queue[Unique]) : Queue[Unique] = {
     
     interleavingCounter += 1
     val root = getEvent(0, currentTrace)
-    val rootN = ( depGraph get root )
+    val rootN = ( depGraph get getRootEvent )
     
     val racingIndices = new HashSet[Integer]
     
@@ -390,13 +499,9 @@ class DPOR extends Scheduler with LazyLogging {
       val later = getEvent(laterI, trace)
       
       // See if this interleaving has been explored.
-      val explored = alreadyExplored.contains((later, earlier))
+      //val explored = alreadyExplored.contains((later, earlier))
+      val explored = exploredTacker.isExplored((later, earlier))
       if (explored) return None
-      
-      // Since we're exploring an already executed trace, we can
-      // safely mark the interleaving of (earlier, later) as
-      // already explored.
-      alreadyExplored += ((earlier, later))
       
       // Get the actual nodes in the dependency graph that
       // correspond to those events
@@ -407,7 +512,10 @@ class DPOR extends Scheduler with LazyLogging {
       // root event (root node) in the system.
       val laterPath = laterN.pathTo( rootN ) match {
         case Some(path) => path.nodes.toList.reverse
-        case None => throw new Exception("no such path")
+        case None =>
+          println(rootN)
+          println(laterN)
+          throw new Exception("no such path")
       }
       
       // Get the dependency path between earlier event and the
@@ -420,16 +528,6 @@ class DPOR extends Scheduler with LazyLogging {
       // Find the common prefix for the above paths.
       val commonPrefix = laterPath.intersect(earlierPath)
       
-      // Find the suffix for each path by taking the original
-      // path and subtracting the common prefix.
-      val laterDiff = laterPath.diff(commonPrefix)
-      val earlierDiff = earlierPath.diff(commonPrefix)
-
-      // We need to replay the entirety of the later suffix except 
-      // for the last event, plus the entirety of the later suffix.
-      // This effectively swaps the earlier and the later event.
-      val needToReplay = earlierDiff.dropRight(1) ++ laterDiff 
-      
       // Figure out where in the provided trace this needs to be
       // replayed. In other words, get the last element of the
       // common prefix and figure out which index in the trace
@@ -437,35 +535,32 @@ class DPOR extends Scheduler with LazyLogging {
       val lastElement = commonPrefix.last
       val branchI = trace.indexWhere { e => (e == lastElement.value) }
       
+      val needToReplay = currentTrace.clone()
+        .drop(branchI + 1)
+        .dropRight(currentTrace.size - laterI - 1)
+        .filter { x => x.id != earlier.id }
+      
       require(branchI < laterI)
       
       // Since we're dealing with the vertices and not the
       // events, we need to extract the values.
-      val needToReplayV = needToReplay.map(v => v.value)
+      val needToReplayV = needToReplay.toList
       
-      // Debugging stuff...
-      racingIndices += branchI
-      
-      // If the freeze flag is not set on that index
-      // it means we can add it to the backtrack set 
-      freezeSet contains branchI match {
-        
-        case false =>
-          logger.trace(Console.CYAN + "Earlier: " + 
-              printPath(earlierPath) + Console.RESET)
-          logger.trace(Console.CYAN + "Later:   " + 
-              printPath(laterPath) + Console.RESET)
-          logger.trace(Console.CYAN + "Replay:  " + 
-              printPath(needToReplay) + Console.RESET)
-          logger.info(Console.GREEN + 
-              "Found a race between " + earlier.id +  " and " + 
-              later.id + " with a common index " + branchI +
-              Console.RESET)
 
-          return Some((branchI, needToReplayV))
-          
-        case true => return None
-      }
+      // Since we're exploring an already executed trace, we can
+      // safely mark the interleaving of (earlier, later) as
+      // already explored.
+      exploredTacker.setExplored(branchI, (earlier, later))
+      
+      logger.trace(Console.CYAN + "Replay:  " + 
+          Util.traceStr(needToReplay) + Console.RESET)
+      logger.info(Console.GREEN + 
+          "Found a race between " + earlier.id +  " and " + 
+          later.id + " with a common index " + branchI +
+          Console.RESET)
+
+      return Some((branchI, needToReplayV))
+
 
 
     }
@@ -517,12 +612,10 @@ class DPOR extends Scheduler with LazyLogging {
         if (sameReceiver && isCoEnabeled(earlier, later)) {
           analyize_dep(earlierI, laterI, trace) match {
             
-            case Some((branchI, needToReplayV)) =>              
+            case Some((branchI, needToReplayV)) => 
               val racingPair = ((later, earlier))
-              backTrack(branchI) = (racingPair, needToReplayV)
-          
-              freezeSet += branchI
-              
+              backTrack.getOrElseUpdate(branchI, new HashMap[(Unique, Unique), List[Unique]])
+              backTrack(branchI)(racingPair) = needToReplayV
             case None => // Nothing
           }
           
@@ -540,36 +633,30 @@ class DPOR extends Scheduler with LazyLogging {
     // Find the deepest backtrack value, and make sure
     // its index is removed from the freeze set.
     val maxIndex = backTrack.keySet.max
-    freezeSet -= maxIndex
-    
     val (u1 @ Unique(m1 : MsgEvent, id1),
-         u2 @ Unique(m2 : MsgEvent, id2)) = backTrack(maxIndex)._1 match {
-      case (u1 @ Unique(m1: MsgEvent, id1), 
-            u2 @ Unique(m2: MsgEvent, id2)) => (u1, u2)
+         u2 @ Unique(m2 : MsgEvent, id2)) = backTrack(maxIndex).head match {
+      case ((u1 @ Unique(m1: MsgEvent, id1), 
+            u2 @ Unique(m2: MsgEvent, id2)), eventList ) => (u1, u2)
       case _ => throw new Exception("invalid interleaving event types")
     }
     
     logger.info(Console.RED + "Exploring a new message interleaving " + 
        id1 + " and " + id2  + " at index " + maxIndex + Console.RESET)
+        
+    val ((e1, e2), replayThis) = backTrack(maxIndex).head
     
-    logger.debug("Unexplored indices: " + racingIndices)
-    logger.debug("Frozen indices:     " + freezeSet)
+    backTrack(maxIndex).remove((e1, e2))
     
-    val ((e1, e2), replayThis) = backTrack(maxIndex)
-    
-    /*
-     * Mark the new interleaving as explored.
-     * XXX: Not sure if this is the correct behavior. If the replay
-     *      diverges and is unable to replay both events, do we still
-     *      mark them as explored?
-     */
-    alreadyExplored += ((e1, e2))
+    exploredTacker.setExplored(maxIndex, (e1, e2))
+    exploredTacker.trimExplored(maxIndex)
+    exploredTacker.printExplored()
     
     // A variable used to figure out if the replay diverged.
     invariant = Queue(e1, e2)
     
     // Remove the backtrack branch, since we're about explore it now.
-    backTrack -= maxIndex
+    if (backTrack(maxIndex).isEmpty)
+      backTrack -= maxIndex
     
     // Return all events up to the backtrack index we're interested in
     // and slap on it a new set of events that need to be replayed in
@@ -579,4 +666,18 @@ class DPOR extends Scheduler with LazyLogging {
   }
   
 
+  // Enqueue a message for future delivery
+  // TODO(cs): redundant with PeekScheduler's enqueue_message. Consider
+  // factoring this out into a superclass.
+  override def enqueue_message(receiver: String, msg: Any) {
+    if (actorNames contains receiver) {
+      enqueue_message(actorToActorRef(receiver), msg)
+    } else {
+      throw new IllegalArgumentException("Unknown receiver " + receiver)
+    }
+  }
+
+  private[this] def enqueue_message(actor: ActorRef, msg: Any) {
+    messagesToSend += ((actor, msg))
+  }
 }
