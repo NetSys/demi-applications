@@ -234,10 +234,16 @@ class BroadcastNode extends Actor {
     case RBBroadcast(msg) => rb_broadcast(msg)
     // Link messages:
     case SLDeliver(senderName, msg) => {
-      dst2link.getOrElse(senderName, null).handle_sl_deliver(senderName, msg)
+      dst2link.get(senderName) match {
+        case Some(link) => link.handle_sl_deliver(senderName, msg)
+        case None => println("senderName " + senderName + " not found!")
+      }
     }
     case ACK(senderName, msgID) => {
-      dst2link.getOrElse(senderName, null).handle_ack(senderName, msgID)
+      dst2link.get(senderName) match {
+        case Some(link) => link.handle_ack(senderName, msgID)
+        case None => println("senderName " + senderName + " not found!")
+      }
     }
     // FailureDetector messages:
     case NodeUnreachable(destination) => handle_suspected_failure(destination)
