@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 // TODO(cs): change this when we factor the failure detector out of
 // akka.dispatch.verification.PeekScheduler
 import akka.dispatch.verification.{ NodeUnreachable, NodeReachable, FailureDetectorOnline }
-import akka.dispatch.verification.{ QueryReachableGroup, ReachableGroup, Util }
+import akka.dispatch.verification.{ QueryReachableGroup, ReachableGroup, Util, Instrumenter }
 
 
 // -- Application message type --
@@ -145,8 +145,10 @@ class TimerQueue(scheduler: Scheduler, source: ActorRef) {
     active = true
     scheduler.scheduleOnce(
       timerMillis milliseconds,
-      source,
-      Tick)
+      new Runnable {
+        override def run = Instrumenter().handleTick(source, Tick)
+      }
+    )
   }
 
   def handle_tick() {
