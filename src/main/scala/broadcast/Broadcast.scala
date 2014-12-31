@@ -168,6 +168,7 @@ class BroadcastNode extends Actor {
   var delivered: Set[Int] = Set()
 
   def handle_group_membership(group: Iterable[String]) {
+    log("handle_group_membership")
     group.map(node => add_link(node))
   }
 
@@ -238,19 +239,22 @@ class BroadcastNode extends Actor {
     case SLDeliver(senderName, msg) => {
       dst2link.get(senderName) match {
         case Some(link) => link.handle_sl_deliver(senderName, msg)
-        case None => println("senderName " + senderName + " not found!")
+        case None => log("senderName " + senderName + " not found!")
       }
     }
     case ACK(senderName, msgID) => {
       dst2link.get(senderName) match {
         case Some(link) => link.handle_ack(senderName, msgID)
-        case None => println("senderName " + senderName + " not found!")
+        case None => log("senderName " + senderName + " not found!")
       }
     }
     // FailureDetector messages:
     case NodeUnreachable(destination) => handle_suspected_failure(destination)
     case NodeReachable(destination) => handle_suspected_recovery(destination)
-    case FailureDetectorOnline(fdName) => context.actorFor("../" + fdName) ! QueryReachableGroup
+    case FailureDetectorOnline(fdName) => {
+      log("FailureDetectorOnline")
+      context.actorFor("../" + fdName) ! QueryReachableGroup
+    }
     case ReachableGroup(group) => handle_group_membership(group)
     case Tick => handle_tick
     case StillActiveQuery => handle_active_query
