@@ -11,7 +11,7 @@ object Main extends App {
                      "bcast3")
   val numNodes = actors.length
 
-  val dpor = true
+  val dpor = false
 
   if (dpor) {
     val trace = Array[ExternalEvent]() ++
@@ -40,13 +40,25 @@ object Main extends App {
       WaitQuiescence
     )
 
-    val sched = new PeekScheduler
-    Instrumenter().scheduler = sched
-    val events = sched.peek(trace)
+    // val sched = new PeekScheduler
+    // Instrumenter().scheduler = sched
+    val test_oracle = new StatelessTestOracle(() => new PeekScheduler)
+    test_oracle.setInvariant(() => false)
+    val minimizer : Minimizer = new LeftToRightRemoval(test_oracle)
+    println("Minimizing:")
+    for (event <- trace) {
+      println(event.toString)
+    }
+    val events = minimizer.minimize(trace)
+    //val events = sched.peek(trace)
     println("Returned to main with events")
-    println("Shutting down")
-    sched.shutdown
-    println("Shutdown successful")
+    println("events: ")
+    for (event <- events) {
+      println(event.toString)
+    }
+    //println("Shutting down")
+    //sched.shutdown
+    //println("Shutdown successful")
   }
 
   // TODO(cs): either remove this code from the Broadcast nodes, or add it to the scheduler.
