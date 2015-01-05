@@ -3,6 +3,9 @@ import akka.actor.{ Actor, ActorRef, DeadLetter }
 import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.dispatch.verification._
+import scala.collection.mutable.Queue
+import scala.collection.mutable.HashMap
+import scala.collection.mutable.Map
 
 object Main extends App {
   val actors = Array("bcast0",
@@ -13,14 +16,65 @@ object Main extends App {
 
   val dpor = false
 
+  // Mapping from { actor name => contents of delivered messages, in order }
+  val state : Map[String, Queue[String]] = HashMap() ++
+              actors.map((_, new Queue[String]()))
+
+  def shutdownCallback() : Unit = {
+    state.clear
+  }
+
+  Instrumenter().registerShutdownCallback(shutdownCallback)
+
+  // Checks FIFO delivery. See 3.9.2 of "Reliable and Secure Distributed
+  // Programming".
+  def invariant(current_trace: Seq[ExternalEvent], state: Map[String, Queue[String]]) : Boolean = {
+    // Correct sequence of deliveries: either 0, 1, or 2 messages in FIFO
+    // order.
+    val correct = new Queue[String]() ++ current_trace.filter(
+      e => {
+        e match {
+          case Send(actor, msg) => true
+          case _ => false
+        }
+      }
+    ).asInstanceOf[Seq[Send]].map(e => e.message.asInstanceOf[RBBroadcast].msg.data)
+
+    // Only non-crashed nodes need to deliver those messages.
+    // TODO(cs): what is the correctness condition for crash-recovery FIFO
+    // broadcast? We assume crash-stop here.
+    val crashed = current_trace.filter(
+      e => {
+        e match {
+          case Kill(actor) => true
+          case _ => false
+        }
+      }
+    ).asInstanceOf[Seq[Kill]].map(e => e.name)
+
+    for (actor <- state.keys.filterNot(a => crashed.contains(a))) {
+      val delivery_order = state(actor)
+      if (!delivery_order.equals(correct)) {
+        println(actor + " produced incorrect order:")
+        for (d <- delivery_order) {
+          println(d)
+        }
+        println("-------------")
+        return false
+      }
+    }
+    return true
+  }
+
   if (dpor) {
     val trace = Array[ExternalEvent]() ++
       // Start Actors.
       actors.map(actor_name =>
-        Start(Props.create(classOf[BroadcastNode]), actor_name)) ++
+        Start(Props.create(classOf[BroadcastNode], state(actor_name)), actor_name)) ++
       // Execute the interesting events.
       Array[ExternalEvent](
-      Send("bcast0", RBBroadcast(DataMessage("Message1")))
+      Send("bcast0", RBBroadcast(DataMessage("Message1"))),
+      Send("bcast0", RBBroadcast(DataMessage("Message2")))
     )
 
     val sched = new DPOR
@@ -31,19 +85,21 @@ object Main extends App {
     val trace = Array[ExternalEvent]() ++
       // Start Actors.
       actors.map(actor_name =>
-        Start(Props.create(classOf[BroadcastNode]), actor_name)) ++
+        Start(Props.create(classOf[BroadcastNode], state(actor_name)), actor_name)) ++
       // Execute the interesting events.
       Array[ExternalEvent](
       WaitQuiescence,
       Send("bcast0", RBBroadcast(DataMessage("Message1"))),
       Kill("bcast2"),
+      Send("bcast0", RBBroadcast(DataMessage("Message2"))),
       WaitQuiescence
     )
 
     // val sched = new PeekScheduler
     // Instrumenter().scheduler = sched
     val test_oracle = new StatelessTestOracle(() => new PeekScheduler)
-    test_oracle.setInvariant(() => false)
+    test_oracle.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
+    // val minimizer : Minimizer = new DDMin(test_oracle)
     val minimizer : Minimizer = new LeftToRightRemoval(test_oracle)
     println("Minimizing:")
     for (event <- trace) {

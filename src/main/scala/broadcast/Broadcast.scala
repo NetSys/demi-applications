@@ -13,7 +13,7 @@ import scala.concurrent.duration._
 // akka.dispatch.verification.PeekScheduler
 import akka.dispatch.verification.{ NodeUnreachable, NodeReachable, FailureDetectorOnline }
 import akka.dispatch.verification.{ QueryReachableGroup, ReachableGroup, Util, Instrumenter }
-
+import scala.collection.mutable.Queue
 
 // -- Application message type --
 object DataMessage {
@@ -160,7 +160,9 @@ class TimerQueue(scheduler: Scheduler, source: ActorRef) {
 /**
  * BroadcastNode Actor. Implements Reliable Broadcast.
  */
-class BroadcastNode extends Actor {
+// delivery_order is for convenience: a shared data structure that allows us
+// to check invariants.
+class BroadcastNode(delivery_order: Queue[String]) extends Actor {
   var name = self.path.name
   val timerQueue = new TimerQueue(context.system.scheduler, self)
   var allLinks: Set[PerfectLink] = Set()
@@ -198,6 +200,7 @@ class BroadcastNode extends Actor {
     }
 
     delivered = delivered + msg.id
+    delivery_order += msg.data
     log("RBDeliver of message " + msg + " from " + senderName)
     beb_broadcast(msg)
   }
