@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import scala.util.control.Breaks._
 
-// TODO(cs): add FailureDetector support.
+// TODO(cs): add FailureDetector support?
 
 /**
  * Scheduler that takes a list of both internal and external events (e.g. the
@@ -242,7 +242,7 @@ class ReplayScheduler() extends Scheduler {
   }
 
   override def notify_quiescence () {
-    if (event_orchestrator.trace_finished) {
+    if (!event_orchestrator.trace_finished) {
       // If waiting for quiescence.
       throw new Exception("Divergence")
     } else {
