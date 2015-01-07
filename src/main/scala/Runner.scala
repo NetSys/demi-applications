@@ -21,7 +21,7 @@ object Main extends App {
               actors.map((_, new Queue[String]()))
 
   def shutdownCallback() : Unit = {
-    state.clear
+    state.values.map(v => v.clear())
   }
 
   Instrumenter().registerShutdownCallback(shutdownCallback)
@@ -31,14 +31,20 @@ object Main extends App {
   def invariant(current_trace: Seq[ExternalEvent], state: Map[String, Queue[String]]) : Boolean = {
     // Correct sequence of deliveries: either 0, 1, or 2 messages in FIFO
     // order.
-    val correct = new Queue[String]() ++ current_trace.filter(
+
+    // Assumes that only one node sent messages
+    // TODO(cs): allow multiple nodes to send messages: maintain a list per
+    // node, and check each list
+    val sends = current_trace.filter(
       e => {
         e match {
           case Send(actor, msg) => true
           case _ => false
         }
       }
-    ).asInstanceOf[Seq[Send]].map(e => e.message.asInstanceOf[RBBroadcast].msg.data)
+    ).asInstanceOf[Seq[Send]]
+
+    val correct = sends.map(e => e.message.asInstanceOf[RBBroadcast].msg.data)
 
     // Only non-crashed nodes need to deliver those messages.
     // TODO(cs): what is the correctness condition for crash-recovery FIFO
@@ -52,7 +58,17 @@ object Main extends App {
       }
     ).asInstanceOf[Seq[Kill]].map(e => e.name)
 
-    for (actor <- state.keys.filterNot(a => crashed.contains(a))) {
+    // Only check nodes that have been started.
+    val started = current_trace.filter(
+      e => {
+        e match {
+          case Start(_,_) => true
+          case _ => false
+        }
+      }
+    ).asInstanceOf[Seq[Start]].map(e => e.name)
+
+    for (actor <- started.filterNot(a => crashed.contains(a))) {
       val delivery_order = state(actor)
       if (!delivery_order.equals(correct)) {
         println(actor + " produced incorrect order:")
@@ -90,27 +106,37 @@ object Main extends App {
       Array[ExternalEvent](
       WaitQuiescence,
       Send("bcast0", RBBroadcast(DataMessage("Message1"))),
-      Kill("bcast2"),
+      //Kill("bcast2"),
       Send("bcast0", RBBroadcast(DataMessage("Message2"))),
       WaitQuiescence
     )
 
-    // val sched = new PeekScheduler
-    // Instrumenter().scheduler = sched
-    val test_oracle = new StatelessTestOracle(() => new PeekScheduler)
-    test_oracle.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
-    // val minimizer : Minimizer = new DDMin(test_oracle)
-    val minimizer : Minimizer = new LeftToRightRemoval(test_oracle)
     println("Minimizing:")
     for (event <- trace) {
       println(event.toString)
     }
+
+    // val sched = new RandomScheduler(3)
+    // Instrumenter().scheduler = sched
+    // sched.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
+
+    // val test_oracle = new StatelessTestOracle(() => new PeekScheduler)
+    val test_oracle = new RandomScheduler(3)
+    test_oracle.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
+    // val minimizer : Minimizer = new DDMin(test_oracle)
+    val minimizer : Minimizer = new LeftToRightRemoval(test_oracle)
     val events = minimizer.minimize(trace)
-    //val events = sched.peek(trace)
+
+    // val events = sched.peek(trace)
+
+    // val events = sched.explore(trace)
+
     println("Returned to main with events")
-    println("events: ")
-    for (event <- events) {
-      println(event.toString)
+    if (events != null) {
+      println("events: ")
+      for (event <- events) {
+        println(event.toString)
+      }
     }
     //println("Shutting down")
     //sched.shutdown

@@ -170,7 +170,7 @@ class BroadcastNode(delivery_order: Queue[String]) extends Actor {
   var delivered: Set[Int] = Set()
 
   def handle_group_membership(group: Iterable[String]) {
-    log("handle_group_membership")
+    log("handle_group_membership " + group)
     group.map(node => add_link(node))
   }
 
@@ -184,6 +184,8 @@ class BroadcastNode(delivery_order: Queue[String]) extends Actor {
   def rb_broadcast(msg: DataMessage) {
     log("Initiating RBBroadcast(" + msg + ")")
     beb_broadcast(msg)
+    // Deliver to self immediately
+    deliver_rb_broadcast(name, msg)
   }
 
   def beb_broadcast(msg: DataMessage) {
@@ -195,6 +197,11 @@ class BroadcastNode(delivery_order: Queue[String]) extends Actor {
   }
 
   def handle_beb_deliver(senderName: String, msg: DataMessage) {
+    deliver_rb_broadcast(senderName, msg)
+    beb_broadcast(msg)
+  }
+
+  def deliver_rb_broadcast(senderName: String, msg: DataMessage) {
     if (delivered contains msg.id) {
       return
     }
@@ -202,7 +209,6 @@ class BroadcastNode(delivery_order: Queue[String]) extends Actor {
     delivered = delivered + msg.id
     delivery_order += msg.data
     log("RBDeliver of message " + msg + " from " + senderName)
-    beb_broadcast(msg)
   }
 
   def schedule_timer(timerMillis: Int) {
