@@ -14,7 +14,7 @@ object Main extends App {
                      "bcast3")
   val numNodes = actors.length
 
-  val dpor = false
+  val dpor = true
 
   // Mapping from { actor name => contents of delivered messages, in order }
   val state : Map[String, Queue[String]] = HashMap() ++
