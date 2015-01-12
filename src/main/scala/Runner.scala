@@ -14,7 +14,7 @@ object Main extends App {
                      "bcast3")
   val numNodes = actors.length
 
-  val dpor = true
+  val dpor = false
 
   // Mapping from { actor name => contents of delivered messages, in order }
   val state : Map[String, Queue[String]] = HashMap() ++
@@ -116,28 +116,48 @@ object Main extends App {
       println(event.toString)
     }
 
-    // val sched = new RandomScheduler(3)
-    // Instrumenter().scheduler = sched
-    // sched.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
+    val sched = new RandomScheduler(3)
+    Instrumenter().scheduler = sched
+    sched.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
 
     // val test_oracle = new StatelessTestOracle(() => new PeekScheduler)
-    val test_oracle = new RandomScheduler(3)
-    test_oracle.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
-    // val minimizer : Minimizer = new DDMin(test_oracle)
-    val minimizer : Minimizer = new LeftToRightRemoval(test_oracle)
-    val events = minimizer.minimize(trace)
+    // val test_oracle = new RandomScheduler(3)
+    // test_oracle.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
+    // // val minimizer : Minimizer = new DDMin(test_oracle)
+    // val minimizer : Minimizer = new LeftToRightRemoval(test_oracle)
+    // val events = minimizer.minimize(trace)
 
     // val events = sched.peek(trace)
 
-    // val events = sched.explore(trace)
+    val events = sched.explore(trace)
 
-    println("Returned to main with events")
     if (events != null) {
       println("events: ")
       for (event <- events) {
         println(event.toString)
       }
     }
+
+    sched.shutdown
+    println("Returned to main with events")
+
+    println("Trying replay")
+    val replayer = new ReplayScheduler()
+    Instrumenter().scheduler = replayer
+    val new_events = replayer.replay(events)
+
+    if (events != new_events) {
+      println("Weird man..")
+    }
+
+
+    //if (events != null) {
+    //  println("events: ")
+    //  for (event <- events) {
+    //    println(event.toString)
+    //  }
+    //}
+
     //println("Shutting down")
     //sched.shutdown
     //println("Shutdown successful")
