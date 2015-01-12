@@ -146,11 +146,6 @@ object Main extends App {
     Instrumenter().scheduler = replayer
     val new_events = replayer.replay(events)
 
-    if (events != new_events) {
-      println("Weird man..")
-    }
-
-
     //if (events != null) {
     //  println("events: ")
     //  for (event <- events) {
