@@ -35,38 +35,26 @@ object Main extends App {
     // Assumes that only one node sent messages
     // TODO(cs): allow multiple nodes to send messages: maintain a list per
     // node, and check each list
-    val sends = current_trace.filter(
-      e => {
-        e match {
-          case Send(actor, msg) => true
-          case _ => false
-        }
-      }
-    ).asInstanceOf[Seq[Send]]
+    val sends : Seq[Send] = current_trace flatMap {
+      case s: Send => Some(s)
+      case _ => None
+    }
 
     val correct = sends.map(e => e.message.asInstanceOf[RBBroadcast].msg.data)
 
     // Only non-crashed nodes need to deliver those messages.
     // TODO(cs): what is the correctness condition for crash-recovery FIFO
     // broadcast? We assume crash-stop here.
-    val crashed = current_trace.filter(
-      e => {
-        e match {
-          case Kill(actor) => true
-          case _ => false
-        }
-      }
-    ).asInstanceOf[Seq[Kill]].map(e => e.name)
+    val crashed = current_trace flatMap {
+      case Kill(actor) => Some(actor)
+      case _ => None
+    }
 
     // Only check nodes that have been started.
-    val started = current_trace.filter(
-      e => {
-        e match {
-          case Start(_,_) => true
-          case _ => false
-        }
-      }
-    ).asInstanceOf[Seq[Start]].map(e => e.name)
+    val started = current_trace flatMap {
+      case Start(_,name) => Some(name)
+      case _ => None
+    }
 
     for (actor <- started.filterNot(a => crashed.contains(a))) {
       val delivery_order = state(actor)
@@ -120,7 +108,6 @@ object Main extends App {
     Instrumenter().scheduler = sched
     sched.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
 
-    // val test_oracle = new StatelessTestOracle(() => new PeekScheduler)
     // val test_oracle = new RandomScheduler(3)
     // test_oracle.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
     // // val minimizer : Minimizer = new DDMin(test_oracle)
@@ -130,28 +117,29 @@ object Main extends App {
     // val events = sched.peek(trace)
 
     val events = sched.explore(trace)
-
-    if (events != null) {
-      println("events: ")
-      for (event <- events) {
-        println(event.toString)
-      }
-    }
-
     sched.shutdown
     println("Returned to main with events")
 
-    println("Trying replay")
-    val replayer = new ReplayScheduler()
-    Instrumenter().scheduler = replayer
-    val new_events = replayer.replay(events)
+    events match {
+      case None => None
+      case Some(event_trace) => {
+        println("events: ")
+        for (event <- event_trace) {
+          println(event.toString)
+        }
 
-    //if (events != null) {
-    //  println("events: ")
-    //  for (event <- events) {
-    //    println(event.toString)
-    //  }
-    //}
+        println("Trying STSScheduler on unmodified")
+        val sts = new StatelessTestOracle(() => new STSScheduler(event_trace))
+        // Instrumenter().scheduler = sts
+        sts.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
+        val minimizer : Minimizer = new LeftToRightRemoval(sts)
+        val minimized = minimizer.minimize(trace)
+        println("Minimized externals:")
+        for (external <- minimized) {
+          println(external)
+        }
+     }
+    }
 
     //println("Shutting down")
     //sched.shutdown
