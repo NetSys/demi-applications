@@ -1,7 +1,5 @@
 package broadcast;
 
-// TODO(cs): use printlns instead of log.debug
-
 import akka.actor.{ Actor, ActorRef }
 import akka.actor.{ ActorSystem, Scheduler, Props }
 import akka.pattern.ask
@@ -9,8 +7,6 @@ import akka.util.Timeout
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-// TODO(cs): change this when we factor the failure detector out of
-// akka.dispatch.verification.PeekScheduler
 import akka.dispatch.verification.{ NodeUnreachable, NodeReachable, FailureDetectorOnline }
 import akka.dispatch.verification.{ QueryReachableGroup, ReachableGroup, Util, Instrumenter }
 import scala.collection.mutable.Queue
@@ -143,11 +139,13 @@ class TimerQueue(scheduler: Scheduler, source: ActorRef) {
     }
     timerPending = true
     active = true
-    scheduler.scheduleOnce(
-      timerMillis milliseconds,
-      new Runnable {
-        override def run = Instrumenter().handleTick(source, Tick)
-      }
+    Instrumenter().registerCancellable(
+      scheduler.scheduleOnce(
+        timerMillis milliseconds,
+        new Runnable {
+          override def run = Instrumenter().handleTick(source, Tick)
+        }
+      )
     )
   }
 
