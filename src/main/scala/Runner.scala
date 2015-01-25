@@ -24,7 +24,24 @@ object Main extends App {
     state.values.map(v => v.clear())
   }
 
+  def checkpointApplicationState() : Any = {
+    val checkpoint = new HashMap[String, Queue[String]] ++
+                     actors.map((_, new Queue[String]()))
+    state.foreach {
+      case (key, value) => checkpoint(key) ++= value
+    }
+    return checkpoint
+  }
+
+  def restoreCheckpoint(checkpoint: Any) = {
+    state.values.map(v => v.clear())
+    checkpoint.asInstanceOf[Map[String, Queue[String]]].foreach {
+      case (key, value) => state(key) ++= value
+    }
+  }
+
   Instrumenter().registerShutdownCallback(shutdownCallback)
+  Instrumenter().registerCheckpointCallbacks(checkpointApplicationState, restoreCheckpoint)
 
   // Checks FIFO delivery. See 3.9.2 of "Reliable and Secure Distributed
   // Programming".
@@ -128,17 +145,21 @@ object Main extends App {
           println(event.toString)
         }
 
-        println("Trying STSScheduler on unmodified")
-        val sts = new StatelessTestOracle(() => new STSScheduler(event_trace))
-        // Instrumenter().scheduler = sts
-        sts.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
-        val minimizer : Minimizer = new LeftToRightRemoval(sts)
-        val minimized = minimizer.minimize(trace)
-        println("Minimized externals:")
-        for (external <- minimized) {
-          println(external)
+        println("================")
+        for (peek <- List(true, false)) {
+          println("Trying STSScheduler")
+          val sts = new StatelessTestOracle(() => new STSScheduler(event_trace, peek))
+          // Instrumenter().scheduler = sts
+          sts.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
+          val minimizer : Minimizer = new LeftToRightRemoval(sts)
+          val minimized = minimizer.minimize(trace)
+          println("Minimized externals:")
+          for (external <- minimized) {
+            println(external)
+          }
+          println("================")
         }
-     }
+      }
     }
 
     //println("Shutting down")
