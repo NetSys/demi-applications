@@ -146,7 +146,7 @@ object Main extends App {
         }
 
         println("================")
-        for (peek <- List(true, false)) {
+        for (peek <- List(true)) { // List(true, false)
           println("Trying STSScheduler")
           val sts = new StatelessTestOracle(() => new STSScheduler(event_trace, peek))
           // Instrumenter().scheduler = sts
