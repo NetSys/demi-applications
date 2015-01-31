@@ -147,11 +147,12 @@ object Main extends App {
 
         println("================")
         for (peek <- List(true)) { // List(true, false)
-          println("Trying STSScheduler")
-          val sts = new StatelessTestOracle(() => new STSScheduler(event_trace, peek))
+          // println("Trying STSScheduler")
+          // val sts = new StatelessTestOracle(() => new STSSched(event_trace, peek))
+          val greedy = new StatelessTestOracle(() => new GreedyED(event_trace))
           // Instrumenter().scheduler = sts
-          sts.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
-          val minimizer : Minimizer = new LeftToRightRemoval(sts)
+          greedy.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
+          val minimizer : Minimizer = new LeftToRightRemoval(greedy)
           val minimized = minimizer.minimize(trace)
           println("Minimized externals:")
           for (external <- minimized) {
