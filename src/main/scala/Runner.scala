@@ -149,7 +149,7 @@ object Main extends App {
         for (peek <- List(true)) { // List(true, false)
           // println("Trying STSScheduler")
           // val sts = new StatelessTestOracle(() => new STSSched(event_trace, peek))
-          val greedy = new StatelessTestOracle(() => new GreedyED(event_trace))
+          val greedy = new StatelessTestOracle(() => new GreedyED(event_trace, 2))
           // Instrumenter().scheduler = sts
           greedy.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
           val minimizer : Minimizer = new LeftToRightRemoval(greedy)
