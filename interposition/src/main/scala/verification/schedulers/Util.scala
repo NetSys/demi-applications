@@ -1,6 +1,5 @@
 package akka.dispatch.verification
 
-// TODO(cs): move the failure detector to this file.
 
 import akka.actor.ActorCell,
        akka.actor.ActorSystem,
@@ -14,7 +13,9 @@ import akka.dispatch.Envelope,
        akka.dispatch.MessageDispatcher
        
 import scala.collection.concurrent.TrieMap,
-       scala.collection.mutable.Queue
+       scala.collection.mutable.Queue,
+       scala.collection.mutable.HashMap,
+       scala.collection.mutable.Set
 
 import scalax.collection.mutable.Graph,
        scalax.collection.GraphPredef._, 
@@ -31,15 +32,48 @@ import scalax.collection.edge.LDiEdge,
 import akka.cluster.VectorClock
 import scala.util.parsing.json.JSONObject
 
+// Provides O(1) lookup, but allows multiple distinct elements
+class MultiSet[E] extends Set[E] {
+  var m = new HashMap[E, List[E]]
+
+  def contains(e: E) : Boolean = {
+    return m.contains(e)
+  }
+
+  def +=(e: E) : this.type  = {
+    if (m.contains(e)) {
+      m(e) = e :: m(e)
+    } else {
+      m(e) = List(e)
+    }
+    return this
+  }
+
+  def -=(e: E) : this.type = {
+    if (!m.contains(e)) {
+      throw new IllegalArgumentException("No such element " + e)
+    }
+    m(e) = m(e).tail
+    if (m(e).isEmpty) {
+      m -= e
+    }
+    return this
+  }
+
+  def iterator: Iterator[E] = {
+    return m.values.flatten.iterator
+  }
+}
+
 // Used by applications to log messages to the console. Transparently attaches vector
 // clocks to log messages.
 class VCLogger () {
-  var actor2vc : Map[String, VectorClock] = Map()
+  var actor2vc = new HashMap[String, VectorClock]
 
   // TODO(cs): is there a way to specify default values for Maps in scala?
   def ensureKeyExists(key: String) : VectorClock = {
     if (!actor2vc.contains(key)) {
-      actor2vc = actor2vc + (key -> new VectorClock())
+      actor2vc(key) = new VectorClock()
     }
     return actor2vc(key)
   }
@@ -50,23 +84,53 @@ class VCLogger () {
     vc = vc :+ src
     // Then print it, along with the message.
     println(JSONObject(vc.versions).toString() + " " + src + ": " + msg)
-    actor2vc = actor2vc + (src -> vc)
+    actor2vc(src) = vc
   }
 
   def mergeVectorClocks(src: String, dst: String) {
     val srcVC = ensureKeyExists(src)
     var dstVC = ensureKeyExists(dst)
     dstVC = dstVC.merge(srcVC)
-    actor2vc = actor2vc + (dst -> dstVC)
+    actor2vc(dst) = dstVC
+  }
+
+  def reset() {
+    actor2vc = new HashMap[String, VectorClock]
   }
 }
 
-
 object Util {
-    
+
   
   // Global logger instance.
   val logger = new VCLogger()
+    
+  def dequeueOne[T1, T2](outer : HashMap[T1, Queue[T2]]) : Option[T2] =
+    
+    outer.headOption match {
+        case Some((receiver, queue)) =>
+
+          if (queue.isEmpty == true) {
+            
+            outer.remove(receiver) match {
+              case Some(key) => dequeueOne(outer)
+              case None => throw new Exception("internal error")
+            }
+
+          } else { 
+            return Some(queue.dequeue())
+          }
+          
+       case None => None
+  }
+
+  def getElement[T1](
+      container: Option[Queue[T1]],
+      condition: T1 => Boolean) : Option[T1] =
+    container match {
+      case Some(queue) => queue.dequeueFirst(condition)
+      case None =>  None
+    }
 
   def queueStr(queue: Queue[(Unique, ActorCell, Envelope)]) : String = {
     var str = "Queue content: "
@@ -80,11 +144,11 @@ object Util {
     
   
   
-  def traceStr(events : Queue[Unique]) : String = {
+  def traceStr(events : Seq[Unique]) : String = {
     var str = ""
     for (item <- events) {
       item match {
-        case Unique(m : MsgEvent, id) => str += id + " " 
+        case Unique(_, id) => str += id + " " 
         case _ =>
       }
     }
@@ -94,7 +158,7 @@ object Util {
   
   
     
-  def get_dot(g: Graph[Unique, DiEdge]) {
+  def getDot(g: Graph[Unique, DiEdge]) : String = {
     
     val root = DotRootGraph(
         directed = true,
@@ -102,11 +166,11 @@ object Util {
 
     def nodeStr(event: Unique) : String = {
       event.value match {
-        case Unique(msg : MsgEvent, id) => msg.receiver + " (" + id + ")" 
-        case Unique(spawn : SpawnEvent, id) => spawn.name + " (" + id + ")" 
+        case Unique(msg : MsgEvent, id) => id.toString()
+        case Unique(spawn : SpawnEvent, id) => id.toString()
       }
     }
-    
+        
     def nodeTransformer(
         innerNode: scalax.collection.Graph[Unique, DiEdge]#NodeT):
         Option[(DotGraph, DotNodeStmt)] = {
@@ -131,11 +195,7 @@ object Util {
     }
     
     
-    val str = g.toDot(root, edgeTransformer, cNodeTransformer = Some(nodeTransformer))
-    
-    val pw = new PrintWriter(new File("dot.dot" ))
-    pw.write(str)
-    pw.close
+    return g.toDot(root, edgeTransformer, cNodeTransformer = Some(nodeTransformer))
   }
 
   

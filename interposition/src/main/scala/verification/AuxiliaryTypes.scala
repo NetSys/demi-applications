@@ -19,15 +19,25 @@ object IDGenerator {
 case class Unique(
   val event : Event,
   var id : Int = IDGenerator.get()
+) extends ExternalEvent
+
+case class Uniq[E](
+  val element : E,
+  var id : Int = IDGenerator.get()
 )
 
-abstract class Event
+abstract trait Event
 
+// Message delivery -- (not the initial send)
 case class MsgEvent(
     sender: String, receiver: String, msg: Any) extends Event
 
 case class SpawnEvent(
     parent: String, props: Props, name: String, actor: ActorRef) extends Event
+
+case class NetworkPartition(
+    first: Set[String], 
+    second: Set[String]) extends Event with ExternalEvent
 
 
 
@@ -38,7 +48,10 @@ abstract class FDMessage
 case class FailureDetectorOnline(fdNode: String) extends FDMessage
 
 // A node is unreachable, either due to node failure or partition.
-case class NodeUnreachable(actor: String) extends FDMessage
+case class NodeUnreachable(actor: String) extends FDMessage with Event
+
+case class NodesUnreachable(actors: Set[String]) extends FDMessage with Event
+
 
 // A new node is now reachable, either because a partition healed or an actor spawned.
 case class NodeReachable(actor: String) extends FDMessage
@@ -47,7 +60,19 @@ case class NodeReachable(actor: String) extends FDMessage
 case object QueryReachableGroup extends FDMessage
 
 // Response to failure detector queries.
-case class ReachableGroup(actors: Array[String]) extends FDMessage
+case class ReachableGroup(actors: Set[String]) extends FDMessage
+
+object MessageTypes {
+  // Messages that the failure detector sends to actors.
+  // Assumes that actors don't relay fd messages to eachother.
+  def fromFailureDetector(m: Any) : Boolean = {
+    m match {
+      case _: FailureDetectorOnline | _: NodeUnreachable | _: NodeReachable |
+           _: ReachableGroup => return true
+      case _ => return false
+    }
+  }
+}
 
 trait TellEnqueue {
   def tell()
