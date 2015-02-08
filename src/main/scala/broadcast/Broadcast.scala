@@ -139,14 +139,11 @@ class TimerQueue(scheduler: Scheduler, source: ActorRef) {
     }
     timerPending = true
     active = true
-    Instrumenter().registerCancellable(
-      scheduler.scheduleOnce(
-        timerMillis milliseconds,
-        new Runnable {
-          override def run = Instrumenter().handleTick(source, Tick)
-        }
-      )
-    )
+
+    scheduler.scheduleOnce(
+      timerMillis milliseconds,
+      source,
+      Tick)
   }
 
   def handle_tick() {

@@ -137,6 +137,7 @@ object Main extends App {
     sched.shutdown
     println("Returned to main with events")
 
+    /*
     events match {
       case None => None
       case Some(event_trace) => {
@@ -162,6 +163,7 @@ object Main extends App {
         }
       }
     }
+    */
 
     //println("Shutting down")
     //sched.shutdown
