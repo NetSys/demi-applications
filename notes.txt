@@ -2,6 +2,9 @@ Looks there are two uses of timers here:
   - cluster/ClusterRaftActor.scala uses schedule.scheduleOnce(), but I don't
     think it's actually crucial to the protocol. Looks like it's just used for
     cluster membership discovery.
+
+    context.system.scheduler.scheduleOnce(identifyTimeout, self, onIdentityTimeout)
+
   - LoggingFSM.setTimer (part of the Akka) is used for heartbeats, etc.
     repeat is set to both true (for Leader) and false (for RaftActor)
 
@@ -17,3 +20,8 @@ Looks there are two uses of timers here:
       ref = Some(
         if (repeat) scheduler.schedule(timeout, timeout, actor, this)
         else scheduler.scheduleOnce(timeout, actor, this))
+
+
+  So, the two scheduler interfaces used are:
+    - scheduleOnce (delay: Duration, receiver: ActorRef, message: Any): Cancellable
+    - schedule (initialDelay: Duration, frequency: Duration, receiver:ActorRef, message: Any): Cancellable
