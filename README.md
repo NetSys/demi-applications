@@ -18,6 +18,7 @@ Branch | Application
 -------|------------
 panda-rbcast | One of three reliable broadcast applications
 colin-rbcast | fully-fleshed out reliable broadcast application
+akka-raft    | akka-raft
 
 
 #### Prequisites

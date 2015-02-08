@@ -1,0 +1,19 @@
+Looks there are two uses of timers here:
+  - cluster/ClusterRaftActor.scala uses schedule.scheduleOnce(), but I don't
+    think it's actually crucial to the protocol. Looks like it's just used for
+    cluster membership discovery.
+  - LoggingFSM.setTimer (part of the Akka) is used for heartbeats, etc.
+    repeat is set to both true (for Leader) and false (for RaftActor)
+
+  setTimer implementation:
+
+  private[akka] case class Timer(name: String, msg: Any, repeat: Boolean, generation: Int)(context: ActorContext)
+    extends NoSerializationVerificationNeeded {
+    private var ref: Option[Cancellable] = _
+    private val scheduler = context.system.scheduler
+    private implicit val executionContext = context.dispatcher
+
+    def schedule(actor: ActorRef, timeout: FiniteDuration): Unit =
+      ref = Some(
+        if (repeat) scheduler.schedule(timeout, timeout, actor, this)
+        else scheduler.scheduleOnce(timeout, actor, this))
