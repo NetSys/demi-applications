@@ -1,8 +1,8 @@
+TODO(cs): write down safety conditions for consensus
+TODO(cs): fuzz tester!
+TODO(cs): fingerprints for Raft.
 TODO(cs): interpose on random? Used to generate Raft's timer values.
           Otherwise, our "prefix produces same state" assumption breaks.
-TODO(cs): write down safety conditions for consensus
-TODO(cs): maybe need to delay timer messages?
-TODO(cs): bug in FairScheduler: messages sent to self never get delivered.
 
 Looks there are two uses of timers here:
   - cluster/ClusterRaftActor.scala uses schedule.scheduleOnce(), but I don't
