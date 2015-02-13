@@ -63,6 +63,11 @@ object Main extends App {
   // -------------
   // + A simple one: no node should crash.
 
+  def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,CheckpointReply] ) : Boolean = {
+    println(checkpoint)
+    return true
+  }
+
   val prefix = Array[ExternalEvent]() ++
     //Array[ExternalEvent](Start(() =>
     //  RaftClientActor.props(Instrumenter().actorSystem() / "raft-member-*"), "client")) ++
@@ -70,7 +75,9 @@ object Main extends App {
       Start(() => Props.create(classOf[WordConcatRaftActor]), member)) ++
     members.map(member =>
       Send(member, () => {
-        val clusterRefs = Instrumenter().actorMappings.filter({case (k,v) => k != "client"})
+        val clusterRefs = Instrumenter().actorMappings.filter({
+            case (k,v) => k != "client" && k != CheckpointSink.name
+        })
         ChangeConfiguration(ClusterConfiguration(clusterRefs.values))
       })) ++
     Array[ExternalEvent](
@@ -87,11 +94,12 @@ object Main extends App {
 
   val weights = new FuzzerWeights(0.01, 0.0, 0.3, 0.3, 0.05, 0.05, 0.1)
   // TODO(cs): make a message generator.
-  val fuzzer = new Fuzzer(2000, weights, null, prefix)
+  val fuzzer = new Fuzzer(0, weights, null, prefix)
   val fuzzTest = fuzzer.generateFuzzTest()
   println(fuzzTest)
 
   val sched = new RandomScheduler(1, false)
+  sched.setInvariant(invariant)
   Instrumenter().scheduler = sched
   sched.explore(fuzzTest)
   println("Returned to main with events")

@@ -1,8 +1,16 @@
 TODO(cs): write down safety conditions for consensus
-TODO(cs): fuzz tester!
 TODO(cs): fingerprints for Raft.
+TODO(cs): do we handle context.system.eventStream.publish properly? It's
+          apparently only a local facility, not a cluster facility.
+TODO(cs): raise exception if any of the other scheduler.schedule methods are
+          1called.
+TODO(cs): should we be testing the cluster versions of the actors?
+TODO(cs): double check: does akka-raft write anything to disk? Sort of seems
+          like it doesn't support crash-recovery.. In fact, it doesn't make
+          use of any of akka's persistence module...
 TODO(cs): interpose on random? Used to generate Raft's timer values.
           Otherwise, our "prefix produces same state" assumption breaks.
+
 
 Looks there are two uses of timers here:
   - cluster/ClusterRaftActor.scala uses schedule.scheduleOnce(), but I don't

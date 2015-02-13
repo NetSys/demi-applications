@@ -5,7 +5,7 @@ import protocol._
 import scala.collection.mutable.ListBuffer
 import pl.project13.scala.akka.raft.RaftActor
 
-class WordConcatRaftActor() extends RaftActor {
+class WordConcatRaftActor extends RaftActor {
 
   type Command = Cmnd
 

@@ -1,5 +1,6 @@
 package pl.project13.scala.akka.raft
 
+import akka.dispatch.verification.{CheckpointRequest, CheckpointReply, CheckpointSink}
 import akka.actor.{Actor, ActorRef, LoggingFSM}
 import scala.concurrent.duration._
 
@@ -40,6 +41,13 @@ abstract class RaftActor extends Actor with LoggingFSM[RaftState, Metadata]
   var matchIndex = LogIndexMap.initialize(Set.empty, -1)
 
   // end of raft member state --------------
+
+  whenUnhandled {
+    case Event(CheckpointRequest, _) =>
+      val state = List(replicatedLog, nextIndex, matchIndex, stateData)
+      context.actorFor("../" + CheckpointSink.name) ! CheckpointReply(state)
+      stay
+  }
 
   val heartbeatInterval: FiniteDuration = raftConfig.heartbeatInterval
 
