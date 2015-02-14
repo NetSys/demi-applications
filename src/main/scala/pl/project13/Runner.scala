@@ -76,7 +76,7 @@ object Main extends App {
     members.map(member =>
       Send(member, () => {
         val clusterRefs = Instrumenter().actorMappings.filter({
-            case (k,v) => k != "client" && k != CheckpointSink.name
+            case (k,v) => k != "client" && !ActorTypes.systemActor(k)
         })
         ChangeConfiguration(ClusterConfiguration(clusterRefs.values))
       })) ++
@@ -103,4 +103,6 @@ object Main extends App {
   Instrumenter().scheduler = sched
   sched.explore(fuzzTest)
   println("Returned to main with events")
+  sched.shutdown()
+  println("shutdown successfully")
 }
