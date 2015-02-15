@@ -1,9 +1,11 @@
+TODO(cs): check invariants more often in RandomScheduler. Do this within
+          schedule_new_message in RandomScheduler (not ExternalEventInjector)
 TODO(cs): write down safety conditions for consensus
 TODO(cs): fingerprints for Raft.
 TODO(cs): do we handle context.system.eventStream.publish properly? It's
           apparently only a local facility, not a cluster facility.
 TODO(cs): raise exception if any of the other scheduler.schedule methods are
-          1called.
+          called.
 TODO(cs): should we be testing the cluster versions of the actors?
 TODO(cs): double check: does akka-raft write anything to disk? Sort of seems
           like it doesn't support crash-recovery.. In fact, it doesn't make

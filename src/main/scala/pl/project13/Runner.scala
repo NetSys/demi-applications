@@ -4,15 +4,37 @@ import akka.actor.Props
 import akka.dispatch.verification._
 import scala.collection.mutable.Queue
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.HashSet
 import scala.collection.mutable.Map
+import scala.util.Random
 import pl.project13.scala.akka.raft.example._
 import pl.project13.scala.akka.raft.protocol._
 import pl.project13.scala.akka.raft.example.protocol._
 import pl.project13.scala.akka.raft._
 
-object Main extends App {
-  val members = (1 to 3) map { i => s"raft-member-$i" }
+class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator {
+  val wordsUsedSoFar = new HashSet[String]
+  val rand = new Random
+  val destinations = new RandomizedHashSet[String]
+  for (dst <- raft_members) {
+    destinations.insert(dst)
+  }
 
+  def generateMessage(alive: RandomizedHashSet[String]) : Send = {
+    val dst = destinations.getRandomElement()
+    // TODO(cs): 10000 is a bit arbitrary, and this algorithm fails
+    // disastrously as we start to approach 10000 Send events.
+    var word = rand.nextInt(10000).toString
+    while (wordsUsedSoFar contains word) {
+      word = rand.nextInt(10000).toString
+    }
+    wordsUsedSoFar += word
+    return Send(dst, () =>
+      ClientMessage[AppendWord](Instrumenter().actorSystem.deadLetters, AppendWord(word)))
+  }
+}
+
+object Main extends App {
   // Correctness properties of Uniform Consensus:
   // ------------
   // Termination: Every correct process eventually decides some value.
@@ -63,10 +85,12 @@ object Main extends App {
   // -------------
   // + A simple one: no node should crash.
 
-  def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,CheckpointReply] ) : Boolean = {
+  def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,CheckpointReply]) : Option[ViolationFingerprint] = {
     println(checkpoint)
-    return true
+    return None
   }
+
+  val members = (1 to 3) map { i => s"raft-member-$i" }
 
   val prefix = Array[ExternalEvent]() ++
     //Array[ExternalEvent](Start(() =>
@@ -77,24 +101,19 @@ object Main extends App {
       Send(member, () => {
         val clusterRefs = Instrumenter().actorMappings.filter({
             case (k,v) => k != "client" && !ActorTypes.systemActor(k)
-        })
-        ChangeConfiguration(ClusterConfiguration(clusterRefs.values))
+        }).values
+        ChangeConfiguration(ClusterConfiguration(clusterRefs))
       })) ++
     Array[ExternalEvent](
-    // Send("client", ClientMessage(AppendWord("I"))),
-    // Send("client", ClientMessage(AppendWord("like"))),
-    // Send("client", ClientMessage(AppendWord("capybaras"))),
     WaitQuiescence,
-    WaitTimers(1),
-    WaitQuiescence
+    WaitTimers(1)
+    //WaitQuiescence
     // Continue(500)
-    // TODO(cs): I think I might need to create an actor other than the client that sends these requests...
-    // Send("client", ClientMessage(GetWords)),
   )
 
-  val weights = new FuzzerWeights(0.01, 0.0, 0.3, 0.3, 0.05, 0.05, 0.1)
-  // TODO(cs): make a message generator.
-  val fuzzer = new Fuzzer(0, weights, null, prefix)
+  val weights = new FuzzerWeights(0.01, 0.3, 0.3, 0.0, 0.05, 0.05, 0.2)
+  val messageGen = new ClientMessageGenerator(members)
+  val fuzzer = new Fuzzer(30, weights, messageGen, prefix)
   val fuzzTest = fuzzer.generateFuzzTest()
   println(fuzzTest)
 
