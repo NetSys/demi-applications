@@ -7,7 +7,7 @@ import scala.annotation.switch
  * @param defaultBatchSize number of commands that can be sent together in one [[pl.project13.scala.akka.raft.protocol.RaftProtocol.AppendEntries]] message.
  */
 case class ReplicatedLog[Command](
-  private[raft] val entries: List[Entry[Command]],
+  val entries: List[Entry[Command]],
   committedIndex: Int,
   defaultBatchSize: Int) {
 

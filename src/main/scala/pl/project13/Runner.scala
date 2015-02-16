@@ -11,6 +11,7 @@ import pl.project13.scala.akka.raft.example._
 import pl.project13.scala.akka.raft.protocol._
 import pl.project13.scala.akka.raft.example.protocol._
 import pl.project13.scala.akka.raft._
+import pl.project13.scala.akka.raft.model._
 
 class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator {
   val wordsUsedSoFar = new HashSet[String]
@@ -31,6 +32,79 @@ class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator
     wordsUsedSoFar += word
     return Send(dst, () =>
       ClientMessage[AppendWord](Instrumenter().actorSystem.deadLetters, AppendWord(word)))
+  }
+}
+
+case class RaftViolation(fingerprints: HashSet[String]) extends ViolationFingerprint {
+  def matches(other: ViolationFingerprint) : Boolean = {
+    other match {
+      case RaftViolation(otherFingerprint) =>
+        // Slack matching algorithm for now: if any fingerprint matches, the whole
+        // thing matches
+        return !fingerprints.intersect(otherFingerprint).isEmpty
+      case _ => return false
+    }
+  }
+}
+
+// Election Safety: at most one leader can be elected in a given term. §5.2
+class ElectionSafetyChecker {
+  var term2leader = new HashMap[Term, String]
+
+  def checkActor(actor: String, state: Metadata) : Option[String] = {
+    state match {
+      case LeaderMeta(_, term, _) =>
+        if ((term2leader contains term) && term2leader(term) != actor) {
+          return Some("ElectionSafety:" + actor + ":" + term)
+        }
+        term2leader(term) = actor
+        return None
+      case _ =>
+        return None
+    }
+  }
+}
+
+// LogMatching: if two logs contain an entry with the same index and term, then
+//     the logs are identical in all entries up through the given index. §5.3
+class LogMatchChecker {
+  // Only contains the most recent ReplicatedLogs.
+  // TODO(cs): could potentially find more violations if we kept a history of
+  // all replicated logs.
+  val actor2log = new HashMap[String, ReplicatedLog[Cmnd]]
+
+  def checkActor(actor: String, log: ReplicatedLog[Cmnd]) : Option[String] = {
+    actor2log(actor) = log
+    val otherActorLogs = actor2log.filter { case (a,_) => a != actor }
+    for (otherActorLog <- otherActorLogs) {
+      val otherActor = otherActorLog._1
+      val otherLog = otherActorLog._2
+      // First, find the last entry in both logs that has the same index and
+      // term.
+      val otherIdxTerms = otherLog.entries.map(entry => (entry.index, entry.term)).toSet
+      val reversed = log.entries.reverse
+      val reverseMatchIdx = reversed.indexWhere(
+          entry => (otherIdxTerms contains (entry.index, entry.term)))
+      if (reverseMatchIdx != -1) {
+        // Now verify that the logs are identical up to the match.
+        val matchIdx = (log.length - 1) - reverseMatchIdx
+        if (otherLog.length < matchIdx) {
+          return Some("LogMatch:"+actor+":"+otherActor+":"+matchIdx)
+        }
+        var currentIdx = 0
+        while (currentIdx <= matchIdx) {
+          val myEntry = log(currentIdx)
+          val otherEntry = otherLog(currentIdx)
+          if (myEntry.command != otherEntry.command ||
+              myEntry.term != otherEntry.term ||
+              myEntry.index != otherEntry.index) {
+            return Some("LogMatch:"+actor+":"+otherActor+":"+currentIdx)
+          }
+          currentIdx += 1
+        }
+      }
+    }
+    return None
   }
 }
 
@@ -83,14 +157,40 @@ object Main extends App {
   //     its state machine, no other server will ever apply a different log entry for
   //     the same index. §5.4.3
   // -------------
-  // + A simple one: no node should crash.
+  // TODO(cs): A simple one: no node should crash.
+
+  val electionSafety = new ElectionSafetyChecker
+  val logMatchChecker = new LogMatchChecker
 
   def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,CheckpointReply]) : Option[ViolationFingerprint] = {
-    println(checkpoint)
+    var violations = new HashSet[String]()
+    for ((actor, reply) <- checkpoint) {
+      val list = reply.data.asInstanceOf[List[Any]]
+      val replicatedLog = list(0).asInstanceOf[ReplicatedLog[Cmnd]]
+      val nextIndex = list(1).asInstanceOf[LogIndexMap]
+      val matchIndex = list(2).asInstanceOf[LogIndexMap]
+      val metaData = list(3).asInstanceOf[Metadata]
+
+      electionSafety.checkActor(actor, metaData) match {
+        case Some(fingerprint) =>
+          violations += fingerprint
+        case None => None
+      }
+
+      logMatchChecker.checkActor(actor, replicatedLog) match {
+        case Some(fingerprint) =>
+          violations += fingerprint
+        case None => None
+      }
+    }
+
+    if (!violations.isEmpty) {
+      return Some(RaftViolation(violations))
+    }
     return None
   }
 
-  val members = (1 to 3) map { i => s"raft-member-$i" }
+  val members = (1 to 9) map { i => s"raft-member-$i" }
 
   val prefix = Array[ExternalEvent]() ++
     //Array[ExternalEvent](Start(() =>
@@ -117,7 +217,7 @@ object Main extends App {
   val fuzzTest = fuzzer.generateFuzzTest()
   println(fuzzTest)
 
-  val sched = new RandomScheduler(1, false)
+  val sched = new RandomScheduler(1, false, 30)
   sched.setInvariant(invariant)
   Instrumenter().scheduler = sched
   sched.explore(fuzzTest)

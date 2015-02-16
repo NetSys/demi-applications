@@ -1,6 +1,6 @@
-TODO(cs): check invariants more often in RandomScheduler. Do this within
-          schedule_new_message in RandomScheduler (not ExternalEventInjector)
 TODO(cs): write down safety conditions for consensus
+TODO(cs): probably need to serialize event traces to disk if we're going to be
+          doing heavy-duty fuzz testing.
 TODO(cs): fingerprints for Raft.
 TODO(cs): do we handle context.system.eventStream.publish properly? It's
           apparently only a local facility, not a cluster facility.
