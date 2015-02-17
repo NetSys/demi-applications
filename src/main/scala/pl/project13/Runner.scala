@@ -317,18 +317,33 @@ object Main extends App {
   //     its state machine, no other server will ever apply a different log entry for
   //     the same index. §5.4.3
   // -------------
-  // TODO(cs): A simple one: no node should crash.
+  // + A simple one:
+  // Liveness: no node should crash.
 
   // TODO(cs): reset raftChecks as a restart hook.
   val raftChecks = new RaftChecks
 
-  def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,CheckpointReply]) : Option[ViolationFingerprint] = {
-    raftChecks.check(checkpoint) match {
+  def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,Option[CheckpointReply]]) : Option[ViolationFingerprint] = {
+    var livenessViolations = checkpoint.toSeq flatMap {
+      case (k, None) => Some("Liveness:"+k)
+      case _ => None
+    }
+
+    var normalReplies = checkpoint flatMap {
+      case (k, None) => None
+      case (k, Some(v)) => Some((k,v))
+    }
+
+    raftChecks.check(normalReplies) match {
       case Some(violations) =>
         println("Violations found! " + violations)
-        return Some(RaftViolation(violations))
+        return Some(RaftViolation(violations ++ livenessViolations))
       case None =>
-        return None
+        if (livenessViolations.isEmpty) {
+          return None
+        }
+        println("Violations found! liveness" + livenessViolations)
+        return Some(RaftViolation(new HashSet[String] ++ livenessViolations))
     }
   }
 
