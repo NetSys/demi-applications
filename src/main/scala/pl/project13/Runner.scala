@@ -321,7 +321,7 @@ object Main extends App {
   // Liveness: no node should crash.
 
   // TODO(cs): reset raftChecks as a restart hook.
-  val raftChecks = new RaftChecks
+  var raftChecks = new RaftChecks
 
   def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,Option[CheckpointReply]]) : Option[ViolationFingerprint] = {
     var livenessViolations = checkpoint.toSeq flatMap {
@@ -368,17 +368,27 @@ object Main extends App {
     // Continue(500)
   )
 
-  val weights = new FuzzerWeights(0.01, 0.3, 0.3, 0.0, 0.05, 0.05, 0.2)
+  val weights = new FuzzerWeights(0.01, 0.3, 0.3, 0.3, 0.1, 0.1, 0.3)
   val messageGen = new ClientMessageGenerator(members)
-  val fuzzer = new Fuzzer(30, weights, messageGen, prefix)
-  val fuzzTest = fuzzer.generateFuzzTest()
-  println(fuzzTest)
+  val fuzzer = new Fuzzer(500, weights, messageGen, prefix)
 
-  val sched = new RandomScheduler(1, false, 30)
-  sched.setInvariant(invariant)
-  Instrumenter().scheduler = sched
-  sched.explore(fuzzTest)
-  println("Returned to main with events")
-  sched.shutdown()
-  println("shutdown successfully")
+  var violationFound : ViolationFingerprint = null
+  while (violationFound == null) {
+    val fuzzTest = fuzzer.generateFuzzTest()
+    println("Trying: " + fuzzTest)
+
+    val sched = new RandomScheduler(1, false, 30)
+    sched.setInvariant(invariant)
+    Instrumenter().scheduler = sched
+    sched.explore(fuzzTest) match {
+      case None =>
+        println("Returned to main with events")
+        sched.shutdown()
+        println("shutdown successfully")
+        raftChecks = new RaftChecks
+      case Some((trace, violation)) =>
+        println("Found a safety violation!")
+        violationFound = violation
+    }
+  }
 }

@@ -1,4 +1,3 @@
-TODO(cs): write down safety conditions for consensus
 TODO(cs): probably need to serialize event traces to disk if we're going to be
           doing heavy-duty fuzz testing.
 TODO(cs): fingerprints for Raft.
