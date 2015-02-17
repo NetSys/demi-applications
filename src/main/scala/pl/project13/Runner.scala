@@ -53,6 +53,7 @@ class RaftChecks {
   val electionSafety = new ElectionSafetyChecker(this)
   val logMatch = new LogMatchChecker(this)
   val leaderCompleteness = new LeaderCompletenessChecker(this)
+  val stateMachine = new StateMachineChecker(this)
 
   // -- State --
   var term2leader = new HashMap[Term, String]
@@ -110,6 +111,12 @@ class RaftChecks {
 
     // Run global checks
     leaderCompleteness.check() match {
+      case Some(fingerprint) =>
+        violations += fingerprint
+      case None => None
+    }
+
+    stateMachine.check() match {
       case Some(fingerprint) =>
         violations += fingerprint
       case None => None
@@ -241,6 +248,26 @@ class LeaderCompletenessChecker(parent: RaftChecks) {
   }
 }
 
+// StateMachine Safety: if a server has applied a log entry at a given index to
+//     its state machine, no other server will ever apply a different log entry for
+//     the same index. §5.4.3
+class StateMachineChecker(parent: RaftChecks) {
+  // TODO(cs): for now, we just check committed entries. To get a perfect view
+  // of applied entries, we'd need the RaftActors to send us a message every
+  // time they apply an entry (which, AFAICT, happens immediately after they infer
+  // infer that they should commit an given entry)
+  def check() : Option[String] = {
+    val allCommittedIndices = parent.allCommitted.toArray.map(c => c._3)
+    if (parent.allCommitted.size != allCommittedIndices.size) {
+      val counts = new MultiSet[Int]
+      counts ++= allCommittedIndices
+      val duplicates = counts.m.filter({case (k, v) => v.length > 1}).keys
+      return Some("StateMachine:"+duplicates.toString)
+    }
+    return None
+  }
+}
+
 object Main extends App {
   // Correctness properties of Uniform Consensus:
   // ------------
@@ -298,6 +325,7 @@ object Main extends App {
   def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,CheckpointReply]) : Option[ViolationFingerprint] = {
     raftChecks.check(checkpoint) match {
       case Some(violations) =>
+        println("Violations found! " + violations)
         return Some(RaftViolation(violations))
       case None =>
         return None
