@@ -5,6 +5,7 @@ import akka.dispatch.verification._
 import scala.collection.mutable.Queue
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
+import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Map
 import scala.util.Random
 import pl.project13.scala.akka.raft.example._
@@ -47,8 +48,109 @@ case class RaftViolation(fingerprints: HashSet[String]) extends ViolationFingerp
   }
 }
 
+class RaftChecks {
+  // -- Checkers --
+  val electionSafety = new ElectionSafetyChecker(this)
+  val logMatch = new LogMatchChecker(this)
+  val leaderCompleteness = new LeaderCompletenessChecker(this)
+
+  // -- State --
+  var term2leader = new HashMap[Term, String]
+  // Only contains the most recent ReplicatedLogs.
+  // TODO(cs): could potentially find more violations if we kept a history of
+  // all replicated logs.
+  val actor2log = new HashMap[String, ReplicatedLog[Cmnd]]
+  val actor2AllEntries = new HashMap[String, HashSet[(Cmnd, Term, Int)]]
+  val allCommitted = new HashSet[(Cmnd, Term, Int)]
+
+  def ingestCheckpoint(checkpoint: HashMap[String,CheckpointReply]) = {
+    for ((actor, reply) <- checkpoint) {
+      val data = reply.data.asInstanceOf[List[Any]]
+      val replicatedLog = data(0).asInstanceOf[ReplicatedLog[Cmnd]]
+      val nextIndex = data(1).asInstanceOf[LogIndexMap]
+      val matchIndex = data(2).asInstanceOf[LogIndexMap]
+      val state = data(3).asInstanceOf[Metadata]
+
+      state match {
+        case LeaderMeta(_, term, _) =>
+          term2leader(term) = actor
+        case _ => None
+      }
+
+      actor2log(actor) = replicatedLog
+
+      for (entry <- replicatedLog.committedEntries) {
+        allCommitted += ((entry.command, entry.term, entry.index))
+      }
+
+      if (!(actor2AllEntries contains actor)) {
+        actor2AllEntries(actor) = new HashSet[(Cmnd, Term, Int)]
+      }
+
+      for (entry <- replicatedLog.entries) {
+        actor2AllEntries(actor) += ((entry.command, entry.term, entry.index))
+      }
+    }
+  }
+
+  def check(checkpoint: HashMap[String,CheckpointReply]) : Option[HashSet[String]] = {
+    ingestCheckpoint(checkpoint)
+
+    var violations = new HashSet[String]()
+
+    // Run checks that are specific to an individual actor
+    for ((actor, reply) <- checkpoint) {
+      val data = reply.data.asInstanceOf[List[Any]]
+      checkActor(actor, data) match {
+        case Some(fingerprints) =>
+          violations ++= fingerprints
+        case None => None
+      }
+    }
+
+    // Run global checks
+    leaderCompleteness.check() match {
+      case Some(fingerprint) =>
+        violations += fingerprint
+      case None => None
+    }
+
+    if (!violations.isEmpty) {
+      return Some(violations)
+    }
+    return None
+  }
+
+  // Run checks that are specific to an individual actor
+  // Pre: ingestCheckpoint was invoked prior to this.
+  def checkActor(actor: String, data: List[Any]) : Option[Seq[String]] = {
+    val metaData = data(3).asInstanceOf[Metadata]
+
+    var violations = new ListBuffer[String]()
+
+    electionSafety.checkActor(actor, metaData) match {
+      case Some(fingerprint) =>
+        violations += fingerprint
+      case None => None
+    }
+
+    logMatch.checkActor(actor) match {
+      case Some(fingerprint) =>
+        violations += fingerprint
+      case None => None
+    }
+
+    if (!violations.isEmpty) {
+      return Some(violations)
+    }
+    return None
+  }
+}
+
 // Election Safety: at most one leader can be elected in a given term. §5.2
-class ElectionSafetyChecker {
+class ElectionSafetyChecker(parent: RaftChecks) {
+  // N.B. we keep our own private term2leader, rather than using parent's.
+  // (Parent's assumes that ElectionSafety holds.)
   var term2leader = new HashMap[Term, String]
 
   def checkActor(actor: String, state: Metadata) : Option[String] = {
@@ -67,15 +169,11 @@ class ElectionSafetyChecker {
 
 // LogMatching: if two logs contain an entry with the same index and term, then
 //     the logs are identical in all entries up through the given index. §5.3
-class LogMatchChecker {
-  // Only contains the most recent ReplicatedLogs.
-  // TODO(cs): could potentially find more violations if we kept a history of
-  // all replicated logs.
-  val actor2log = new HashMap[String, ReplicatedLog[Cmnd]]
+class LogMatchChecker(parent: RaftChecks) {
 
-  def checkActor(actor: String, log: ReplicatedLog[Cmnd]) : Option[String] = {
-    actor2log(actor) = log
-    val otherActorLogs = actor2log.filter { case (a,_) => a != actor }
+  def checkActor(actor: String) : Option[String] = {
+    val otherActorLogs = parent.actor2log.filter { case (a,_) => a != actor }
+    val log = parent.actor2log(actor)
     for (otherActorLog <- otherActorLogs) {
       val otherActor = otherActorLog._1
       val otherLog = otherActorLog._2
@@ -101,6 +199,41 @@ class LogMatchChecker {
             return Some("LogMatch:"+actor+":"+otherActor+":"+currentIdx)
           }
           currentIdx += 1
+        }
+      }
+    }
+    return None
+  }
+}
+
+// Leader Completeness: if a log entry is committed in a given term, then that
+//     entry will be present in the logs of the leaders for all higher-numbered
+//     terms. §5.4
+class LeaderCompletenessChecker(parent: RaftChecks) {
+
+  def check() : Option[String] = {
+    val sortedTerms = parent.term2leader.keys.toArray.sortWith((a,b) => a < b)
+    if (sortedTerms.isEmpty) {
+      return None
+    }
+    // The index of the first sortedTerm that is > than the current committed
+    // entry.
+    var termWatermark = 0
+    val sortedCommitted = parent.allCommitted.toArray.sortWith((c1, c2) => c1._2 < c2._2)
+    for (committed <- sortedCommitted) {
+      // Move the waterMark if necessary
+      while (termWatermark < sortedTerms.length &&
+             sortedTerms(termWatermark) <= committed._2) {
+        termWatermark += 1
+      }
+      if (termWatermark >= sortedTerms.length) {
+        return None
+      }
+      for (termIdx <- (termWatermark until sortedTerms.length)) {
+        val term = sortedTerms(termIdx)
+        val leader = parent.term2leader(term)
+        if (!(parent.actor2AllEntries(leader) contains committed)) {
+          return Some("LeaderCompleteness:"+leader+":"+committed)
         }
       }
     }
@@ -159,35 +292,16 @@ object Main extends App {
   // -------------
   // TODO(cs): A simple one: no node should crash.
 
-  val electionSafety = new ElectionSafetyChecker
-  val logMatchChecker = new LogMatchChecker
+  // TODO(cs): reset raftChecks as a restart hook.
+  val raftChecks = new RaftChecks
 
   def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,CheckpointReply]) : Option[ViolationFingerprint] = {
-    var violations = new HashSet[String]()
-    for ((actor, reply) <- checkpoint) {
-      val list = reply.data.asInstanceOf[List[Any]]
-      val replicatedLog = list(0).asInstanceOf[ReplicatedLog[Cmnd]]
-      val nextIndex = list(1).asInstanceOf[LogIndexMap]
-      val matchIndex = list(2).asInstanceOf[LogIndexMap]
-      val metaData = list(3).asInstanceOf[Metadata]
-
-      electionSafety.checkActor(actor, metaData) match {
-        case Some(fingerprint) =>
-          violations += fingerprint
-        case None => None
-      }
-
-      logMatchChecker.checkActor(actor, replicatedLog) match {
-        case Some(fingerprint) =>
-          violations += fingerprint
-        case None => None
-      }
+    raftChecks.check(checkpoint) match {
+      case Some(violations) =>
+        return Some(RaftViolation(violations))
+      case None =>
+        return None
     }
-
-    if (!violations.isEmpty) {
-      return Some(RaftViolation(violations))
-    }
-    return None
   }
 
   val members = (1 to 9) map { i => s"raft-member-$i" }
