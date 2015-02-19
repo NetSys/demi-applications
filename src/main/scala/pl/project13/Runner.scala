@@ -14,6 +14,49 @@ import pl.project13.scala.akka.raft.example.protocol._
 import pl.project13.scala.akka.raft._
 import pl.project13.scala.akka.raft.model._
 
+import scala.sys.process._
+import scala.sys.process.BasicIO
+import scala.pickling.Defaults._
+import scala.pickling._
+import scala.pickling.io.TextFileOutput
+import json._
+
+import java.io._
+import scala.io._
+
+// TODO(cs): move me.
+object Experiment {
+
+  def create_experiment_dir(experiment_name: String) : String = {
+    // Create experiment dir.
+    // ("./interposition/src/main/python/setup.py -n " + name) .!
+    var output_dir = ""
+    val errToDevNull = BasicIO(false, (out) => output_dir = out, None)
+    val proc = (f"./interposition/src/main/python/setup.py -t -n " + experiment_name).run(errToDevNull)
+    // Block until the process exits.
+    proc.exitValue
+    return output_dir.trim
+  }
+
+  def record_experiment(experiment_name: String, trace: EventTrace, violation: ViolationFingerprint) {
+    val output_dir = Experiment.create_experiment_dir(experiment_name)
+    val traceFile = new File(output_dir + "/trace.json")
+    val traceFileOut = new TextFileOutput(traceFile)
+    trace.serializeToFile(traceFileOut)
+    traceFileOut.close()
+
+    val violationFile = new File(output_dir + "/violation.json")
+    val violationFileOut = new TextFileOutput(violationFile)
+    violation.serializeToFile(violationFileOut)
+    violationFileOut.close()
+  }
+
+  def read_experiment(results_dir: String) {
+    // TODO(cs): halp!
+    val json = Source.fromFile(results_dir + "/trace.json").getLines.mkString
+  }
+}
+
 class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator {
   val wordsUsedSoFar = new HashSet[String]
   val rand = new Random
@@ -45,6 +88,10 @@ case class RaftViolation(fingerprints: HashSet[String]) extends ViolationFingerp
         return !fingerprints.intersect(otherFingerprint).isEmpty
       case _ => return false
     }
+  }
+
+  def serializeToFile(file: TextFileOutput) = {
+    (new Tuple1(fingerprints)).pickleTo(file)
   }
 }
 
@@ -269,6 +316,9 @@ class StateMachineChecker(parent: RaftChecks) {
 }
 
 object Main extends App {
+  val v = new RaftViolation(new HashSet[String])
+  Experiment.record_experiment("test", new EventTrace(List()), v)
+
   // Correctness properties of Uniform Consensus:
   // ------------
   // Termination: Every correct process eventually decides some value.
@@ -391,6 +441,8 @@ object Main extends App {
       case Some((trace, violation)) =>
         println("Found a safety violation!")
         violationFound = violation
+        Experiment.record_experiment("akka-raft", trace, violation)
+        sched.shutdown()
     }
   }
 }

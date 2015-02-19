@@ -1,5 +1,3 @@
-TODO(cs): probably need to serialize event traces to disk if we're going to be
-          doing heavy-duty fuzz testing.
 TODO(cs): fingerprints for Raft.
 TODO(cs): do we handle context.system.eventStream.publish properly? It's
           apparently only a local facility, not a cluster facility.
@@ -12,7 +10,15 @@ TODO(cs): double check: does akka-raft write anything to disk? Sort of seems
 TODO(cs): interpose on random? Used to generate Raft's timer values.
           Otherwise, our "prefix produces same state" assumption breaks.
 
+          scala.concurrent.forkjoin.ThreadLocalRandom
 
+
+----------- Random notes -----------
+
+// Only use:
+import scala.concurrent.forkjoin.ThreadLocalRandom
+
+----------- Timer notes ------------
 Looks there are two uses of timers here:
   - cluster/ClusterRaftActor.scala uses schedule.scheduleOnce(), but I don't
     think it's actually crucial to the protocol. Looks like it's just used for
