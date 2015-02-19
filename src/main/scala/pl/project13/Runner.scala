@@ -425,6 +425,7 @@ object Main extends App {
   val fuzzer = new Fuzzer(500, weights, messageGen, prefix)
 
   var violationFound : ViolationFingerprint = null
+  var traceFound : EventTrace = null
   while (violationFound == null) {
     val fuzzTest = fuzzer.generateFuzzTest()
     println("Trying: " + fuzzTest)
@@ -441,8 +442,27 @@ object Main extends App {
       case Some((trace, violation)) =>
         println("Found a safety violation!")
         violationFound = violation
-        Experiment.record_experiment("akka-raft", trace, violation)
+        traceFound = trace
+        // Experiment.record_experiment("akka-raft", trace, violation)
         sched.shutdown()
     }
   }
+
+  println("Trying replay:")
+  println("trace:")
+  for (e <- traceFound) {
+    println(e)
+  }
+  val replayer = new ReplayScheduler()
+  val events = replayer.replay(traceFound.filterCheckpointMessages())
+  println("Done with replay")
+  println("events:")
+  for (e <- events) {
+    println(e)
+  }
+
+  // Trying STSSched:
+  // val minimizer : Minimizer = new LeftToRightRemoval(test_oracle)
+  // val minimizer : Minimizer = new DeltaDebuggin(test_oracle)
+  // val events = minimizer.minimize(trace)
 }
