@@ -1,12 +1,12 @@
 package pl.project13.scala.akka.raft
 
-import akka.dispatch.verification.{CheckpointRequest, CheckpointReply, CheckpointSink}
+import akka.dispatch.verification.{CheckpointRequest, CheckpointReply, CheckpointSink, Instrumenter}
 import akka.actor.{Actor, ActorRef, LoggingFSM}
 import scala.concurrent.duration._
 
 import model._
 import protocol._
-import scala.concurrent.forkjoin.ThreadLocalRandom
+// import scala.concurrent.forkjoin.ThreadLocalRandom
 import pl.project13.scala.akka.raft.compaction.LogCompactionExtension
 import pl.project13.scala.akka.raft.config.RaftConfiguration
 
@@ -116,7 +116,7 @@ abstract class RaftActor extends Actor with LoggingFSM[RaftState, Metadata]
     val toMs = to.toMillis
     require(toMs > fromMs, s"to ($to) must be greater than from ($from) in order to create valid election timeout.")
 
-    (fromMs + ThreadLocalRandom.current().nextInt(toMs.toInt - fromMs.toInt)).millis
+    (fromMs + Instrumenter().seededRandom().nextInt(toMs.toInt - fromMs.toInt)).millis
   }
 
   // named state changes --------------------------------------------

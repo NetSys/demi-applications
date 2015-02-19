@@ -9,8 +9,8 @@ TODO(cs): double check: does akka-raft write anything to disk? Sort of seems
           use of any of akka's persistence module...
 TODO(cs): interpose on random? Used to generate Raft's timer values.
           Otherwise, our "prefix produces same state" assumption breaks.
-
-          scala.concurrent.forkjoin.ThreadLocalRandom
+TODO(cs): Modify PeekScheduler (or anyone who uses checkpoints) to be careful
+          to associate the right SeededRandom with each actor system.
 
 
 ----------- Random notes -----------
