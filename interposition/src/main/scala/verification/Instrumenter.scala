@@ -9,6 +9,8 @@ import akka.actor.Props;
 import akka.actor.Cancellable
 import akka.cluster.VectorClock
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.Semaphore
 import java.io.Closeable
 
 import akka.dispatch.Envelope
@@ -20,6 +22,8 @@ import scala.collection.mutable.Queue
 import scala.collection.mutable.Stack
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
+
+import scala.util.Random
 import scala.util.control.Breaks
 
 class InstrumenterCheckpoint(
@@ -29,6 +33,7 @@ class InstrumenterCheckpoint(
   val dispatchers : HashMap[ActorRef, MessageDispatcher],
   val vectorClocks : HashMap[String, VectorClock],
   val sys: ActorSystem,
+  // TODO(cs): add the random associated with this actor system
   val applicationCheckpoint: Any
 ) {}
 
@@ -58,18 +63,37 @@ class Instrumenter {
   var shutdownCallback : ShutdownCallback = () => {}
   var checkpointCallback : CheckpointCallback = () => {null}
   var restoreCheckpointCallback : RestoreCheckpointCallback = (a: Any) => {}
-  var registeredCancellableTasks = new Queue[Cancellable]
+  var registeredCancellableTasks = new HashSet[Cancellable]
+  // Mark which of the timers are scheduleOnce vs schedule [ongoing]
+  var ongoingCancellableTasks = new HashSet[Cancellable]
+  // Allow a calling thread to block until all registered Timers have gone off.
+  // We initialize the semaphore to 0 rather than 1,
+  // so that the main thread blocks upon invoking acquire() until another
+  // thread release()'s it.
+  var awaitTimers = new Semaphore(0)
+  // How many timers we still have pending until awaitTimer should be
+  // released.
+  var pendingTimers = new AtomicInteger(0)
 
   // AspectJ runs into initialization problems if a new ActorSystem is created
   // by the constructor. Instead use a getter to create on demand.
-  private[this] var _actorSystem : ActorSystem = null 
+  private[this] var _actorSystem : ActorSystem = null
   def actorSystem () : ActorSystem = {
     if (_actorSystem == null) {
       _actorSystem = ActorSystem("new-system-" + counter)
+      _randoms(_actorSystem) = new Random(0)
       counter += 1
     }
     _actorSystem
   }
+
+  private[this] var _randoms = new HashMap[ActorSystem, Random]
+  def seededRandom() : Random = {
+    return _randoms(actorSystem())
+  }
+
+  // TODO(cs):
+  // def seededRandomForActorSystem
  
   
   def await_enqueue() {
@@ -118,6 +142,7 @@ class Instrumenter {
   def reinitialize_system(sys: ActorSystem, argQueue: Queue[Any]) {
     require(scheduler != null)
     _actorSystem = ActorSystem("new-system-" + counter)
+    _randoms(_actorSystem) = new Random(0)
     counter += 1
     
     actorMappings.clear()
@@ -157,7 +182,7 @@ class Instrumenter {
       if (alsoRestart) {
         system.registerOnTermination(reinitialize_system(system, argQueue))
       }
-      for (task <- registeredCancellableTasks) {
+      for (task <- registeredCancellableTasks.filterNot(c => c.isCancelled)) {
         task.cancel()
       }
       registeredCancellableTasks.clear
@@ -285,17 +310,43 @@ class Instrumenter {
     }
   }
 
+  def await_timers(numTimers: Integer) {
+    if (numTimers <= 0) {
+      throw new IllegalArgumentException("numTimers must be > 0")
+    }
+    if (registeredCancellableTasks.isEmpty) {
+      throw new RuntimeException("No timers to wait for...")
+    }
+    pendingTimers.set(numTimers)
+    awaitTimers.acquire()
+  }
+
+  def await_timers() {
+    registeredCancellableTasks = registeredCancellableTasks.filterNot(c => c.isCancelled)
+    await_timers(registeredCancellableTasks.size)
+  }
+
   // When someone calls akka.actor.schedulerOnce to schedule a Timer, we
   // record the returned Cancellable object here, so that we can cancel it later.
-  def registerCancellable(c: Cancellable) {
+  def registerCancellable(c: Cancellable, ongoingTimer: Boolean) {
     registeredCancellableTasks += c
+    if (ongoingTimer) {
+      ongoingCancellableTasks += c
+    }
   }
 
   // When akka.actor.schedulerOnce decides to schedule a message to be sent,
   // we intercept it here.
-  def handleTick(receiver: ActorRef, msg: Any) {
-    println("handleTick " + receiver.path.name)
+  def handleTick(receiver: ActorRef, msg: Any, c: Cancellable) {
+    println("handleTick " + receiver)
     scheduler.enqueue_message(receiver.path.name, msg)
+    if (!(ongoingCancellableTasks contains c)) {
+      registeredCancellableTasks -= c
+    }
+    val pending = pendingTimers.decrementAndGet()
+    if (pending == 0) {
+      awaitTimers.release()
+    }
   }
 
   def registerShutdownCallback(callback: ShutdownCallback) {
@@ -317,7 +368,7 @@ class Instrumenter {
     // TODO(cs): for now we just cancel all timers in
     // registeredCancellableTasks upon restart_system().
     // Cancelling may affect the correctness of the application...
-    for (task <- registeredCancellableTasks) {
+    for (task <- registeredCancellableTasks.filterNot(c => c.isCancelled)) {
       task.cancel()
     }
     registeredCancellableTasks.clear

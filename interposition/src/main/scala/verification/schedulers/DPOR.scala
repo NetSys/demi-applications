@@ -148,7 +148,7 @@ class DPOR extends Scheduler with LazyLogging {
   def isSystemMessage(sender: String, receiver: String): Boolean = {
     ((actorNames contains sender) || (actorNames contains receiver)) match
     {
-      case true => return false
+      case true => return receiver == "deadLetters"
       case _ => return true
     }
   }
@@ -355,10 +355,10 @@ class DPOR extends Scheduler with LazyLogging {
     // we unisolate the actor.
     for (t <- externalEventList) {
       t match {
-        case Start (prop, name) => 
+        case Start (propCtor, name) => 
           // Just start and isolate all actors we might eventually care about [top-level actors]
           // TODO(cs): doesn't actually isolate the nodes at the moment..
-          instrumenter().actorSystem.actorOf(prop, name)
+          instrumenter().actorSystem.actorOf(propCtor(), name)
           fd.isolate_node(name)
         case _ =>
           None
@@ -368,12 +368,12 @@ class DPOR extends Scheduler with LazyLogging {
     currentTrace += getRootEvent
     
     for(event <- externalEventList) event match {
-      case Start(props, name) => 
+      case Start(_, name) => 
         fd.unisolate_node(name)
         fd.handle_start_event(name)
         
-      case Send(rcv, msg) =>
-        enqueue_message(rcv, msg)
+      case Send(rcv, msgCtor) =>
+        enqueue_message(rcv, msgCtor())
         
       case _ => throw new Exception("unsuported external event")
     }

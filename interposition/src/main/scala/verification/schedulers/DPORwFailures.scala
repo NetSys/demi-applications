@@ -150,7 +150,7 @@ class DPORwFailures extends Scheduler with LazyLogging {
   
   // Is this message a system message
   override def isSystemMessage(sender: String, receiver: String, msg: Any): Boolean = {
-    return !isValidActor(sender, receiver)
+    return !isValidActor(sender, receiver) || receiver == "deadLetters"
   }
   
   
@@ -361,12 +361,12 @@ class DPORwFailures extends Scheduler with LazyLogging {
     
     for(event <- externalEventList) event match {
     
-      case Start(props, name) => 
-        instrumenter().actorSystem().actorOf(props, name)
+      case Start(propsCtor, name) => 
+        instrumenter().actorSystem().actorOf(propsCtor(), name)
   
-      case Send(rcv, msg) =>
+      case Send(rcv, msgCtor) =>
         val ref = instrumenter().actorMappings(rcv)
-        instrumenter().actorMappings(rcv) ! msg
+        instrumenter().actorMappings(rcv) ! msgCtor()
 
       case uniq @ Unique(par : NetworkPartition, id) =>  
         val msgs = pendingEvents.getOrElse(SCHEDULER, new Queue[(Unique, ActorCell, Envelope)])

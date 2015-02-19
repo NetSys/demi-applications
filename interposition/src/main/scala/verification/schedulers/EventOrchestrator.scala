@@ -73,6 +73,9 @@ class EventOrchestrator[E] {
 
   // A bit of a misnomer: current *trace* event, not current recorded event.
   def current_event() : E = {
+    if (traceIdx >= trace.length) {
+      throw new IllegalStateException("No current event..")
+    }
     trace(traceIdx)
   }
 
@@ -92,13 +95,14 @@ class EventOrchestrator[E] {
   def inject_until_quiescence(enqueue_message: EnqueueMessage) = {
     var loop = true
     while (loop && !trace_finished) {
+      println("Injecting " + traceIdx + "/" + trace.length + " " + current_event)
       current_event.asInstanceOf[ExternalEvent] match {
         case Start (_, name) =>
           trigger_start(name)
         case Kill (name) =>
           trigger_kill(name)
-        case Send (name, message) =>
-          enqueue_message(name, message)
+        case Send (name, messageCtor) =>
+          enqueue_message(name, messageCtor())
         case Partition (a, b) =>
           trigger_partition(a,b)
         case UnPartition (a, b) =>
@@ -106,6 +110,14 @@ class EventOrchestrator[E] {
         case WaitQuiescence =>
           events += BeginWaitQuiescence
           loop = false // Start waiting for quiescence
+        case WaitTimers(n) =>
+          if (n < 0) {
+            Instrumenter().await_timers
+          } else {
+             Instrumenter().await_timers(n)
+          }
+        case Continue(n) =>
+          loop = false
       }
       trace_advanced()
     }
@@ -188,6 +200,7 @@ class EventOrchestrator[E] {
   }
 
   def crosses_partition (snd: String, rcv: String) : Boolean = {
+    if (snd == rcv) return false
     return ((partitioned contains (snd, rcv))
            || (partitioned contains (rcv, snd))
            || (inaccessible contains rcv)
