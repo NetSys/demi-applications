@@ -16,7 +16,7 @@ case class BroadcastViolation(fingerprint: String) extends ViolationFingerprint 
       case _ => return false
     }
   }
-  def serializeToFile(f: TextFileOutput) = {}
+  def serialize() = {}
 }
 
 object Main extends App {
@@ -152,6 +152,7 @@ object Main extends App {
     println("Returned to main with events")
     result match {
       case Some((events, violation)) =>
+        println(events.serialize())
         val replayer = new ReplayScheduler(enableFailureDetector=true)
         Instrumenter().scheduler = replayer
         replayer.replay(events)
