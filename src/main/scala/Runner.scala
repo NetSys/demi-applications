@@ -7,8 +7,6 @@ import scala.collection.mutable.Queue
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
 
-import scala.pickling.io.TextFileOutput
-
 case class BroadcastViolation(fingerprint: String) extends ViolationFingerprint {
   def matches(other: ViolationFingerprint) : Boolean = {
     other match {
