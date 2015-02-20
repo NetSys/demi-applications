@@ -16,10 +16,6 @@ import pl.project13.scala.akka.raft.model._
 
 import scala.sys.process._
 import scala.sys.process.BasicIO
-import scala.pickling.Defaults._
-import scala.pickling._
-import scala.pickling.io.TextFileOutput
-import json._
 
 import java.io._
 import scala.io._
@@ -40,20 +36,21 @@ object Experiment {
 
   def record_experiment(experiment_name: String, trace: EventTrace, violation: ViolationFingerprint) {
     val output_dir = Experiment.create_experiment_dir(experiment_name)
-    val traceFile = new File(output_dir + "/trace.json")
-    val traceFileOut = new TextFileOutput(traceFile)
-    trace.serializeToFile(traceFileOut)
-    traceFileOut.close()
+    //val traceFile = new File(output_dir + "/trace.json")
+    //val traceFileOut = new TextFileOutput(traceFile)
+    //trace.serializeToFile(traceFileOut)
+    println(trace.serialize())
+    //traceFileOut.close()
 
     val violationFile = new File(output_dir + "/violation.json")
-    val violationFileOut = new TextFileOutput(violationFile)
-    violation.serializeToFile(violationFileOut)
-    violationFileOut.close()
+    //val violationFileOut = new TextFileOutput(violationFile)
+    violation.serialize()
+    //violationFileOut.close()
   }
 
   def read_experiment(results_dir: String) {
     // TODO(cs): halp!
-    val json = Source.fromFile(results_dir + "/trace.json").getLines.mkString
+    // val json = Source.fromFile(results_dir + "/trace.json").getLines.mkString
   }
 }
 
@@ -90,8 +87,8 @@ case class RaftViolation(fingerprints: HashSet[String]) extends ViolationFingerp
     }
   }
 
-  def serializeToFile(file: TextFileOutput) = {
-    (new Tuple1(fingerprints)).pickleTo(file)
+  def serialize() = {
+    //(new Tuple1(fingerprints)).pickleTo(file)
   }
 }
 
@@ -430,7 +427,7 @@ object Main extends App {
     val fuzzTest = fuzzer.generateFuzzTest()
     println("Trying: " + fuzzTest)
 
-    val sched = new RandomScheduler(1, false, 30)
+    val sched = new RandomScheduler(1, false, 30, false)
     sched.setInvariant(invariant)
     Instrumenter().scheduler = sched
     sched.explore(fuzzTest) match {
@@ -443,7 +440,7 @@ object Main extends App {
         println("Found a safety violation!")
         violationFound = violation
         traceFound = trace
-        // Experiment.record_experiment("akka-raft", trace, violation)
+        Experiment.record_experiment("akka-raft", trace, violation)
         sched.shutdown()
     }
   }
@@ -454,6 +451,7 @@ object Main extends App {
     println(e)
   }
   val replayer = new ReplayScheduler()
+  Instrumenter().scheduler = replayer
   val events = replayer.replay(traceFound.filterCheckpointMessages())
   println("Done with replay")
   println("events:")

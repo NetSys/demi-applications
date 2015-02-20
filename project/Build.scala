@@ -24,9 +24,8 @@ object STS2Application extends Build {
     settings = Defaults.defaultSettings ++ aspectjSettings ++ Seq(
       organization := "com.typesafe.sbt.aspectj",
       version := "0.1",
-      scalaVersion := "2.11.2",
-      resolvers += Resolver.sonatypeRepo("snapshots"),
-      libraryDependencies += "org.scala-lang.modules" %% "scala-pickling" % "0.10.0",
+      scalaVersion := "2.11.0",
+      libraryDependencies += "com.lambdaworks" % "jacks_2.11" % "2.3.3",
       libraryDependencies += "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       libraryDependencies += "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
       libraryDependencies += "com.typesafe.akka" %% "akka-slf4j"   % akkaVersion,

@@ -1,0 +1,1271 @@
+[0m[[0minfo[0m] [0mLoading project definition from /Users/cs/Research/UCB/code/sts2-applications/project[0m
+[0m[[0minfo[0m] [0mSet current project to randomSearch (in build file:/Users/cs/Research/UCB/code/sts2-applications/)[0m
+[0m[[0minfo[0m] [0mRunning Main [0m
+[[],[]]
+Trying: ListBuffer(Start(<function0>,raft-member-1), Start(<function0>,raft-member-2), Start(<function0>,raft-member-3), Start(<function0>,raft-member-4), Start(<function0>,raft-member-5), Start(<function0>,raft-member-6), Start(<function0>,raft-member-7), Start(<function0>,raft-member-8), Start(<function0>,raft-member-9), Send(raft-member-1,<function0>), Send(raft-member-2,<function0>), Send(raft-member-3,<function0>), Send(raft-member-4,<function0>), Send(raft-member-5,<function0>), Send(raft-member-6,<function0>), Send(raft-member-7,<function0>), Send(raft-member-8,<function0>), Send(raft-member-9,<function0>), WaitQuiescence, WaitTimers(1), Partition(raft-member-1,raft-member-8), WaitQuiescence, Partition(raft-member-4,raft-member-6), WaitTimers(1), Continue(23), Send(raft-member-2,<function0>), UnPartition(raft-member-1,raft-member-8), WaitQuiescence, WaitTimers(1), Continue(1), WaitQuiescence, WaitTimers(1), WaitTimers(1), UnPartition(raft-member-4,raft-member-6), Continue(29), WaitQuiescence, Send(raft-member-5,<function0>), Continue(20), WaitTimers(1), Send(raft-member-4,<function0>), WaitQuiescence, WaitTimers(1), Continue(1), Continue(16), Send(raft-member-2,<function0>), Continue(2), Send(raft-member-7,<function0>), Continue(17), Continue(11), WaitQuiescence, Continue(25), WaitTimers(1), WaitTimers(1), Partition(raft-member-1,raft-member-7), Continue(7), UnPartition(raft-member-1,raft-member-7), Send(raft-member-1,<function0>), WaitTimers(1), WaitTimers(1), Continue(21), WaitTimers(1), Send(raft-member-2,<function0>), Continue(38), WaitTimers(1), Continue(27), Send(raft-member-6,<function0>), Continue(40), Partition(raft-member-6,raft-member-8), Continue(35), Send(raft-member-4,<function0>), WaitTimers(1), Kill(raft-member-7), Continue(32), Send(raft-member-4,<function0>), WaitTimers(1), Continue(15), Send(raft-member-2,<function0>), Partition(raft-member-1,raft-member-3), Partition(raft-member-3,raft-member-5), Send(raft-member-6,<function0>), WaitTimers(1), WaitTimers(1), WaitTimers(1), WaitTimers(1), UnPartition(raft-member-1,raft-member-3), Send(raft-member-5,<function0>), Send(raft-member-5,<function0>), Send(raft-member-2,<function0>), Continue(36), Send(raft-member-3,<function0>), Send(raft-member-4,<function0>), Send(raft-member-6,<function0>), Send(raft-member-9,<function0>), Send(raft-member-2,<function0>), Partition(raft-member-1,raft-member-3), Send(raft-member-9,<function0>), WaitQuiescence, WaitTimers(1), WaitTimers(1), Send(raft-member-5,<function0>), Continue(12), WaitTimers(1), Partition(raft-member-2,raft-member-3), Continue(20), UnPartition(raft-member-2,raft-member-3), Continue(2), Send(raft-member-5,<function0>), WaitQuiescence, UnPartition(raft-member-1,raft-member-3), UnPartition(raft-member-3,raft-member-5), Send(raft-member-7,<function0>), WaitTimers(1), Send(raft-member-2,<function0>), UnPartition(raft-member-6,raft-member-8), Continue(27), Partition(raft-member-1,raft-member-4), WaitQuiescence, Continue(3), Continue(27), Continue(30), WaitTimers(1), Send(raft-member-8,<function0>), Continue(15), Partition(raft-member-6,raft-member-8), Send(raft-member-7,<function0>), WaitTimers(1), Continue(21), WaitTimers(1), Send(raft-member-1,<function0>), Partition(raft-member-2,raft-member-8), WaitTimers(1), WaitQuiescence, WaitTimers(1), WaitTimers(1), WaitTimers(1), Continue(22), Send(raft-member-2,<function0>), Send(raft-member-5,<function0>), Continue(8), Send(raft-member-2,<function0>), WaitTimers(1), WaitTimers(1), Send(raft-member-9,<function0>), UnPartition(raft-member-2,raft-member-8), WaitQuiescence, UnPartition(raft-member-1,raft-member-4), Send(raft-member-7,<function0>), Continue(23), Send(raft-member-4,<function0>), Continue(19), WaitQuiescence, Continue(36), Kill(raft-member-9), Continue(16), Continue(33), UnPartition(raft-member-6,raft-member-8), Continue(1), WaitQuiescence, Send(raft-member-8,<function0>), Send(raft-member-1,<function0>), Continue(5), Partition(raft-member-1,raft-member-5), Send(raft-member-4,<function0>), WaitQuiescence, WaitTimers(1), Send(raft-member-5,<function0>), WaitQuiescence, WaitTimers(1), Send(raft-member-1,<function0>), Continue(24), WaitQuiescence, Continue(3), Send(raft-member-5,<function0>), Continue(11), Send(raft-member-4,<function0>), Continue(23), UnPartition(raft-member-1,raft-member-5), Continue(39), Continue(16), WaitTimers(1), Partition(raft-member-1,raft-member-2), Continue(5), WaitQuiescence, WaitTimers(1), Continue(1), WaitQuiescence, WaitTimers(1), Send(raft-member-6,<function0>), Send(raft-member-8,<function0>), Send(raft-member-5,<function0>), Continue(15), WaitTimers(1), WaitTimers(1), WaitQuiescence, Send(raft-member-6,<function0>), Continue(23), UnPartition(raft-member-1,raft-member-2), Continue(12), WaitQuiescence, Partition(raft-member-3,raft-member-4), WaitQuiescence, Send(raft-member-1,<function0>), Continue(8), Continue(5), WaitTimers(1), WaitTimers(1), WaitTimers(1), Send(raft-member-3,<function0>), WaitQuiescence, WaitTimers(1), Send(raft-member-6,<function0>), Continue(3), WaitTimers(1), Partition(raft-member-2,raft-member-7), Send(raft-member-8,<function0>), Continue(40), Send(raft-member-2,<function0>), WaitTimers(1), WaitTimers(1), WaitTimers(1), Send(raft-member-6,<function0>), Send(raft-member-4,<function0>), WaitTimers(1), WaitQuiescence, Continue(22), Continue(25), Continue(22), Send(raft-member-8,<function0>), WaitTimers(1), Send(raft-member-7,<function0>), WaitTimers(1), Partition(raft-member-1,raft-member-9), Continue(36), WaitTimers(1), Send(raft-member-8,<function0>), Send(raft-member-3,<function0>), Continue(31), Partition(raft-member-2,raft-member-8), WaitTimers(1), WaitQuiescence, Continue(12), WaitTimers(1), Continue(18), Continue(28), WaitTimers(1), Continue(24), Continue(38), WaitQuiescence, WaitTimers(1), WaitQuiescence, Continue(36), Send(raft-member-6,<function0>), Partition(raft-member-2,raft-member-4), Continue(28), WaitTimers(1), WaitTimers(1), WaitTimers(1), UnPartition(raft-member-2,raft-member-7), Continue(16), UnPartition(raft-member-2,raft-member-4), Send(raft-member-6,<function0>), Continue(27), WaitTimers(1), WaitTimers(1), Continue(10), Send(raft-member-4,<function0>), Send(raft-member-8,<function0>), WaitTimers(1), Continue(1), Send(raft-member-3,<function0>), Continue(35), WaitTimers(1), WaitQuiescence, Send(raft-member-2,<function0>), Send(raft-member-7,<function0>), Continue(18), WaitTimers(1), Continue(12), Continue(21), Continue(24), Continue(37), WaitTimers(1), WaitTimers(1), UnPartition(raft-member-3,raft-member-4), Send(raft-member-5,<function0>), Continue(24), Send(raft-member-7,<function0>), WaitQuiescence, WaitTimers(1), Continue(31), WaitTimers(1), Partition(raft-member-2,raft-member-7), WaitQuiescence, Send(raft-member-8,<function0>), Send(raft-member-9,<function0>), WaitTimers(1), Continue(2), Send(raft-member-5,<function0>), WaitTimers(1), Continue(1), Continue(32), Continue(16), Continue(31), Send(raft-member-1,<function0>), UnPartition(raft-member-2,raft-member-8), WaitTimers(1), Continue(24), Partition(raft-member-6,raft-member-8), WaitTimers(1), Send(raft-member-1,<function0>), Send(raft-member-4,<function0>), Continue(29), WaitTimers(1), WaitTimers(1), WaitQuiescence, Partition(raft-member-2,raft-member-3), WaitTimers(1), Continue(36), Continue(24), WaitTimers(1), WaitTimers(1), Continue(2), Continue(40), WaitTimers(1), Continue(29), Continue(32), Continue(39), Send(raft-member-6,<function0>), Continue(40), Continue(21), UnPartition(raft-member-2,raft-member-7), Continue(31), Send(raft-member-2,<function0>), WaitTimers(1), Send(raft-member-2,<function0>), WaitTimers(1), Send(raft-member-6,<function0>), WaitTimers(1), UnPartition(raft-member-2,raft-member-3), WaitTimers(1), WaitTimers(1), Send(raft-member-1,<function0>), Send(raft-member-5,<function0>), UnPartition(raft-member-1,raft-member-9), Continue(27), Partition(raft-member-1,raft-member-9), WaitTimers(1), Continue(26), WaitQuiescence, Send(raft-member-5,<function0>), WaitQuiescence, Partition(raft-member-5,raft-member-6), WaitTimers(1), Continue(21), WaitTimers(1), Continue(15), WaitTimers(1), Continue(36), Send(raft-member-7,<function0>), Continue(20), Continue(28), Continue(31), Send(raft-member-1,<function0>), WaitTimers(1), Send(raft-member-9,<function0>), Continue(30), UnPartition(raft-member-1,raft-member-9), WaitQuiescence, Continue(32), WaitQuiescence, WaitTimers(1), Partition(raft-member-2,raft-member-8), Continue(33), Continue(37), Send(raft-member-1,<function0>), WaitQuiescence, Send(raft-member-6,<function0>), WaitTimers(1), Continue(40), Send(raft-member-2,<function0>), UnPartition(raft-member-2,raft-member-8), Continue(10), Continue(5), Continue(11), Continue(19), Partition(raft-member-2,raft-member-4), UnPartition(raft-member-2,raft-member-4), WaitTimers(1), Send(raft-member-8,<function0>), Partition(raft-member-3,raft-member-5), WaitQuiescence, UnPartition(raft-member-3,raft-member-5), Continue(10), Send(raft-member-1,<function0>), Send(raft-member-7,<function0>), Send(raft-member-7,<function0>), WaitQuiescence, WaitTimers(1), WaitTimers(1), Send(raft-member-7,<function0>), Send(raft-member-1,<function0>), WaitTimers(1), WaitTimers(1), WaitTimers(1), UnPartition(raft-member-5,raft-member-6), Continue(3), WaitTimers(1), WaitTimers(1), Partition(raft-member-5,raft-member-7), WaitTimers(1), WaitTimers(1), WaitTimers(1), Send(raft-member-1,<function0>), WaitTimers(1), WaitTimers(1), Send(raft-member-4,<function0>), Send(raft-member-8,<function0>), WaitQuiescence, Continue(23), Send(raft-member-4,<function0>), WaitTimers(1), Partition(raft-member-6,raft-member-7), Send(raft-member-8,<function0>), Send(raft-member-4,<function0>), Continue(12), UnPartition(raft-member-6,raft-member-8), Send(raft-member-4,<function0>), Continue(36), UnPartition(raft-member-6,raft-member-7), UnPartition(raft-member-5,raft-member-7), Continue(10), Partition(raft-member-1,raft-member-3), Partition(raft-member-5,raft-member-8), Continue(27), WaitQuiescence, Continue(34), Partition(raft-member-6,raft-member-8), Continue(19), WaitTimers(1), Send(raft-member-8,<function0>), WaitQuiescence, Continue(17), Continue(14), Continue(27), WaitTimers(1), WaitTimers(1), Continue(33), Partition(raft-member-3,raft-member-5), Continue(3), WaitQuiescence, Continue(23), Send(raft-member-9,<function0>), Send(raft-member-5,<function0>), Continue(1), Send(raft-member-9,<function0>), Send(raft-member-7,<function0>), UnPartition(raft-member-3,raft-member-5), Send(raft-member-2,<function0>), WaitTimers(1), UnPartition(raft-member-1,raft-member-3), Send(raft-member-7,<function0>), WaitTimers(1), Continue(6), Send(raft-member-6,<function0>), Continue(30), Continue(16), WaitTimers(1), WaitTimers(1), WaitQuiescence, Continue(8), Partition(raft-member-3,raft-member-7), Continue(26), Continue(8), UnPartition(raft-member-6,raft-member-8), Send(raft-member-6,<function0>), Send(raft-member-7,<function0>), Partition(raft-member-5,raft-member-6), Continue(2), WaitTimers(1), WaitTimers(1), Send(raft-member-8,<function0>), Send(raft-member-3,<function0>), Continue(38), WaitTimers(1), Continue(21), Continue(24), WaitTimers(1), WaitTimers(1), Continue(19), WaitQuiescence, Send(raft-member-8,<function0>), Send(raft-member-3,<function0>), Partition(raft-member-1,raft-member-8), WaitQuiescence, WaitTimers(1), Continue(14), Send(raft-member-2,<function0>), WaitTimers(1), WaitQuiescence, Send(raft-member-6,<function0>), WaitQuiescence, Send(raft-member-5,<function0>), Send(raft-member-8,<function0>), Continue(31), Send(raft-member-6,<function0>), Continue(10), WaitTimers(1), WaitTimers(1), Continue(35), WaitTimers(1), UnPartition(raft-member-5,raft-member-8), WaitTimers(1), Continue(6), Send(raft-member-4,<function0>), WaitQuiescence, Send(raft-member-3,<function0>), WaitTimers(1), Partition(raft-member-1,raft-member-4), Send(raft-member-2,<function0>), Partition(raft-member-4,raft-member-5))
+Trying random interleaving 1
+Sched knows about actor checkpoint_sink
+System has created a new actor: checkpoint_sink
+Sched knows about actor raft-member-1
+System has created a new actor: raft-member-1
+Sched knows about actor raft-member-2
+System has created a new actor: raft-member-2
+Sched knows about actor raft-member-3
+System has created a new actor: raft-member-3
+Sched knows about actor raft-member-4
+System has created a new actor: raft-member-4
+Sched knows about actor raft-member-5
+System has created a new actor: raft-member-5
+Sched knows about actor raft-member-6
+System has created a new actor: raft-member-6
+Sched knows about actor raft-member-7
+System has created a new actor: raft-member-7
+Sched knows about actor raft-member-8
+System has created a new actor: raft-member-8
+Sched knows about actor raft-member-9
+System has created a new actor: raft-member-9
+Injecting 0/520 Start(<function0>,raft-member-1)
+{"raft-member-1" : 1} raft-member-1: God spawned me
+Injecting 1/520 Start(<function0>,raft-member-2)
+{"raft-member-2" : 1} raft-member-2: God spawned me
+Injecting 2/520 Start(<function0>,raft-member-3)
+{"raft-member-3" : 1} raft-member-3: God spawned me
+Injecting 3/520 Start(<function0>,raft-member-4)
+{"raft-member-4" : 1} raft-member-4: God spawned me
+Injecting 4/520 Start(<function0>,raft-member-5)
+{"raft-member-5" : 1} raft-member-5: God spawned me
+Injecting 5/520 Start(<function0>,raft-member-6)
+{"raft-member-6" : 1} raft-member-6: God spawned me
+Injecting 6/520 Start(<function0>,raft-member-7)
+{"raft-member-7" : 1} raft-member-7: God spawned me
+Injecting 7/520 Start(<function0>,raft-member-8)
+{"raft-member-8" : 1} raft-member-8: God spawned me
+Injecting 8/520 Start(<function0>,raft-member-9)
+{"raft-member-9" : 1} raft-member-9: God spawned me
+Injecting 9/520 Send(raft-member-1,<function0>)
+Injecting 10/520 Send(raft-member-2,<function0>)
+Injecting 11/520 Send(raft-member-3,<function0>)
+Injecting 12/520 Send(raft-member-4,<function0>)
+Injecting 13/520 Send(raft-member-5,<function0>)
+Injecting 14/520 Send(raft-member-6,<function0>)
+Injecting 15/520 Send(raft-member-7,<function0>)
+Injecting 16/520 Send(raft-member-8,<function0>)
+Injecting 17/520 Send(raft-member-9,<function0>)
+Injecting 18/520 WaitQuiescence
+[INFO] [02/20/2015 11:05:54.273] [new-system-0-akka.actor.default-dispatcher-5] [akka://new-system-0/user/raft-member-3] Starting new Raft member, will wait for raft cluster configuration...
+[INFO] [02/20/2015 11:05:54.273] [new-system-0-akka.actor.default-dispatcher-11] [akka://new-system-0/user/raft-member-9] Starting new Raft member, will wait for raft cluster configuration...
+[INFO] [02/20/2015 11:05:54.273] [new-system-0-akka.actor.default-dispatcher-3] [akka://new-system-0/user/raft-member-1] Starting new Raft member, will wait for raft cluster configuration...
+[INFO] [02/20/2015 11:05:54.273] [new-system-0-akka.actor.default-dispatcher-2] [akka://new-system-0/user/raft-member-2] Starting new Raft member, will wait for raft cluster configuration...
+[INFO] [02/20/2015 11:05:54.273] [new-system-0-akka.actor.default-dispatcher-8] [akka://new-system-0/user/raft-member-6] Starting new Raft member, will wait for raft cluster configuration...
+[INFO] [02/20/2015 11:05:54.273] [new-system-0-akka.actor.default-dispatcher-10] [akka://new-system-0/user/raft-member-8] Starting new Raft member, will wait for raft cluster configuration...
+[INFO] [02/20/2015 11:05:54.273] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-4] Starting new Raft member, will wait for raft cluster configuration...
+[INFO] [02/20/2015 11:05:54.273] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Starting new Raft member, will wait for raft cluster configuration...
+[INFO] [02/20/2015 11:05:54.273] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-7] Starting new Raft member, will wait for raft cluster configuration...
+[INFO] [02/20/2015 11:05:54.286] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-1] Applying initial raft cluster configuration. Consists of [9] nodes: {raft-member-1, raft-member-7, raft-member-2, raft-member-6, raft-member-5, raft-member-9, raft-member-8, raft-member-3, raft-member-4}
+[INFO] [02/20/2015 11:05:54.288] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-1] Finished init of new Raft member, becoming Follower. Initial election deadline: Deadline(1424459154496784000 nanoseconds)
+[INFO] [02/20/2015 11:05:54.290] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-2] Applying initial raft cluster configuration. Consists of [9] nodes: {raft-member-1, raft-member-7, raft-member-2, raft-member-6, raft-member-5, raft-member-9, raft-member-8, raft-member-3, raft-member-4}
+[INFO] [02/20/2015 11:05:54.290] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-2] Finished init of new Raft member, becoming Follower. Initial election deadline: Deadline(1424459154519393000 nanoseconds)
+[INFO] [02/20/2015 11:05:54.290] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Applying initial raft cluster configuration. Consists of [9] nodes: {raft-member-1, raft-member-7, raft-member-2, raft-member-6, raft-member-5, raft-member-9, raft-member-8, raft-member-3, raft-member-4}
+[INFO] [02/20/2015 11:05:54.290] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Finished init of new Raft member, becoming Follower. Initial election deadline: Deadline(1424459154505885000 nanoseconds)
+[INFO] [02/20/2015 11:05:54.291] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-4] Applying initial raft cluster configuration. Consists of [9] nodes: {raft-member-1, raft-member-7, raft-member-2, raft-member-6, raft-member-5, raft-member-9, raft-member-8, raft-member-3, raft-member-4}
+[INFO] [02/20/2015 11:05:54.291] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-4] Finished init of new Raft member, becoming Follower. Initial election deadline: Deadline(1424459154482368000 nanoseconds)
+[INFO] [02/20/2015 11:05:54.291] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Applying initial raft cluster configuration. Consists of [9] nodes: {raft-member-1, raft-member-7, raft-member-2, raft-member-6, raft-member-5, raft-member-9, raft-member-8, raft-member-3, raft-member-4}
+[INFO] [02/20/2015 11:05:54.291] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Finished init of new Raft member, becoming Follower. Initial election deadline: Deadline(1424459154510852000 nanoseconds)
+[INFO] [02/20/2015 11:05:54.292] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-6] Applying initial raft cluster configuration. Consists of [9] nodes: {raft-member-1, raft-member-7, raft-member-2, raft-member-6, raft-member-5, raft-member-9, raft-member-8, raft-member-3, raft-member-4}
+[INFO] [02/20/2015 11:05:54.292] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-6] Finished init of new Raft member, becoming Follower. Initial election deadline: Deadline(1424459154519374000 nanoseconds)
+[INFO] [02/20/2015 11:05:54.292] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-7] Applying initial raft cluster configuration. Consists of [9] nodes: {raft-member-1, raft-member-7, raft-member-2, raft-member-6, raft-member-5, raft-member-9, raft-member-8, raft-member-3, raft-member-4}
+[INFO] [02/20/2015 11:05:54.292] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-7] Finished init of new Raft member, becoming Follower. Initial election deadline: Deadline(1424459154465897000 nanoseconds)
+[INFO] [02/20/2015 11:05:54.293] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-8] Applying initial raft cluster configuration. Consists of [9] nodes: {raft-member-1, raft-member-7, raft-member-2, raft-member-6, raft-member-5, raft-member-9, raft-member-8, raft-member-3, raft-member-4}
+[INFO] [02/20/2015 11:05:54.293] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-8] Finished init of new Raft member, becoming Follower. Initial election deadline: Deadline(1424459154538436000 nanoseconds)
+[INFO] [02/20/2015 11:05:54.294] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-9] Applying initial raft cluster configuration. Consists of [9] nodes: {raft-member-1, raft-member-7, raft-member-2, raft-member-6, raft-member-5, raft-member-9, raft-member-8, raft-member-3, raft-member-4}
+[INFO] [02/20/2015 11:05:54.294] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-9] Finished init of new Raft member, becoming Follower. Initial election deadline: Deadline(1424459154478494000 nanoseconds)
+Injecting 19/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-2#2135101372]
+Injecting 20/520 Partition(raft-member-1,raft-member-8)
+{"raft-member-1" : 2} raft-member-1: God partitioned me from raft-member-8
+{"raft-member-8" : 2} raft-member-8: God partitioned me from raft-member-1
+Injecting 21/520 WaitQuiescence
+handleTick Actor[akka://new-system-0/user/raft-member-8#1076560471]
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+[INFO] [02/20/2015 11:05:54.516] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-2] Initializing election (among 9 nodes) for Term(1)
+[INFO] [02/20/2015 11:05:54.520] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-3] Initializing election (among 9 nodes) for Term(1)
+[INFO] [02/20/2015 11:05:54.521] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-9] Voting for Actor[akka://new-system-0/user/raft-member-3#636276302] in Term(1)
+[INFO] [02/20/2015 11:05:54.522] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-5] Voting for Actor[akka://new-system-0/user/raft-member-3#636276302] in Term(1)
+[INFO] [02/20/2015 11:05:54.522] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-1] Voting for Actor[akka://new-system-0/user/raft-member-2#2135101372] in Term(1)
+[INFO] [02/20/2015 11:05:54.523] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-3] Received vote by Actor[akka://new-system-0/user/raft-member-9#897661594]; Have 2 of 9 votes
+[INFO] [02/20/2015 11:05:54.523] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-4] Voting for Actor[akka://new-system-0/user/raft-member-3#636276302] in Term(1)
+[INFO] [02/20/2015 11:05:54.523] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-4] Rejecting vote for Actor[akka://new-system-0/user/raft-member-2#2135101372], and Term(1), currentTerm: Term(0), already voted for: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:54.524] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-5] Rejecting vote for Actor[akka://new-system-0/user/raft-member-2#2135101372], and Term(1), currentTerm: Term(0), already voted for: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:54.525] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-9] Rejecting vote for Actor[akka://new-system-0/user/raft-member-2#2135101372], and Term(1), currentTerm: Term(0), already voted for: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:54.525] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-7] Voting for Actor[akka://new-system-0/user/raft-member-2#2135101372] in Term(1)
+[INFO] [02/20/2015 11:05:54.526] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-8] Initializing election (among 9 nodes) for Term(1)
+[INFO] [02/20/2015 11:05:54.527] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-1] Rejecting vote for Actor[akka://new-system-0/user/raft-member-3#636276302], and Term(1), currentTerm: Term(0), already voted for: Some(Actor[akka://new-system-0/user/raft-member-2#2135101372])
+[INFO] [02/20/2015 11:05:54.527] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-2] Rejected vote by Actor[akka://new-system-0/user/raft-member-4#1081062123], in term Term(0)
+[INFO] [02/20/2015 11:05:54.527] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-2] Rejected vote by Actor[akka://new-system-0/user/raft-member-5#-1007235248], in term Term(0)
+[INFO] [02/20/2015 11:05:54.528] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-4] Rejecting vote for Actor[akka://new-system-0/user/raft-member-8#1076560471], and Term(1), currentTerm: Term(0), already voted for: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:54.528] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-6] Voting for Actor[akka://new-system-0/user/raft-member-3#636276302] in Term(1)
+Checking invariant
+[INFO] [02/20/2015 11:05:54.528] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-8] Rejected vote by Actor[akka://new-system-0/user/raft-member-4#1081062123], in term Term(0)
+handleTick Actor[akka://new-system-0/user/raft-member-6#1752238924]
+handleTick Actor[akka://new-system-0/user/raft-member-9#897661594]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+[INFO] [02/20/2015 11:05:54.570] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-7] Rejecting vote for Actor[akka://new-system-0/user/raft-member-3#636276302], and Term(1), currentTerm: Term(0), already voted for: Some(Actor[akka://new-system-0/user/raft-member-2#2135101372])
+[INFO] [02/20/2015 11:05:54.571] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-2] Received vote by Actor[akka://new-system-0/user/raft-member-1#-1044990185]; Have 2 of 9 votes
+[INFO] [02/20/2015 11:05:54.572] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Rejected vote by Actor[akka://new-system-0/user/raft-member-7#1926203691], in term Term(0)
+[INFO] [02/20/2015 11:05:54.572] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Rejected vote by Actor[akka://new-system-0/user/raft-member-1#-1044990185], in term Term(0)
+[INFO] [02/20/2015 11:05:54.573] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Received vote by Actor[akka://new-system-0/user/raft-member-5#-1007235248]; Have 3 of 9 votes
+[INFO] [02/20/2015 11:05:54.573] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Initializing election (among 9 nodes) for Term(1)
+handleTick Actor[akka://new-system-0/user/raft-member-7#1926203691]
+handleTick Actor[akka://new-system-0/user/raft-member-4#1081062123]
+[INFO] [02/20/2015 11:05:54.574] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-4] Rejecting vote for Actor[akka://new-system-0/user/raft-member-5#-1007235248], and Term(1), currentTerm: Term(0), already voted for: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:54.575] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-2] Received vote by Actor[akka://new-system-0/user/raft-member-7#1926203691]; Have 3 of 9 votes
+[INFO] [02/20/2015 11:05:54.576] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-8] Rejected vote by Actor[akka://new-system-0/user/raft-member-6#1752238924], in term Term(1)
+[INFO] [02/20/2015 11:05:54.577] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-1] Rejecting vote for Actor[akka://new-system-0/user/raft-member-5#-1007235248], and Term(1), currentTerm: Term(0), already voted for: Some(Actor[akka://new-system-0/user/raft-member-2#2135101372])
+[INFO] [02/20/2015 11:05:54.577] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Rejected vote by Actor[akka://new-system-0/user/raft-member-3#636276302], in term Term(1)
+[INFO] [02/20/2015 11:05:54.578] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Received vote by Actor[akka://new-system-0/user/raft-member-4#1081062123]; Have 4 of 9 votes
+[INFO] [02/20/2015 11:05:54.578] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Received vote by Actor[akka://new-system-0/user/raft-member-6#1752238924]; Won election with 5 of 9 votes
+[INFO] [02/20/2015 11:05:54.580] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-2] Rejected vote by Actor[akka://new-system-0/user/raft-member-3#636276302], in term Term(1)
+[INFO] [02/20/2015 11:05:54.580] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-5] Rejected vote by Actor[akka://new-system-0/user/raft-member-4#1081062123], in term Term(0)
+[INFO] [02/20/2015 11:05:54.580] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-8] Rejected vote by Actor[akka://new-system-0/user/raft-member-9#897661594], in term Term(1)
+Checking invariant
+[INFO] [02/20/2015 11:05:54.590] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-2] Rejected vote by Actor[akka://new-system-0/user/raft-member-8#1076560471], in term Term(1)
+[INFO] [02/20/2015 11:05:54.591] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-8] Rejected vote by Actor[akka://new-system-0/user/raft-member-5#-1007235248], in term Term(1)
+[INFO] [02/20/2015 11:05:54.591] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Rejected vote by Actor[akka://new-system-0/user/raft-member-2#2135101372], in term Term(1)
+[INFO] [02/20/2015 11:05:54.591] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-6] Initializing election (among 9 nodes) for Term(1)
+[INFO] [02/20/2015 11:05:54.592] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-7] Initializing election (among 9 nodes) for Term(1)
+[WARN] [02/20/2015 11:05:54.594] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] unhandled event RequestVote(Term(1),Actor[akka://new-system-0/user/raft-member-8#1076560471],Term(0),0) in state Leader
+[INFO] [02/20/2015 11:05:54.596] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-1] Rejecting vote for Actor[akka://new-system-0/user/raft-member-6#1752238924], and Term(1), currentTerm: Term(0), already voted for: Some(Actor[akka://new-system-0/user/raft-member-2#2135101372])
+[INFO] [02/20/2015 11:05:54.596] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-4] Initializing election (among 9 nodes) for Term(1)
+[INFO] [02/20/2015 11:05:54.598] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-7] Rejected vote by Actor[akka://new-system-0/user/raft-member-5#-1007235248], in term Term(1)
+[INFO] [02/20/2015 11:05:54.599] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-4] Rejected vote by Actor[akka://new-system-0/user/raft-member-9#897661594], in term Term(1)
+[INFO] [02/20/2015 11:05:54.599] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Became leader for Term(1)
+[INFO] [02/20/2015 11:05:54.599] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Preparing nextIndex and matchIndex table for followers, init all to: replicatedLog.lastIndex = 0
+[INFO] [02/20/2015 11:05:54.602] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Starting hearbeat, with interval: 50 milliseconds
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+[INFO] [02/20/2015 11:05:54.605] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-8] Rejected vote by Actor[akka://new-system-0/user/raft-member-7#1926203691], in term Term(1)
+[INFO] [02/20/2015 11:05:54.605] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-6] Rejected vote by Actor[akka://new-system-0/user/raft-member-9#897661594], in term Term(1)
+[INFO] [02/20/2015 11:05:54.606] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-8] Rejected vote by Actor[akka://new-system-0/user/raft-member-2#2135101372], in term Term(1)
+[INFO] [02/20/2015 11:05:54.606] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Rejected vote by Actor[akka://new-system-0/user/raft-member-7#1926203691], in term Term(1)
+[INFO] [02/20/2015 11:05:54.606] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Reverting to Follower, because got AppendEntries from Leader in Term(1), but am in Term(1)
+Checking invariant
+[INFO] [02/20/2015 11:05:54.612] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-1] Reverting to Follower, because got AppendEntries from Leader in Term(1), but am in Term(1)
+[INFO] [02/20/2015 11:05:54.612] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-6] Rejected vote by Actor[akka://new-system-0/user/raft-member-1#-1044990185], in term Term(0)
+[INFO] [02/20/2015 11:05:54.613] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-5] Voting for Actor[akka://new-system-0/user/raft-member-6#1752238924] in Term(1)
+[INFO] [02/20/2015 11:05:54.613] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-2] Rejected vote by Actor[akka://new-system-0/user/raft-member-9#897661594], in term Term(0)
+[INFO] [02/20/2015 11:05:54.614] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-9] Initializing election (among 9 nodes) for Term(1)
+[INFO] [02/20/2015 11:05:54.616] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-2] Reverting to Follower, because got AppendEntries from Leader in Term(1), but am in Term(1)
+[WARN] [02/20/2015 11:05:54.616] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] unhandled event RequestVote(Term(1),Actor[akka://new-system-0/user/raft-member-9#897661594],Term(0),0) in state Leader
+[INFO] [02/20/2015 11:05:54.617] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-9] Rejected vote by Actor[akka://new-system-0/user/raft-member-6#1752238924], in term Term(1)
+[INFO] [02/20/2015 11:05:54.617] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-6] Rejected vote by Actor[akka://new-system-0/user/raft-member-4#1081062123], in term Term(1)
+[INFO] [02/20/2015 11:05:54.617] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-2] Voting for Actor[akka://new-system-0/user/raft-member-9#897661594] in Term(1)
+[INFO] [02/20/2015 11:05:54.618] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-4] Rejected vote by Actor[akka://new-system-0/user/raft-member-8#1076560471], in term Term(1)
+[INFO] [02/20/2015 11:05:54.618] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-6] Reverting to Follower, because got AppendEntries from Leader in Term(1), but am in Term(1)
+[WARN] [02/20/2015 11:05:54.619] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] unhandled event DeclineCandidate(Term(1)) in state Follower
+[INFO] [02/20/2015 11:05:54.619] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-7] Rejected vote by Actor[akka://new-system-0/user/raft-member-1#-1044990185], in term Term(1)
+[INFO] [02/20/2015 11:05:54.620] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-9] Received vote by Actor[akka://new-system-0/user/raft-member-2#2135101372]; Have 2 of 9 votes
+[INFO] [02/20/2015 11:05:54.620] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-1] Voting for Actor[akka://new-system-0/user/raft-member-9#897661594] in Term(1)
+Checking invariant
+[INFO] [02/20/2015 11:05:54.625] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-1] Rejecting vote for Actor[akka://new-system-0/user/raft-member-4#1081062123], and Term(1), currentTerm: Term(1), already voted for: Some(Actor[akka://new-system-0/user/raft-member-9#897661594])
+[WARN] [02/20/2015 11:05:54.626] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-3] unhandled event RequestVote(Term(1),Actor[akka://new-system-0/user/raft-member-4#1081062123],Term(0),0) in state Leader
+[INFO] [02/20/2015 11:05:54.626] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-7] Rejected vote by Actor[akka://new-system-0/user/raft-member-6#1752238924], in term Term(1)
+[INFO] [02/20/2015 11:05:54.626] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-4] Rejected vote by Actor[akka://new-system-0/user/raft-member-7#1926203691], in term Term(1)
+[INFO] [02/20/2015 11:05:54.627] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-4] Rejected vote by Actor[akka://new-system-0/user/raft-member-2#2135101372], in term Term(1)
+[INFO] [02/20/2015 11:05:54.627] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-4] Rejected vote by Actor[akka://new-system-0/user/raft-member-1#-1044990185], in term Term(1)
+[INFO] [02/20/2015 11:05:54.628] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-4] Reverting to Follower, because got AppendEntries from Leader in Term(1), but am in Term(1)
+[INFO] [02/20/2015 11:05:54.628] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Rejecting vote for Actor[akka://new-system-0/user/raft-member-4#1081062123], and Term(1), currentTerm: Term(1), already voted for: Some(Actor[akka://new-system-0/user/raft-member-6#1752238924])
+[WARN] [02/20/2015 11:05:54.629] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-4] unhandled event DeclineCandidate(Term(1)) in state Follower
+[WARN] [02/20/2015 11:05:54.630] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] unhandled event RequestVote(Term(1),Actor[akka://new-system-0/user/raft-member-6#1752238924],Term(0),0) in state Leader
+[INFO] [02/20/2015 11:05:54.630] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-9] Reverting to Follower, because got AppendEntries from Leader in Term(1), but am in Term(1)
+[WARN] [02/20/2015 11:05:54.631] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-9] unhandled event DeclineCandidate(Term(1)) in state Follower
+[WARN] [02/20/2015 11:05:54.631] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-2] unhandled event DeclineCandidate(Term(1)) in state Follower
+[WARN] [02/20/2015 11:05:54.631] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-6] unhandled event DeclineCandidate(Term(1)) in state Follower
+[WARN] [02/20/2015 11:05:54.632] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-9] unhandled event DeclineCandidate(Term(1)) in state Follower
+[INFO] [02/20/2015 11:05:54.632] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-6] Voting for Actor[akka://new-system-0/user/raft-member-4#1081062123] in Term(1)
+[INFO] [02/20/2015 11:05:54.632] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-4] Voting for Actor[akka://new-system-0/user/raft-member-7#1926203691] in Term(1)
+[WARN] [02/20/2015 11:05:54.633] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-4] unhandled event VoteCandidate(Term(1)) in state Follower
+[INFO] [02/20/2015 11:05:54.633] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-7] Received vote by Actor[akka://new-system-0/user/raft-member-4#1081062123]; Have 2 of 9 votes
+[WARN] [02/20/2015 11:05:54.634] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-5] unhandled event DeclineCandidate(Term(1)) in state Follower
+[WARN] [02/20/2015 11:05:54.634] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-9] unhandled event VoteCandidate(Term(1)) in state Follower
+[INFO] [02/20/2015 11:05:54.634] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-7] Reverting to Follower, because got AppendEntries from Leader in Term(1), but am in Term(1)
+[WARN] [02/20/2015 11:05:54.635] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-6] unhandled event DeclineCandidate(Term(1)) in state Follower
+[WARN] [02/20/2015 11:05:54.636] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-6] unhandled event DeclineCandidate(Term(1)) in state Follower
+Checking invariant
+[WARN] [02/20/2015 11:05:54.636] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-7] unhandled event DeclineCandidate(Term(1)) in state Follower
+[INFO] [02/20/2015 11:05:54.642] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-4] Rejecting vote for Actor[akka://new-system-0/user/raft-member-9#897661594], and Term(1), currentTerm: Term(1), already voted for: Some(Actor[akka://new-system-0/user/raft-member-7#1926203691])
+[INFO] [02/20/2015 11:05:54.642] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-5] Rejecting vote for Actor[akka://new-system-0/user/raft-member-9#897661594], and Term(1), currentTerm: Term(1), already voted for: Some(Actor[akka://new-system-0/user/raft-member-6#1752238924])
+[INFO] [02/20/2015 11:05:54.642] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-8] Reverting to Follower, because got AppendEntries from Leader in Term(1), but am in Term(1)
+[WARN] [02/20/2015 11:05:54.643] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-9] unhandled event DeclineCandidate(Term(1)) in state Follower
+[WARN] [02/20/2015 11:05:54.643] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-9] unhandled event DeclineCandidate(Term(1)) in state Follower
+[WARN] [02/20/2015 11:05:54.643] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] unhandled event DeclineCandidate(Term(0)) in state Follower
+[WARN] [02/20/2015 11:05:54.643] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] unhandled event RequestVote(Term(1),Actor[akka://new-system-0/user/raft-member-7#1926203691],Term(0),0) in state Leader
+[WARN] [02/20/2015 11:05:54.644] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] unhandled event DeclineCandidate(Term(1)) in state Follower
+[WARN] [02/20/2015 11:05:54.644] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-7] unhandled event DeclineCandidate(Term(1)) in state Follower
+[WARN] [02/20/2015 11:05:54.644] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-7] unhandled event DeclineCandidate(Term(1)) in state Follower
+[WARN] [02/20/2015 11:05:54.645] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-1] unhandled event BeginElection in state Follower
+Injecting 22/520 Partition(raft-member-4,raft-member-6)
+[WARN] [02/20/2015 11:05:54.645] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-6] unhandled event VoteCandidate(Term(1)) in state Follower
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 2, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-4: God partitioned me from raft-member-6
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 2, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-6: God partitioned me from raft-member-4
+Injecting 23/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 24/520 Continue(23)
+Injecting 25/520 Send(raft-member-2,<function0>)
+Injecting 26/520 UnPartition(raft-member-1,raft-member-8)
+{"raft-member-1" : 3, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-1: God reconnected me to raft-member-8
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 1, "raft-member-8" : 3, "raft-member-9" : 1} raft-member-8: God reconnected me to raft-member-1
+Injecting 27/520 WaitQuiescence
+[INFO] [02/20/2015 11:05:54.690] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-2] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(951)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+Injecting 28/520 WaitTimers(1)
+[INFO] [02/20/2015 11:05:54.693] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/deadLetters] Message [pl.project13.scala.akka.raft.protocol.RaftProtocol$LeaderIs] from Actor[akka://new-system-0/user/raft-member-2#2135101372] to Actor[akka://new-system-0/deadLetters] was not delivered. [1] dead letters encountered. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 29/520 Continue(1)
+Checking invariant
+Injecting 30/520 WaitQuiescence
+Injecting 31/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 32/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 33/520 UnPartition(raft-member-4,raft-member-6)
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 3, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-4: God reconnected me to raft-member-6
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 3, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-6: God reconnected me to raft-member-4
+Injecting 34/520 Continue(29)
+Injecting 35/520 WaitQuiescence
+Injecting 36/520 Send(raft-member-5,<function0>)
+Injecting 37/520 Continue(20)
+Injecting 38/520 WaitTimers(1)
+[INFO] [02/20/2015 11:05:54.824] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(9891)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:54.824] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/deadLetters] Message [pl.project13.scala.akka.raft.protocol.RaftProtocol$LeaderIs] from Actor[akka://new-system-0/user/raft-member-5#-1007235248] to Actor[akka://new-system-0/deadLetters] was not delivered. [2] dead letters encountered. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 39/520 Send(raft-member-4,<function0>)
+Injecting 40/520 WaitQuiescence
+[INFO] [02/20/2015 11:05:54.867] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-4] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(828)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:54.867] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/deadLetters] Message [pl.project13.scala.akka.raft.protocol.RaftProtocol$LeaderIs] from Actor[akka://new-system-0/user/raft-member-4#1081062123] to Actor[akka://new-system-0/deadLetters] was not delivered. [3] dead letters encountered. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
+Checking invariant
+Injecting 41/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 42/520 Continue(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 43/520 Continue(16)
+Injecting 44/520 Send(raft-member-2,<function0>)
+Injecting 45/520 Continue(2)
+Injecting 46/520 Send(raft-member-7,<function0>)
+Injecting 47/520 Continue(17)
+[INFO] [02/20/2015 11:05:54.980] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-2] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(2551)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:54.980] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/deadLetters] Message [pl.project13.scala.akka.raft.protocol.RaftProtocol$LeaderIs] from Actor[akka://new-system-0/user/raft-member-2#2135101372] to Actor[akka://new-system-0/deadLetters] was not delivered. [4] dead letters encountered. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
+[INFO] [02/20/2015 11:05:54.981] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-7] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(7056)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:54.981] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/deadLetters] Message [pl.project13.scala.akka.raft.protocol.RaftProtocol$LeaderIs] from Actor[akka://new-system-0/user/raft-member-7#1926203691] to Actor[akka://new-system-0/deadLetters] was not delivered. [5] dead letters encountered. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Checking invariant
+Injecting 48/520 Continue(11)
+Injecting 49/520 WaitQuiescence
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 50/520 Continue(25)
+Injecting 51/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 52/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 53/520 Partition(raft-member-1,raft-member-7)
+{"raft-member-1" : 4, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-1: God partitioned me from raft-member-7
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 2, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-7: God partitioned me from raft-member-1
+Injecting 54/520 Continue(7)
+Checking invariant
+Injecting 55/520 UnPartition(raft-member-1,raft-member-7)
+{"raft-member-1" : 5, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-1: God reconnected me to raft-member-7
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 3, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-7: God reconnected me to raft-member-1
+Injecting 56/520 Send(raft-member-1,<function0>)
+Injecting 57/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 58/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 59/520 Continue(21)
+[INFO] [02/20/2015 11:05:55.366] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-1] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(2647)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:55.366] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/deadLetters] Message [pl.project13.scala.akka.raft.protocol.RaftProtocol$LeaderIs] from Actor[akka://new-system-0/user/raft-member-1#-1044990185] to Actor[akka://new-system-0/deadLetters] was not delivered. [6] dead letters encountered. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
+Checking invariant
+Injecting 60/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 61/520 Send(raft-member-2,<function0>)
+Injecting 62/520 Continue(38)
+[INFO] [02/20/2015 11:05:55.417] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-2] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(9212)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:55.417] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/deadLetters] Message [pl.project13.scala.akka.raft.protocol.RaftProtocol$LeaderIs] from Actor[akka://new-system-0/user/raft-member-2#2135101372] to Actor[akka://new-system-0/deadLetters] was not delivered. [7] dead letters encountered. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
+Injecting 63/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 64/520 Continue(27)
+Injecting 65/520 Send(raft-member-6,<function0>)
+Injecting 66/520 Continue(40)
+Injecting 67/520 Partition(raft-member-6,raft-member-8)
+[INFO] [02/20/2015 11:05:55.469] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-6] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(9618)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:55.469] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/deadLetters] Message [pl.project13.scala.akka.raft.protocol.RaftProtocol$LeaderIs] from Actor[akka://new-system-0/user/raft-member-6#1752238924] to Actor[akka://new-system-0/deadLetters] was not delivered. [8] dead letters encountered. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 4, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-6: God partitioned me from raft-member-8
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 1, "raft-member-8" : 4, "raft-member-9" : 1} raft-member-8: God partitioned me from raft-member-6
+Injecting 68/520 Continue(35)
+Injecting 69/520 Send(raft-member-4,<function0>)
+Injecting 70/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 71/520 Kill(raft-member-7)
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 4, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-7: God killed me
+Injecting 72/520 Continue(32)
+[INFO] [02/20/2015 11:05:55.516] [new-system-0-akka.actor.default-dispatcher-9] [akka://new-system-0/user/raft-member-4] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(9586)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:55.516] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/deadLetters] Message [pl.project13.scala.akka.raft.protocol.RaftProtocol$LeaderIs] from Actor[akka://new-system-0/user/raft-member-4#1081062123] to Actor[akka://new-system-0/deadLetters] was not delivered. [9] dead letters encountered. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
+Checking invariant
+Injecting 73/520 Send(raft-member-4,<function0>)
+Injecting 74/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 75/520 Continue(15)
+[INFO] [02/20/2015 11:05:55.576] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-4] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(1453)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:55.576] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/deadLetters] Message [pl.project13.scala.akka.raft.protocol.RaftProtocol$LeaderIs] from Actor[akka://new-system-0/user/raft-member-4#1081062123] to Actor[akka://new-system-0/deadLetters] was not delivered. [10] dead letters encountered, no more dead letters will be logged. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
+Injecting 76/520 Send(raft-member-2,<function0>)
+Injecting 77/520 Partition(raft-member-1,raft-member-3)
+{"raft-member-1" : 6, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-1: God partitioned me from raft-member-3
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 2, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-3: God partitioned me from raft-member-1
+Injecting 78/520 Partition(raft-member-3,raft-member-5)
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 3, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-3: God partitioned me from raft-member-5
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 1, "raft-member-5" : 2, "raft-member-6" : 1, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-5: God partitioned me from raft-member-3
+Injecting 79/520 Send(raft-member-6,<function0>)
+Injecting 80/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 81/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 82/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-7#1926203691]
+Injecting 83/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 84/520 UnPartition(raft-member-1,raft-member-3)
+{"raft-member-1" : 7, "raft-member-2" : 1, "raft-member-3" : 1, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-1: God reconnected me to raft-member-3
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 4, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-3: God reconnected me to raft-member-1
+Injecting 85/520 Send(raft-member-5,<function0>)
+Injecting 86/520 Send(raft-member-5,<function0>)
+Injecting 87/520 Send(raft-member-2,<function0>)
+Injecting 88/520 Continue(36)
+[INFO] [02/20/2015 11:05:55.718] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-2] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(2010)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:55.719] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-6] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(4650)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:55.721] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(7115)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:55.722] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(7428)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:55.722] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-2] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(7207)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:55.723] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-7] Initializing election (among 9 nodes) for Term(2)
+Checking invariant
+Injecting 89/520 Send(raft-member-3,<function0>)
+Injecting 90/520 Send(raft-member-4,<function0>)
+Injecting 91/520 Send(raft-member-6,<function0>)
+Injecting 92/520 Send(raft-member-9,<function0>)
+Injecting 93/520 Send(raft-member-2,<function0>)
+Injecting 94/520 Partition(raft-member-1,raft-member-3)
+{"raft-member-1" : 8, "raft-member-2" : 1, "raft-member-3" : 4, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-1: God partitioned me from raft-member-3
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 5, "raft-member-4" : 1, "raft-member-5" : 1, "raft-member-6" : 1, "raft-member-7" : 1, "raft-member-8" : 2, "raft-member-9" : 1} raft-member-3: God partitioned me from raft-member-1
+Injecting 95/520 Send(raft-member-9,<function0>)
+Injecting 96/520 WaitQuiescence
+[INFO] [02/20/2015 11:05:55.731] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Appending command: [AppendWord(843)] from Actor[akka://new-system-0/deadLetters] to replicated log...
+[INFO] [02/20/2015 11:05:55.735] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-4] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(6340)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:55.735] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-6] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(886)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:55.735] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-9] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(8384)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:55.736] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-2] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(6480)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:55.736] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-9] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(9746)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-3#636276302])
+[INFO] [02/20/2015 11:05:55.743] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(1), index: 0
+[INFO] [02/20/2015 11:05:55.749] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Consensus for persisted index: -1. (Comitted index: -1)
+[INFO] [02/20/2015 11:05:55.750] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(1), index: 0
+[INFO] [02/20/2015 11:05:55.750] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Consensus for persisted index: -1. (Comitted index: -1)
+[INFO] [02/20/2015 11:05:55.750] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(1), index: 0
+[INFO] [02/20/2015 11:05:55.751] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Consensus for persisted index: -1. (Comitted index: -1)
+[INFO] [02/20/2015 11:05:55.751] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(1), index: 0
+[INFO] [02/20/2015 11:05:55.751] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Consensus for persisted index: 0. (Comitted index: -1, will commit now: true)
+[INFO] [02/20/2015 11:05:55.754] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Committing log at index: 0; Applying command: AppendWord(843), will send result to client: Some(Actor[akka://new-system-0/deadLetters])
+[INFO] [02/20/2015 11:05:55.754] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Applied command [AppendWord(843)], full words is: Vector(843)
+[INFO] [02/20/2015 11:05:55.755] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(1), index: 0
+Injecting 97/520 WaitTimers(1)
+[INFO] [02/20/2015 11:05:55.756] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Consensus for persisted index: 0. (Comitted index: 0)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 98/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Injecting 99/520 Send(raft-member-5,<function0>)
+Injecting 100/520 Continue(12)
+Checking invariant
+[INFO] [02/20/2015 11:05:55.778] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Candidate got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(6565)) from client; Respond with anarchy - there is no leader.
+[INFO] [02/20/2015 11:05:55.782] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Initializing election (among 9 nodes) for Term(2)
+[INFO] [02/20/2015 11:05:55.783] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-4] Voting for Actor[akka://new-system-0/user/raft-member-5#-1007235248] in Term(2)
+[INFO] [02/20/2015 11:05:55.784] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-8] Applied command [AppendWord(843)], full words is: Vector(843)
+[INFO] [02/20/2015 11:05:55.784] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-6] Applied command [AppendWord(843)], full words is: Vector(843)
+[INFO] [02/20/2015 11:05:55.784] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(1), index: 0
+[INFO] [02/20/2015 11:05:55.785] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.785] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-6] Voting for Actor[akka://new-system-0/user/raft-member-5#-1007235248] in Term(2)
+[INFO] [02/20/2015 11:05:55.785] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-1] Voting for Actor[akka://new-system-0/user/raft-member-5#-1007235248] in Term(2)
+[INFO] [02/20/2015 11:05:55.785] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(1), index: 0
+[INFO] [02/20/2015 11:05:55.785] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.786] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-2] Voting for Actor[akka://new-system-0/user/raft-member-5#-1007235248] in Term(2)
+[INFO] [02/20/2015 11:05:55.786] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Received vote by Actor[akka://new-system-0/user/raft-member-6#1752238924]; Have 2 of 9 votes
+[INFO] [02/20/2015 11:05:55.786] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-4] Applied command [AppendWord(843)], full words is: Vector(843)
+[INFO] [02/20/2015 11:05:55.786] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Received vote by Actor[akka://new-system-0/user/raft-member-4#1081062123]; Have 3 of 9 votes
+[INFO] [02/20/2015 11:05:55.787] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-9] Voting for Actor[akka://new-system-0/user/raft-member-5#-1007235248] in Term(2)
+[INFO] [02/20/2015 11:05:55.787] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-8] Voting for Actor[akka://new-system-0/user/raft-member-5#-1007235248] in Term(2)
+[INFO] [02/20/2015 11:05:55.787] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Received vote by Actor[akka://new-system-0/user/raft-member-8#1076560471]; Have 4 of 9 votes
+[INFO] [02/20/2015 11:05:55.787] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-9] Applied command [AppendWord(843)], full words is: Vector(843)
+[INFO] [02/20/2015 11:05:55.788] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-3] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(1), index: 0
+[INFO] [02/20/2015 11:05:55.788] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-3] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.788] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-2] Applied command [AppendWord(843)], full words is: Vector(843)
+[INFO] [02/20/2015 11:05:55.788] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-3] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(1), index: 0
+[INFO] [02/20/2015 11:05:55.789] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-3] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.789] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Received vote by Actor[akka://new-system-0/user/raft-member-9#897661594]; Won election with 5 of 9 votes
+[INFO] [02/20/2015 11:05:55.789] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-3] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(1), index: 0
+[INFO] [02/20/2015 11:05:55.789] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-3] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.789] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Became leader for Term(2)
+[INFO] [02/20/2015 11:05:55.789] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Preparing nextIndex and matchIndex table for followers, init all to: replicatedLog.lastIndex = 0
+[INFO] [02/20/2015 11:05:55.790] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Starting hearbeat, with interval: 50 milliseconds
+Checking invariant
+Injecting 101/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+Injecting 102/520 Partition(raft-member-2,raft-member-3)
+{"raft-member-1" : 2, "raft-member-2" : 2, "raft-member-3" : 5, "raft-member-4" : 3, "raft-member-5" : 2, "raft-member-6" : 4, "raft-member-7" : 1, "raft-member-8" : 4, "raft-member-9" : 1} raft-member-2: God partitioned me from raft-member-3
+{"raft-member-1" : 2, "raft-member-2" : 1, "raft-member-3" : 6, "raft-member-4" : 3, "raft-member-5" : 2, "raft-member-6" : 4, "raft-member-7" : 1, "raft-member-8" : 4, "raft-member-9" : 1} raft-member-3: God partitioned me from raft-member-2
+Injecting 103/520 Continue(20)
+[INFO] [02/20/2015 11:05:55.818] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(1), index: 0
+[INFO] [02/20/2015 11:05:55.819] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.819] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(1), index: 0
+[INFO] [02/20/2015 11:05:55.819] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.820] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(1), index: 0
+[INFO] [02/20/2015 11:05:55.820] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.821] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(1), index: 0
+Injecting 104/520 UnPartition(raft-member-2,raft-member-3)
+[INFO] [02/20/2015 11:05:55.821] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Consensus for persisted index: 0. (Comitted index: 0)
+{"raft-member-1" : 2, "raft-member-2" : 3, "raft-member-3" : 5, "raft-member-4" : 3, "raft-member-5" : 2, "raft-member-6" : 4, "raft-member-7" : 1, "raft-member-8" : 4, "raft-member-9" : 1} raft-member-2: God reconnected me to raft-member-3
+{"raft-member-1" : 8, "raft-member-2" : 1, "raft-member-3" : 7, "raft-member-4" : 3, "raft-member-5" : 2, "raft-member-6" : 4, "raft-member-7" : 1, "raft-member-8" : 4, "raft-member-9" : 1} raft-member-3: God reconnected me to raft-member-2
+Injecting 105/520 Continue(2)
+Injecting 106/520 Send(raft-member-5,<function0>)
+Injecting 107/520 WaitQuiescence
+[INFO] [02/20/2015 11:05:55.822] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Appending command: [AppendWord(1127)] from Actor[akka://new-system-0/deadLetters] to replicated log...
+[INFO] [02/20/2015 11:05:55.824] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.824] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: -1. (Comitted index: -1)
+[INFO] [02/20/2015 11:05:55.825] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.825] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: -1. (Comitted index: -1)
+[INFO] [02/20/2015 11:05:55.826] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.826] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: -1. (Comitted index: -1)
+[INFO] [02/20/2015 11:05:55.826] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.826] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: -1, will commit now: true)
+[INFO] [02/20/2015 11:05:55.826] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Committing log at index: 0; Applying command: AppendWord(1127), will send result to client: Some(Actor[akka://new-system-0/deadLetters])
+[INFO] [02/20/2015 11:05:55.826] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Applied command [AppendWord(1127)], full words is: Vector(1127)
+[INFO] [02/20/2015 11:05:55.826] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.826] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.827] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 0
+Injecting 108/520 UnPartition(raft-member-1,raft-member-3)
+[INFO] [02/20/2015 11:05:55.827] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+{"raft-member-1" : 9, "raft-member-2" : 1, "raft-member-3" : 5, "raft-member-4" : 3, "raft-member-5" : 2, "raft-member-6" : 4, "raft-member-7" : 1, "raft-member-8" : 4, "raft-member-9" : 1} raft-member-1: God reconnected me to raft-member-3
+{"raft-member-1" : 8, "raft-member-2" : 1, "raft-member-3" : 8, "raft-member-4" : 3, "raft-member-5" : 2, "raft-member-6" : 4, "raft-member-7" : 1, "raft-member-8" : 4, "raft-member-9" : 1} raft-member-3: God reconnected me to raft-member-1
+Injecting 109/520 UnPartition(raft-member-3,raft-member-5)
+{"raft-member-1" : 8, "raft-member-2" : 1, "raft-member-3" : 9, "raft-member-4" : 3, "raft-member-5" : 2, "raft-member-6" : 4, "raft-member-7" : 1, "raft-member-8" : 4, "raft-member-9" : 1} raft-member-3: God reconnected me to raft-member-5
+{"raft-member-1" : 8, "raft-member-2" : 3, "raft-member-3" : 6, "raft-member-4" : 3, "raft-member-5" : 3, "raft-member-6" : 4, "raft-member-7" : 1, "raft-member-8" : 4, "raft-member-9" : 1} raft-member-5: God reconnected me to raft-member-3
+Injecting 110/520 Send(raft-member-7,<function0>)
+Injecting 111/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Injecting 112/520 Send(raft-member-2,<function0>)
+Injecting 113/520 UnPartition(raft-member-6,raft-member-8)
+{"raft-member-1" : 8, "raft-member-2" : 3, "raft-member-3" : 6, "raft-member-4" : 3, "raft-member-5" : 2, "raft-member-6" : 5, "raft-member-7" : 1, "raft-member-8" : 4, "raft-member-9" : 1} raft-member-6: God reconnected me to raft-member-8
+{"raft-member-1" : 8, "raft-member-2" : 1, "raft-member-3" : 6, "raft-member-4" : 3, "raft-member-5" : 2, "raft-member-6" : 4, "raft-member-7" : 1, "raft-member-8" : 5, "raft-member-9" : 1} raft-member-8: God reconnected me to raft-member-6
+Injecting 114/520 Continue(27)
+[INFO] [02/20/2015 11:05:55.856] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-7] Candidate got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(4526)) from client; Respond with anarchy - there is no leader.
+[INFO] [02/20/2015 11:05:55.857] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-2] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(7308)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-5#-1007235248])
+[INFO] [02/20/2015 11:05:55.857] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-3] Leader (@ Term(1)) got AppendEntries from fresher Leader (@ Term(2)), will step down and the Leader will keep being: Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Checking invariant
+[INFO] [02/20/2015 11:05:55.863] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-1] Applied command [AppendWord(1127)], full words is: Vector(1127)
+[INFO] [02/20/2015 11:05:55.864] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.864] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.864] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.864] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.864] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.864] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.865] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.865] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.865] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.865] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.866] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 0
+Injecting 115/520 Partition(raft-member-1,raft-member-4)
+[INFO] [02/20/2015 11:05:55.866] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+{"raft-member-1" : 10, "raft-member-2" : 3, "raft-member-3" : 6, "raft-member-4" : 3, "raft-member-5" : 3, "raft-member-6" : 4, "raft-member-7" : 1, "raft-member-8" : 4, "raft-member-9" : 1} raft-member-1: God partitioned me from raft-member-4
+{"raft-member-1" : 9, "raft-member-2" : 3, "raft-member-3" : 6, "raft-member-4" : 4, "raft-member-5" : 3, "raft-member-6" : 4, "raft-member-7" : 1, "raft-member-8" : 5, "raft-member-9" : 1} raft-member-4: God partitioned me from raft-member-1
+Injecting 116/520 WaitQuiescence
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+[INFO] [02/20/2015 11:05:55.909] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.909] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.911] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.912] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.913] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.913] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.914] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.914] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.914] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.914] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.914] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.914] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.915] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 0
+Injecting 117/520 Continue(3)
+[INFO] [02/20/2015 11:05:55.915] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Checking invariant
+[INFO] [02/20/2015 11:05:55.962] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.962] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.963] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.963] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.963] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.964] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+handleTick Actor[akka://new-system-0/user/raft-member-7#1926203691]
+[INFO] [02/20/2015 11:05:55.964] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.964] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.964] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.965] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.965] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-7] Voting timeout, starting a new election (among 9)...
+[INFO] [02/20/2015 11:05:55.965] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-7] Initializing election (among 9 nodes) for Term(3)
+[INFO] [02/20/2015 11:05:55.965] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.965] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:55.966] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:55.966] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+[INFO] [02/20/2015 11:05:56.007] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.008] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.008] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.008] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.009] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.009] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.009] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.010] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.011] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.011] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.011] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.012] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.012] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 0
+Injecting 118/520 Continue(27)
+[INFO] [02/20/2015 11:05:56.012] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Checking invariant
+[INFO] [02/20/2015 11:05:56.061] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.062] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.062] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.062] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.063] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.063] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.067] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.068] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.068] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.068] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.068] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.068] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.069] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.069] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+[INFO] [02/20/2015 11:05:56.107] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.108] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.109] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.109] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.110] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.110] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.110] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.110] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.111] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.111] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.112] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.112] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.112] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 0
+Injecting 119/520 Continue(30)
+Injecting 120/520 WaitTimers(1)
+[INFO] [02/20/2015 11:05:56.112] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Injecting 121/520 Send(raft-member-8,<function0>)
+Injecting 122/520 Continue(15)
+[INFO] [02/20/2015 11:05:56.156] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-8] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(148)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-5#-1007235248])
+Checking invariant
+[INFO] [02/20/2015 11:05:56.163] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.163] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.164] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.164] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.165] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.165] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.165] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.165] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.165] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.165] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.166] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.166] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.166] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 0
+Injecting 123/520 Partition(raft-member-6,raft-member-8)
+[INFO] [02/20/2015 11:05:56.166] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+{"raft-member-1" : 10, "raft-member-2" : 3, "raft-member-3" : 9, "raft-member-4" : 4, "raft-member-5" : 3, "raft-member-6" : 6, "raft-member-7" : 1, "raft-member-8" : 5, "raft-member-9" : 1} raft-member-6: God partitioned me from raft-member-8
+{"raft-member-1" : 10, "raft-member-2" : 3, "raft-member-3" : 9, "raft-member-4" : 4, "raft-member-5" : 3, "raft-member-6" : 5, "raft-member-7" : 1, "raft-member-8" : 6, "raft-member-9" : 1} raft-member-8: God partitioned me from raft-member-6
+Injecting 124/520 Send(raft-member-7,<function0>)
+Injecting 125/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Injecting 126/520 Continue(21)
+[INFO] [02/20/2015 11:05:56.205] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-7] Candidate got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(7058)) from client; Respond with anarchy - there is no leader.
+[INFO] [02/20/2015 11:05:56.209] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.209] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.209] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.209] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.210] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.210] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.211] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.211] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.212] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.212] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.212] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.213] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.213] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 0
+Injecting 127/520 WaitTimers(1)
+[INFO] [02/20/2015 11:05:56.213] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Injecting 128/520 Send(raft-member-1,<function0>)
+Injecting 129/520 Partition(raft-member-2,raft-member-8)
+{"raft-member-1" : 10, "raft-member-2" : 4, "raft-member-3" : 9, "raft-member-4" : 4, "raft-member-5" : 3, "raft-member-6" : 5, "raft-member-7" : 1, "raft-member-8" : 5, "raft-member-9" : 1} raft-member-2: God partitioned me from raft-member-8
+{"raft-member-1" : 10, "raft-member-2" : 3, "raft-member-3" : 9, "raft-member-4" : 4, "raft-member-5" : 3, "raft-member-6" : 5, "raft-member-7" : 1, "raft-member-8" : 7, "raft-member-9" : 1} raft-member-8: God partitioned me from raft-member-2
+Injecting 130/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Injecting 131/520 WaitQuiescence
+Checking invariant
+[INFO] [02/20/2015 11:05:56.306] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-1] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(5239)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-5#-1007235248])
+[INFO] [02/20/2015 11:05:56.312] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.312] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.313] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.313] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.314] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.314] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.314] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.314] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.315] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.315] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.315] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.315] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.316] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.316] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.317] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.317] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.317] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.318] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.318] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.318] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.318] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.318] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.318] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.318] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.319] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.319] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.319] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 0
+Injecting 132/520 WaitTimers(1)
+[INFO] [02/20/2015 11:05:56.319] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Injecting 133/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Injecting 134/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Injecting 135/520 Continue(22)
+Checking invariant
+[INFO] [02/20/2015 11:05:56.465] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.466] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.466] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.466] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.466] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.466] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.467] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.467] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.467] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.467] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.468] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.468] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.468] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.468] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.470] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.470] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.470] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.470] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.470] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.470] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.471] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 0
+Checking invariant
+[INFO] [02/20/2015 11:05:56.471] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.474] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.475] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.475] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.475] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.475] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.476] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.476] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.476] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.477] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.477] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.477] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.477] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.478] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.478] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.478] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.478] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.478] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.478] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.478] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 0
+Injecting 136/520 Send(raft-member-2,<function0>)
+Injecting 137/520 Send(raft-member-5,<function0>)
+[INFO] [02/20/2015 11:05:56.479] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+Injecting 138/520 Continue(8)
+[INFO] [02/20/2015 11:05:56.479] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-2] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(9399)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-5#-1007235248])
+[INFO] [02/20/2015 11:05:56.479] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Appending command: [AppendWord(768)] from Actor[akka://new-system-0/deadLetters] to replicated log...
+[INFO] [02/20/2015 11:05:56.482] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.482] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.482] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.483] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 0. (Comitted index: 0)
+[INFO] [02/20/2015 11:05:56.483] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.483] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 0, will commit now: true)
+[INFO] [02/20/2015 11:05:56.483] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Committing log at index: 1; Applying command: AppendWord(768), will send result to client: Some(Actor[akka://new-system-0/deadLetters])
+[INFO] [02/20/2015 11:05:56.483] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Applied command [AppendWord(768)], full words is: Vector(1127, 768)
+[INFO] [02/20/2015 11:05:56.483] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.483] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.483] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.483] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.484] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 0
+[INFO] [02/20/2015 11:05:56.484] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.484] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 0
+Checking invariant
+[INFO] [02/20/2015 11:05:56.484] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+Injecting 139/520 Send(raft-member-2,<function0>)
+Injecting 140/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Injecting 141/520 WaitTimers(1)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Injecting 142/520 Send(raft-member-9,<function0>)
+Injecting 143/520 UnPartition(raft-member-2,raft-member-8)
+{"raft-member-1" : 10, "raft-member-2" : 5, "raft-member-3" : 9, "raft-member-4" : 4, "raft-member-5" : 3, "raft-member-6" : 6, "raft-member-7" : 1, "raft-member-8" : 7, "raft-member-9" : 1} raft-member-2: God reconnected me to raft-member-8
+{"raft-member-1" : 10, "raft-member-2" : 4, "raft-member-3" : 9, "raft-member-4" : 4, "raft-member-5" : 3, "raft-member-6" : 6, "raft-member-7" : 1, "raft-member-8" : 8, "raft-member-9" : 1} raft-member-8: God reconnected me to raft-member-2
+Injecting 144/520 WaitQuiescence
+[INFO] [02/20/2015 11:05:56.557] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-2] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(3549)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-5#-1007235248])
+[INFO] [02/20/2015 11:05:56.559] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-9] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(9484)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-5#-1007235248])
+[INFO] [02/20/2015 11:05:56.559] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-9] Applied command [AppendWord(768)], full words is: Vector(843, 768)
+[INFO] [02/20/2015 11:05:56.560] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Applied command [AppendWord(768)], full words is: Vector(843, 768)
+[INFO] [02/20/2015 11:05:56.560] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-2] Applied command [AppendWord(768)], full words is: Vector(843, 768)
+[INFO] [02/20/2015 11:05:56.561] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.561] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.562] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-8] Applied command [AppendWord(768)], full words is: Vector(843, 768)
+[INFO] [02/20/2015 11:05:56.562] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.562] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.562] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.563] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.563] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.563] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.563] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-6] Applied command [AppendWord(768)], full words is: Vector(843, 768)
+[INFO] [02/20/2015 11:05:56.564] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-1] Applied command [AppendWord(768)], full words is: Vector(1127, 768)
+[INFO] [02/20/2015 11:05:56.564] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.564] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.565] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-4] Applied command [AppendWord(768)], full words is: Vector(843, 768)
+[INFO] [02/20/2015 11:05:56.565] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.566] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.566] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.566] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.566] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.567] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.567] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.567] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.567] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.567] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.568] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.568] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.568] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.568] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.568] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 1
+Checking invariant
+[INFO] [02/20/2015 11:05:56.569] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+Injecting 145/520 UnPartition(raft-member-1,raft-member-4)
+[INFO] [02/20/2015 11:05:56.572] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.572] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+{"raft-member-1" : 11, "raft-member-2" : 5, "raft-member-3" : 9, "raft-member-4" : 4, "raft-member-5" : 3, "raft-member-6" : 6, "raft-member-7" : 1, "raft-member-8" : 8, "raft-member-9" : 1} raft-member-1: God reconnected me to raft-member-4
+{"raft-member-1" : 10, "raft-member-2" : 5, "raft-member-3" : 9, "raft-member-4" : 5, "raft-member-5" : 3, "raft-member-6" : 6, "raft-member-7" : 1, "raft-member-8" : 8, "raft-member-9" : 1} raft-member-4: God reconnected me to raft-member-1
+Injecting 146/520 Send(raft-member-7,<function0>)
+Injecting 147/520 Continue(23)
+Injecting 148/520 Send(raft-member-4,<function0>)
+[INFO] [02/20/2015 11:05:56.573] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-7] Candidate got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(7773)) from client; Respond with anarchy - there is no leader.
+Injecting 149/520 Continue(19)
+Injecting 150/520 WaitQuiescence
+[INFO] [02/20/2015 11:05:56.574] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-4] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(1178)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-5#-1007235248])
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+[INFO] [02/20/2015 11:05:56.606] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.606] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.607] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.607] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.609] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.609] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.609] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.609] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.609] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.609] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.610] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.610] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.610] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.610] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+[INFO] [02/20/2015 11:05:56.657] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.657] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.658] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.658] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.658] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.658] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.659] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.659] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.659] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-9#897661594] took write in term: Term(2), index: 1
+Checking invariant
+[INFO] [02/20/2015 11:05:56.659] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.664] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.664] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.665] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 1
+Injecting 151/520 Continue(36)
+[INFO] [02/20/2015 11:05:56.665] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+Injecting 152/520 Kill(raft-member-9)
+{"raft-member-1" : 11, "raft-member-2" : 5, "raft-member-3" : 9, "raft-member-4" : 5, "raft-member-5" : 3, "raft-member-6" : 6, "raft-member-7" : 1, "raft-member-8" : 8, "raft-member-9" : 2} raft-member-9: God killed me
+Injecting 153/520 Continue(16)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+[INFO] [02/20/2015 11:05:56.708] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.709] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.709] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.709] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.710] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.710] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.710] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.711] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.711] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.711] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.711] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.711] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+[INFO] [02/20/2015 11:05:56.756] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.756] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.757] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-1#-1044990185] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.757] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.757] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.757] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.758] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.758] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.759] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.759] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.759] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 1
+Checking invariant
+[INFO] [02/20/2015 11:05:56.759] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+Injecting 154/520 Continue(33)
+Injecting 155/520 UnPartition(raft-member-6,raft-member-8)
+{"raft-member-1" : 11, "raft-member-2" : 5, "raft-member-3" : 9, "raft-member-4" : 5, "raft-member-5" : 3, "raft-member-6" : 7, "raft-member-7" : 1, "raft-member-8" : 8, "raft-member-9" : 1} raft-member-6: God reconnected me to raft-member-8
+{"raft-member-1" : 11, "raft-member-2" : 5, "raft-member-3" : 9, "raft-member-4" : 5, "raft-member-5" : 3, "raft-member-6" : 6, "raft-member-7" : 1, "raft-member-8" : 9, "raft-member-9" : 1} raft-member-8: God reconnected me to raft-member-6
+Injecting 156/520 Continue(1)
+Injecting 157/520 WaitQuiescence
+Injecting 158/520 Send(raft-member-8,<function0>)
+Injecting 159/520 Send(raft-member-1,<function0>)
+Injecting 160/520 Continue(5)
+[INFO] [02/20/2015 11:05:56.764] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-8] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(3050)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-5#-1007235248])
+Injecting 161/520 Partition(raft-member-1,raft-member-5)
+[INFO] [02/20/2015 11:05:56.764] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-1] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(4898)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-5#-1007235248])
+{"raft-member-1" : 12, "raft-member-2" : 5, "raft-member-3" : 9, "raft-member-4" : 5, "raft-member-5" : 3, "raft-member-6" : 6, "raft-member-7" : 1, "raft-member-8" : 8, "raft-member-9" : 1} raft-member-1: God partitioned me from raft-member-5
+{"raft-member-1" : 11, "raft-member-2" : 5, "raft-member-3" : 9, "raft-member-4" : 5, "raft-member-5" : 4, "raft-member-6" : 6, "raft-member-7" : 1, "raft-member-8" : 8, "raft-member-9" : 1} raft-member-5: God partitioned me from raft-member-1
+Injecting 162/520 Send(raft-member-4,<function0>)
+Injecting 163/520 WaitQuiescence
+Injecting 164/520 WaitTimers(1)
+[INFO] [02/20/2015 11:05:56.765] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-4] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(9325)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-5#-1007235248])
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Injecting 165/520 Send(raft-member-5,<function0>)
+Injecting 166/520 WaitQuiescence
+[INFO] [02/20/2015 11:05:56.805] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Appending command: [AppendWord(1362)] from Actor[akka://new-system-0/deadLetters] to replicated log...
+[INFO] [02/20/2015 11:05:56.807] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.808] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.808] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.808] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.809] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.809] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.809] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 2
+[INFO] [02/20/2015 11:05:56.809] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.809] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.809] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 1. (Comitted index: 1)
+[INFO] [02/20/2015 11:05:56.810] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.810] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 1, will commit now: true)
+[INFO] [02/20/2015 11:05:56.810] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Committing log at index: 2; Applying command: AppendWord(1362), will send result to client: Some(Actor[akka://new-system-0/deadLetters])
+[INFO] [02/20/2015 11:05:56.810] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Applied command [AppendWord(1362)], full words is: Vector(1127, 768, 1362)
+[INFO] [02/20/2015 11:05:56.811] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 2
+[INFO] [02/20/2015 11:05:56.811] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+[INFO] [02/20/2015 11:05:56.811] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.811] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+[INFO] [02/20/2015 11:05:56.812] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.812] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+[INFO] [02/20/2015 11:05:56.812] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 1
+Injecting 167/520 WaitTimers(1)
+[INFO] [02/20/2015 11:05:56.812] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+handleTick Actor[akka://new-system-0/user/raft-member-9#897661594]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+Injecting 168/520 Send(raft-member-1,<function0>)
+Injecting 169/520 Continue(24)
+[INFO] [02/20/2015 11:05:56.858] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-1] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(585)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-5#-1007235248])
+[INFO] [02/20/2015 11:05:56.858] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Applied command [AppendWord(1362)], full words is: Vector(843, 768, 1362)
+Checking invariant
+[INFO] [02/20/2015 11:05:56.859] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-6] Applied command [AppendWord(1362)], full words is: Vector(843, 768, 1362)
+[INFO] [02/20/2015 11:05:56.864] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-9] Initializing election (among 9 nodes) for Term(3)
+[INFO] [02/20/2015 11:05:56.864] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-2] Applied command [AppendWord(1362)], full words is: Vector(843, 768, 1362)
+[INFO] [02/20/2015 11:05:56.864] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.865] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+[INFO] [02/20/2015 11:05:56.865] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.865] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+[INFO] [02/20/2015 11:05:56.865] [new-system-0-akka.actor.default-dispatcher-7] [akka://new-system-0/user/raft-member-4] Applied command [AppendWord(1362)], full words is: Vector(843, 768, 1362)
+[INFO] [02/20/2015 11:05:56.865] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 2
+[INFO] [02/20/2015 11:05:56.866] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+[INFO] [02/20/2015 11:05:56.866] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 2
+[INFO] [02/20/2015 11:05:56.866] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+[INFO] [02/20/2015 11:05:56.866] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-8] Applied command [AppendWord(1362)], full words is: Vector(843, 768, 1362)
+[INFO] [02/20/2015 11:05:56.867] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 2
+Injecting 170/520 WaitQuiescence
+[INFO] [02/20/2015 11:05:56.867] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+[INFO] [02/20/2015 11:05:56.907] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 2
+[INFO] [02/20/2015 11:05:56.908] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+[INFO] [02/20/2015 11:05:56.908] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 2
+[INFO] [02/20/2015 11:05:56.909] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+[INFO] [02/20/2015 11:05:56.909] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 2
+[INFO] [02/20/2015 11:05:56.909] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+[INFO] [02/20/2015 11:05:56.910] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 2
+[INFO] [02/20/2015 11:05:56.910] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+[INFO] [02/20/2015 11:05:56.910] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 2
+Injecting 171/520 Continue(3)
+[INFO] [02/20/2015 11:05:56.911] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+Injecting 172/520 Send(raft-member-5,<function0>)
+Injecting 173/520 Continue(11)
+[INFO] [02/20/2015 11:05:56.912] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-5] Appending command: [AppendWord(6399)] from Actor[akka://new-system-0/deadLetters] to replicated log...
+[INFO] [02/20/2015 11:05:56.914] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 2
+[INFO] [02/20/2015 11:05:56.915] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+[INFO] [02/20/2015 11:05:56.915] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 2
+[INFO] [02/20/2015 11:05:56.915] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 2. (Comitted index: 2)
+[INFO] [02/20/2015 11:05:56.915] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 2
+[INFO] [02/20/2015 11:05:56.916] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 3. (Comitted index: 2, will commit now: true)
+[INFO] [02/20/2015 11:05:56.916] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Committing log at index: 3; Applying command: AppendWord(6399), will send result to client: Some(Actor[akka://new-system-0/deadLetters])
+[INFO] [02/20/2015 11:05:56.916] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Applied command [AppendWord(6399)], full words is: Vector(1127, 768, 1362, 6399)
+[INFO] [02/20/2015 11:05:56.916] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 2
+Checking invariant
+[INFO] [02/20/2015 11:05:56.916] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 3. (Comitted index: 3)
+[INFO] [02/20/2015 11:05:56.920] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 2
+Injecting 174/520 Send(raft-member-4,<function0>)
+[INFO] [02/20/2015 11:05:56.920] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 3. (Comitted index: 3)
+Injecting 175/520 Continue(23)
+Injecting 176/520 UnPartition(raft-member-1,raft-member-5)
+[INFO] [02/20/2015 11:05:56.920] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-4] Follower got ClientMessage(Actor[akka://new-system-0/deadLetters],AppendWord(2283)) from client; Respond with last Leader that took write from: Some(Actor[akka://new-system-0/user/raft-member-5#-1007235248])
+{"raft-member-1" : 13, "raft-member-2" : 5, "raft-member-3" : 9, "raft-member-4" : 5, "raft-member-5" : 3, "raft-member-6" : 6, "raft-member-7" : 1, "raft-member-8" : 8, "raft-member-9" : 1} raft-member-1: God reconnected me to raft-member-5
+{"raft-member-1" : 11, "raft-member-2" : 5, "raft-member-3" : 9, "raft-member-4" : 5, "raft-member-5" : 5, "raft-member-6" : 7, "raft-member-7" : 1, "raft-member-8" : 9, "raft-member-9" : 1} raft-member-5: God reconnected me to raft-member-1
+Injecting 177/520 Continue(39)
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+[INFO] [02/20/2015 11:05:56.956] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-4] Applied command [AppendWord(6399)], full words is: Vector(843, 768, 1362, 6399)
+[INFO] [02/20/2015 11:05:56.956] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-3] Applied command [AppendWord(6399)], full words is: Vector(843, 768, 1362, 6399)
+[INFO] [02/20/2015 11:05:56.956] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-3#636276302] took write in term: Term(2), index: 3
+[INFO] [02/20/2015 11:05:56.957] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 3. (Comitted index: 3)
+[INFO] [02/20/2015 11:05:56.957] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-2] Applied command [AppendWord(6399)], full words is: Vector(843, 768, 1362, 6399)
+[INFO] [02/20/2015 11:05:56.958] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-6] Applied command [AppendWord(6399)], full words is: Vector(843, 768, 1362, 6399)
+[INFO] [02/20/2015 11:05:56.958] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-1] Initializing election (among 9 nodes) for Term(3)
+[INFO] [02/20/2015 11:05:56.958] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 3
+[INFO] [02/20/2015 11:05:56.958] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 3. (Comitted index: 3)
+[INFO] [02/20/2015 11:05:56.959] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-2#2135101372] took write in term: Term(2), index: 3
+[INFO] [02/20/2015 11:05:56.959] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 3. (Comitted index: 3)
+[WARN] [02/20/2015 11:05:56.959] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] unhandled event RequestVote(Term(3),Actor[akka://new-system-0/user/raft-member-1#-1044990185],Term(2),1) in state Leader
+[INFO] [02/20/2015 11:05:56.959] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-3] Voting for Actor[akka://new-system-0/user/raft-member-1#-1044990185] in Term(3)
+[INFO] [02/20/2015 11:05:56.960] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-4] Voting for Actor[akka://new-system-0/user/raft-member-1#-1044990185] in Term(3)
+[INFO] [02/20/2015 11:05:56.960] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-1] Received vote by Actor[akka://new-system-0/user/raft-member-4#1081062123]; Have 2 of 9 votes
+[INFO] [02/20/2015 11:05:56.960] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-6] Voting for Actor[akka://new-system-0/user/raft-member-1#-1044990185] in Term(3)
+[INFO] [02/20/2015 11:05:56.960] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-8] Voting for Actor[akka://new-system-0/user/raft-member-1#-1044990185] in Term(3)
+[INFO] [02/20/2015 11:05:56.961] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-8] Applied command [AppendWord(6399)], full words is: Vector(843, 768, 1362, 6399)
+[INFO] [02/20/2015 11:05:56.961] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-1] Received vote by Actor[akka://new-system-0/user/raft-member-3#636276302]; Have 3 of 9 votes
+[INFO] [02/20/2015 11:05:56.961] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-8#1076560471] took write in term: Term(2), index: 3
+[INFO] [02/20/2015 11:05:56.961] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 3. (Comitted index: 3)
+[INFO] [02/20/2015 11:05:56.961] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Follower Actor[akka://new-system-0/user/raft-member-4#1081062123] took write in term: Term(2), index: 3
+[INFO] [02/20/2015 11:05:56.962] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-5] Consensus for persisted index: 3. (Comitted index: 3)
+[INFO] [02/20/2015 11:05:56.962] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-1] Received vote by Actor[akka://new-system-0/user/raft-member-8#1076560471]; Have 4 of 9 votes
+[INFO] [02/20/2015 11:05:56.962] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-1] Received vote by Actor[akka://new-system-0/user/raft-member-6#1752238924]; Won election with 5 of 9 votes
+[INFO] [02/20/2015 11:05:56.962] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-1] Became leader for Term(3)
+[INFO] [02/20/2015 11:05:56.962] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-1] Preparing nextIndex and matchIndex table for followers, init all to: replicatedLog.lastIndex = 1
+[INFO] [02/20/2015 11:05:56.963] [new-system-0-akka.actor.default-dispatcher-12] [akka://new-system-0/user/raft-member-1] Starting hearbeat, with interval: 50 milliseconds
+[INFO] [02/20/2015 11:05:56.963] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-1] Follower Actor[akka://new-system-0/user/raft-member-6#1752238924] took write in term: Term(2), index: 1
+[INFO] [02/20/2015 11:05:56.963] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-1] Consensus for persisted index: -1. (Comitted index: 1)
+Checking invariant
+[INFO] [02/20/2015 11:05:56.964] [new-system-0-akka.actor.default-dispatcher-6] [akka://new-system-0/user/raft-member-2] Voting for Actor[akka://new-system-0/user/raft-member-1#-1044990185] in Term(3)
+Violations found! Set(LeaderCompleteness:raft-member-1:(AppendWord(1362),Term(2),2))
+Violation found early. Halting
+Found a safety violation!
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-9#897661594]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-8#1076560471]
+handleTick Actor[akka://new-system-0/user/raft-member-4#1081062123]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-3#636276302]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-6#1752238924]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-2#2135101372]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+[0m[[31merror[0m] [0m(run-main-0) com.fasterxml.jackson.databind.JsonMappingException: No serializer found for class pl.project13.scala.akka.raft.protocol.RaftProtocol$ChangeConfiguration and no properties discovered to create BeanSerializer (to avoid exception, disable SerializationFeature.FAIL_ON_EMPTY_BEANS) )[0m
+com.fasterxml.jackson.databind.JsonMappingException: No serializer found for class pl.project13.scala.akka.raft.protocol.RaftProtocol$ChangeConfiguration and no properties discovered to create BeanSerializer (to avoid exception, disable SerializationFeature.FAIL_ON_EMPTY_BEANS) )
+	at com.fasterxml.jackson.databind.ser.impl.UnknownSerializer.failForEmpty(UnknownSerializer.java:59)
+	at com.fasterxml.jackson.databind.ser.impl.UnknownSerializer.serialize(UnknownSerializer.java:26)
+	at com.lambdaworks.jacks.CaseClassSerializer.serialize(case.scala:17)
+	at com.lambdaworks.jacks.CaseClassSerializer.serialize(case.scala:13)
+	at com.lambdaworks.jacks.CaseClassSerializer.serialize(case.scala:17)
+	at com.lambdaworks.jacks.CaseClassSerializer.serialize(case.scala:13)
+	at com.lambdaworks.jacks.IterableSerializer$$anonfun$serialize$1.apply(iterable.scala:28)
+	at com.lambdaworks.jacks.IterableSerializer$$anonfun$serialize$1.apply(iterable.scala:21)
+	at scala.collection.LinearSeqOptimized$class.foreach(LinearSeqOptimized.scala:59)
+	at scala.collection.mutable.MutableList.foreach(MutableList.scala:29)
+	at com.lambdaworks.jacks.IterableSerializer.serialize(iterable.scala:21)
+	at com.lambdaworks.jacks.IterableSerializer.serialize(iterable.scala:14)
+	at com.lambdaworks.jacks.TupleSerializer$$anonfun$serialize$1.apply(tuple.scala:26)
+	at com.lambdaworks.jacks.TupleSerializer$$anonfun$serialize$1.apply(tuple.scala:19)
+	at scala.collection.Iterator$class.foreach(Iterator.scala:743)
+	at scala.collection.AbstractIterator.foreach(Iterator.scala:1174)
+	at com.lambdaworks.jacks.TupleSerializer.serialize(tuple.scala:19)
+	at com.lambdaworks.jacks.TupleSerializer.serialize(tuple.scala:12)
+	at com.fasterxml.jackson.databind.ser.DefaultSerializerProvider.serializeValue(DefaultSerializerProvider.java:237)
+	at com.fasterxml.jackson.databind.ObjectWriter._configAndWriteValue(ObjectWriter.java:811)
+	at com.fasterxml.jackson.databind.ObjectWriter.writeValueAsString(ObjectWriter.java:684)
+	at com.lambdaworks.jacks.JacksMapper$class.writeValueAsString(jacks.scala:24)
+	at com.lambdaworks.jacks.JacksMapper$.writeValueAsString(jacks.scala:40)
+	at akka.dispatch.verification.EventTrace.serialize(EventTrace.scala:53)
+	at Experiment$.record_experiment(Runner.scala:42)
+	at Main$.delayedEndpoint$Main$1(Runner.scala:443)
+	at Main$delayedInit$body.apply(Runner.scala:315)
+	at scala.Function0$class.apply$mcV$sp(Function0.scala:40)
+	at scala.runtime.AbstractFunction0.apply$mcV$sp(AbstractFunction0.scala:12)
+	at scala.App$$anonfun$main$1.apply(App.scala:76)
+	at scala.App$$anonfun$main$1.apply(App.scala:76)
+	at scala.collection.immutable.List.foreach(List.scala:383)
+	at scala.collection.generic.TraversableForwarder$class.foreach(TraversableForwarder.scala:35)
+	at scala.App$class.main(App.scala:76)
+	at Main$.main(Runner.scala:315)
+	at Main.main(Runner.scala)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+[0m[[31mtrace[0m] [0mStack trace suppressed: run [34mlast compile:run[0m for the full output.[0m
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
+handleTick Actor[akka://new-system-0/user/raft-member-5#-1007235248]
+handleTick Actor[akka://new-system-0/user/raft-member-1#-1044990185]
