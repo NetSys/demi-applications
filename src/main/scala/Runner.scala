@@ -7,6 +7,18 @@ import scala.collection.mutable.Queue
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
 
+import scala.pickling.io.TextFileOutput
+
+case class BroadcastViolation(fingerprint: String) extends ViolationFingerprint {
+  def matches(other: ViolationFingerprint) : Boolean = {
+    other match {
+      case BroadcastViolation(f) => return f == fingerprint
+      case _ => return false
+    }
+  }
+  def serializeToFile(f: TextFileOutput) = {}
+}
+
 object Main extends App {
   val actors = Array("bcast0",
                      "bcast1",
@@ -45,7 +57,7 @@ object Main extends App {
 
   // Checks FIFO delivery. See 3.9.2 of "Reliable and Secure Distributed
   // Programming".
-  def invariant(current_trace: Seq[ExternalEvent], state: Map[String, Queue[String]]) : Boolean = {
+  def invariant(current_trace: Seq[ExternalEvent], state: Map[String, Queue[String]]) : Option[akka.dispatch.verification.ViolationFingerprint]= {
     // Correct sequence of deliveries: either 0, 1, or 2 messages in FIFO
     // order.
 
@@ -57,7 +69,7 @@ object Main extends App {
       case _ => None
     }
 
-    val correct = sends.map(e => e.message.asInstanceOf[RBBroadcast].msg.data)
+    val correct = sends.map(e => e.messageCtor().asInstanceOf[RBBroadcast].msg.data)
 
     // Only non-crashed nodes need to deliver those messages.
     // TODO(cs): what is the correctness condition for crash-recovery FIFO
@@ -81,21 +93,21 @@ object Main extends App {
           println(d)
         }
         println("-------------")
-        return false
+        return Some(BroadcastViolation("" + delivery_order))
       }
     }
-    return true
+    return None
   }
 
   if (dpor) {
     val trace = Array[ExternalEvent]() ++
       // Start Actors.
       actors.map(actor_name =>
-        Start(Props.create(classOf[BroadcastNode], state(actor_name)), actor_name)) ++
+        Start(() => Props.create(classOf[BroadcastNode], state(actor_name)), actor_name)) ++
       // Execute the interesting events.
       Array[ExternalEvent](
-      Send("bcast0", RBBroadcast(DataMessage("Message1"))),
-      Send("bcast0", RBBroadcast(DataMessage("Message2")))
+      Send("bcast0", () => RBBroadcast(DataMessage("Message1"))),
+      Send("bcast0", () => RBBroadcast(DataMessage("Message2")))
     )
 
     val sched = new DPOR
@@ -106,13 +118,13 @@ object Main extends App {
     val trace = Array[ExternalEvent]() ++
       // Start Actors.
       actors.map(actor_name =>
-        Start(Props.create(classOf[BroadcastNode], state(actor_name)), actor_name)) ++
+        Start(() => Props.create(classOf[BroadcastNode], state(actor_name)), actor_name)) ++
       // Execute the interesting events.
       Array[ExternalEvent](
       WaitQuiescence,
-      Send("bcast0", RBBroadcast(DataMessage("Message1"))),
+      Send("bcast0", () => RBBroadcast(DataMessage("Message1"))),
       //Kill("bcast2"),
-      Send("bcast0", RBBroadcast(DataMessage("Message2"))),
+      Send("bcast0", () => RBBroadcast(DataMessage("Message2"))),
       WaitQuiescence
     )
 
@@ -121,9 +133,11 @@ object Main extends App {
       println(event.toString)
     }
 
-    val sched = new RandomScheduler(3)
+    val sched = new RandomScheduler(3, true, 0, true)
     Instrumenter().scheduler = sched
-    sched.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
+    sched.setInvariant(
+      (current_trace: Seq[ExternalEvent], notUsed: HashMap[String,Option[CheckpointReply]]) =>
+      invariant(current_trace, state))
 
     // val test_oracle = new RandomScheduler(3)
     // test_oracle.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
@@ -133,9 +147,18 @@ object Main extends App {
 
     // val events = sched.peek(trace)
 
-    val events = sched.explore(trace)
+    val result = sched.explore(trace)
     sched.shutdown
     println("Returned to main with events")
+    result match {
+      case Some((events, violation)) =>
+        val replayer = new ReplayScheduler(enableFailureDetector=true)
+        Instrumenter().scheduler = replayer
+        replayer.replay(events)
+        println("Replayed succesfully?")
+        replayer.shutdown
+      case None => None
+    }
 
     /*
     events match {

@@ -11,6 +11,8 @@ object STS2Application extends Build {
       organization := "com.typesafe.sbt.aspectj",
       version := "0.1",
       scalaVersion := "2.11.2",
+      resolvers += Resolver.sonatypeRepo("snapshots"),
+      libraryDependencies += "org.scala-lang.modules" %% "scala-pickling" % "0.10.0",
       libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.3.6",
       libraryDependencies += "com.typesafe.akka" %% "akka-cluster" % "2.3.6",
       libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.2",
