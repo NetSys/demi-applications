@@ -17,3 +17,6 @@ project/plugins/project/
 .worksheet
 *.iml
 .idea/*
+
+experiments/*
+*pyc
