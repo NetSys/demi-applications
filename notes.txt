@@ -12,7 +12,6 @@ TODO(cs): Modify PeekScheduler (or anyone who uses checkpoints) to be careful
 
 ---------------
 TODO(cs): incorporate timers into IntervalPeekScheduler
-TODO(cs): fingerprints for Raft.
 TODO(cs): do we handle context.system.eventStream.publish properly? It's
           apparently only a local facility, not a cluster facility.
 TODO(cs): raise exception if any of the other scheduler.schedule methods are
