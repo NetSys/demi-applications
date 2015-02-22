@@ -1,17 +1,17 @@
+TODO(cs): probably need the equivalent of BeginWaitQuiescence for Continue
+          events. And WaitTimer events.
 TODO(cs): serialization issues. Possibly in msg (Any), or Props, or ActorRef,
 or in Start/Sends's anonymous functions.
 
   No symbol could be loaded from class java.util.concurrent.TimeUnit$1 in object
   TimeUnit with name 1 and classloader null
 
-TODO(cs): probably need the equivalent of BeginWaitQuiescence for Continue
-          events.
-TODO(cs): test whether replay is deterministic.
 TODO(cs): figure out how to deserialize from disk...
 TODO(cs): Modify PeekScheduler (or anyone who uses checkpoints) to be careful
           to associate the right SeededRandom with each actor system.
 
 ---------------
+TODO(cs): incorporate timers into IntervalPeekScheduler
 TODO(cs): fingerprints for Raft.
 TODO(cs): do we handle context.system.eventStream.publish properly? It's
           apparently only a local facility, not a cluster facility.
@@ -25,7 +25,13 @@ TODO(cs): need a utility library for building Runner.scala files.
 
 ----------- Random notes -----------
 
-// Only use:
+// Potentially useful:
+http://stackoverflow.com/questions/17183308/scala-reflection-of-nested-list
+
+// Andi's aspectj:
+https://github.com/andiwundsam/floodlight-sync-proto/commit/d1e75dfb51b5d2d0847e5a4d2a3bc756df423bb0
+
+// akka-raft Only uses:
 import scala.concurrent.forkjoin.ThreadLocalRandom
 
 ----------- Timer notes ------------

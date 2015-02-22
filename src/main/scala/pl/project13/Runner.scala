@@ -54,6 +54,28 @@ object Experiment {
   }
 }
 
+class RaftMessageFingerprinter extends MessageFingerprinter {
+  val refRegex = ".*raft-member-(\\d+).*".r
+
+  def fingerprint(msg: Any) : MessageFingerprint = {
+    def removeId(ref: ActorRef) : String = {
+      ref.toString match {
+        case refRegex(member) => return "raft-member-" + member
+        case _ => return ref.toString
+      }
+    }
+    val str = msg match {
+      case RequestVote(term, ref, lastTerm, lastIdx) =>
+        (("RequestVote", term, removeId(ref), lastTerm, lastIdx)).toString
+      case LeaderIs(Some(ref), msg) =>
+        ("LeaderIs", removeId(ref)).toString
+      case m =>
+        m.toString
+    }
+    return BasicFingerprint(str)
+  }
+}
+
 class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator {
   val wordsUsedSoFar = new HashSet[String]
   val rand = new Random
@@ -313,9 +335,6 @@ class StateMachineChecker(parent: RaftChecks) {
 }
 
 object Main extends App {
-  val v = new RaftViolation(new HashSet[String])
-  Experiment.record_experiment("test", new EventTrace(List()), v)
-
   // Correctness properties of Uniform Consensus:
   // ------------
   // Termination: Every correct process eventually decides some value.
@@ -371,6 +390,8 @@ object Main extends App {
   var raftChecks = new RaftChecks
 
   def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,Option[CheckpointReply]]) : Option[ViolationFingerprint] = {
+    return Some(RaftViolation(new HashSet[String]))
+    /*
     var livenessViolations = checkpoint.toSeq flatMap {
       case (k, None) => Some("Liveness:"+k)
       case _ => None
@@ -392,6 +413,7 @@ object Main extends App {
         println("Violations found! liveness" + livenessViolations)
         return Some(RaftViolation(new HashSet[String] ++ livenessViolations))
     }
+    */
   }
 
   val members = (1 to 9) map { i => s"raft-member-$i" }
@@ -410,7 +432,8 @@ object Main extends App {
       })) ++
     Array[ExternalEvent](
     WaitQuiescence,
-    WaitTimers(1)
+    WaitTimers(1),
+    Continue(10)
     //WaitQuiescence
     // Continue(500)
   )
@@ -440,20 +463,43 @@ object Main extends App {
         println("Found a safety violation!")
         violationFound = violation
         traceFound = trace
-        Experiment.record_experiment("akka-raft", trace, violation)
+        // Experiment.record_experiment("akka-raft", trace, violation)
         sched.shutdown()
     }
   }
 
+  println("----------")
   println("Trying replay:")
   println("trace:")
   for (e <- traceFound) {
     println(e)
   }
-  val replayer = new ReplayScheduler()
+  println("----------")
+  val replayer = new ReplayScheduler(new RaftMessageFingerprinter, false, false)
   Instrumenter().scheduler = replayer
+  // Very important! Need to update the actor refs recorded in the event
+  // trace, since they are no longer valid for this new actor system.
+  def updateActorRef(ref: ActorRef) : ActorRef = {
+    val newRef = Instrumenter().actorSystem.actorFor("/user/" + ref.path.name)
+    require(newRef.path.name != "deadLetters")
+    return newRef
+  }
+
+  replayer.setEventMapper((e: Event) =>
+    e match {
+      case MsgSend(snd,rcv,ChangeConfiguration(config)) =>
+        val updatedRefs = config.members.map(updateActorRef)
+        val updatedConfig = ChangeConfiguration(ClusterConfiguration(updatedRefs))
+        Some(MsgSend(snd,rcv,updatedConfig))
+      case m =>
+        Some(m)
+    }
+  )
+
+  // Now do the replay.
   val events = replayer.replay(traceFound.filterCheckpointMessages())
   println("Done with replay")
+  replayer.shutdown
   println("events:")
   for (e <- events) {
     println(e)
