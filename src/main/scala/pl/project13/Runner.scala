@@ -1,5 +1,5 @@
 import akka.actor.{ Actor, ActorRef, DeadLetter }
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, ExtendedActorSystem}
 import akka.actor.Props
 import akka.dispatch.verification._
 import scala.collection.mutable.Queue
@@ -14,13 +14,20 @@ import pl.project13.scala.akka.raft.example.protocol._
 import pl.project13.scala.akka.raft._
 import pl.project13.scala.akka.raft.model._
 import runner.raftchecks._
-
+import runner.raftserialization._
+import java.nio._
 
 class RaftMessageFingerprinter extends MessageFingerprinter {
   // TODO(cs): might be an easier way to do this. See ActorRef API.
   val refRegex = ".*raft-member-(\\d+).*".r
+  val systemRegex = ".*(new-system-\\d+).*".r
 
-  def fingerprint(msg: Any) : MessageFingerprint = {
+  override def fingerprint(msg: Any) : MessageFingerprint = {
+    val superResult = super.fingerprint(msg)
+    if (superResult != null) {
+      return superResult
+    }
+
     def removeId(ref: ActorRef) : String = {
       ref.toString match {
         case refRegex(member) => return "raft-member-" + member
@@ -33,7 +40,12 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
       case LeaderIs(Some(ref), msg) =>
         ("LeaderIs", removeId(ref)).toString
       case m =>
-        m.toString
+        // Lazy person's approach: instead of dealing properly with all
+        // message types, just do a regex on the string
+        m.toString match {
+          case systemRegex(system) => m.toString.replace(system, "")
+          case _ => m.toString
+        }
     }
     return BasicFingerprint(str)
   }
@@ -92,7 +104,7 @@ object Main extends App {
     */
   }
 
-  val members = (1 to 9) map { i => s"raft-member-$i" }
+  val members = (1 to 3) map { i => s"raft-member-$i" }
 
   val prefix = Array[ExternalEvent]() ++
     //Array[ExternalEvent](Start(() =>
@@ -135,27 +147,50 @@ object Main extends App {
         sched.shutdown()
         println("shutdown successfully")
         raftChecks = new RaftChecks
-      case Some((trace, violation)) =>
+      case Some((trace, violation)) => {
         println("Found a safety violation!")
         violationFound = violation
         traceFound = trace
-        // Experiment.record_experiment("akka-raft", trace, violation)
         sched.shutdown()
+      }
     }
   }
 
   println("----------")
-  println("Trying replay:")
   println("trace:")
   for (e <- traceFound) {
     println(e)
   }
   println("----------")
+
+  val serializer = new ExperimentSerializer(
+      new RaftMessageFingerprinter,
+      new RaftMessageSerializer)
+  val experiment_dir = serializer.record_experiment("akka-raft",
+      traceFound.filterCheckpointMessages(), violationFound)
+  val deserializer = new ExperimentDeserializer(experiment_dir)
+
   val replayer = new ReplayScheduler(new RaftMessageFingerprinter, false, false)
   Instrumenter().scheduler = replayer
+  replayer.populateActorSystem(deserializer.get_actors)
+  val raftDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
+  val trace = deserializer.get_events(raftDeserializer, Instrumenter().actorSystem)
+  val violation = deserializer.get_violation(raftDeserializer)
+
+  println("----------")
+  println("deserialized trace:")
+  for (e <- trace) {
+    println(e)
+  }
+  println("----------")
+
+  /*
   // Very important! Need to update the actor refs recorded in the event
   // trace, since they are no longer valid for this new actor system.
+  // TODO(cs): I don't understand why Akka's deserialization magic doesn't
+  // obviate the need to do this?
   def updateActorRef(ref: ActorRef) : ActorRef = {
+    println("Updating ActorRef: " + ref.path.name)
     val newRef = Instrumenter().actorSystem.actorFor("/user/" + ref.path.name)
     require(newRef.path.name != "deadLetters")
     return newRef
@@ -171,9 +206,10 @@ object Main extends App {
         Some(m)
     }
   )
+  */
 
   // Now do the replay.
-  val events = replayer.replay(traceFound.filterCheckpointMessages())
+  val events = replayer.replay(trace, populateActors=false)
   println("Done with replay")
   replayer.shutdown
   println("events:")
