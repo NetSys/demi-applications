@@ -1,11 +1,15 @@
-TODO(cs): add populateActorSystem and pendingTimers and TimerDelivery to other schedulers.
+TODO(cs): reason about timers as unexpected events in GreedyED
+TODO(cs): deal with checkpoints of Timers in a more principled way. See
+Instrumenter.scala
 TODO(cs): probably need the equivalent of BeginWaitQuiescence for Continue
           events? And WaitTimer events?
 TODO(cs): Modify IntervalPeekScheduler (or anyone who uses checkpoints) to be careful
           to associate the right SeededRandom with each actor system.
+TODO(cs): modify IntervalPeekScheduler to use message fingerprints. (and
+STSSched?)
+TODO(cs): add knob to disable failure detector in STSSChed and GreedyED
 
 ---------------
-TODO(cs): incorporate timers into IntervalPeekScheduler
 TODO(cs): do we handle context.system.eventStream.publish properly? It's
           apparently only a local facility, not a cluster facility.
 TODO(cs): raise exception if any of the other scheduler.schedule methods are
