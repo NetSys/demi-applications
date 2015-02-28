@@ -7,7 +7,6 @@ TODO(cs): Modify IntervalPeekScheduler (or anyone who uses checkpoints) to be ca
           to associate the right SeededRandom with each actor system.
 TODO(cs): modify IntervalPeekScheduler to use message fingerprints. (and
 STSSched?)
-TODO(cs): add knob to disable failure detector in STSSChed and GreedyED
 
 ---------------
 TODO(cs): do we handle context.system.eventStream.publish properly? It's
