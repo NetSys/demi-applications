@@ -1,12 +1,11 @@
-TODO(cs): reason about timers as unexpected events in GreedyED
 TODO(cs): deal with checkpoints of Timers in a more principled way. See
 Instrumenter.scala
 TODO(cs): probably need the equivalent of BeginWaitQuiescence for Continue
           events? And WaitTimer events?
 TODO(cs): Modify IntervalPeekScheduler (or anyone who uses checkpoints) to be careful
           to associate the right SeededRandom with each actor system.
-TODO(cs): modify IntervalPeekScheduler to use message fingerprints. (and
-STSSched?)
+TODO(cs): consider timers as unexpected events in STSSched's and GreedyED's optimization?
+          (unexpected.isEmpty)
 
 ---------------
 TODO(cs): do we handle context.system.eventStream.publish properly? It's
