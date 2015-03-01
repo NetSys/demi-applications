@@ -1,9 +1,12 @@
 TODO(cs): probably need the equivalent of BeginWaitQuiescence for Continue
           events? And WaitTimer events?
-TODO(cs): Modify IntervalPeekScheduler (or anyone who uses checkpoints) to be careful
-          to associate the right SeededRandom with each actor system.
+TODO(cs): try to serialize external events.
 TODO(cs): consider timers as unexpected events in STSSched's and GreedyED's optimization?
           (unexpected.isEmpty)
+TODO(cs): in GreedyED, if any repeating timer t went off k times in \tau^0, we should make sure it only goes
+off k times in the executions we care about (i.e., we don't have to worry
+about it going off infinitely, etc.)
+
 
 ---------------
 TODO(cs): do we handle context.system.eventStream.publish properly? It's
