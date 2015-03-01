@@ -1,5 +1,3 @@
-TODO(cs): deal with checkpoints of Timers in a more principled way. See
-Instrumenter.scala
 TODO(cs): probably need the equivalent of BeginWaitQuiescence for Continue
           events? And WaitTimer events?
 TODO(cs): Modify IntervalPeekScheduler (or anyone who uses checkpoints) to be careful
