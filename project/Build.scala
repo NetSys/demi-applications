@@ -3,10 +3,6 @@ import sbt.Keys._
 import com.typesafe.sbt.SbtAspectj.{ Aspectj, aspectjSettings, useInstrumentedClasses }
 import com.typesafe.sbt.SbtAspectj.AspectjKeys.inputs
 
-import com.typesafe.sbt.SbtMultiJvm
-import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
-
-
 object STS2Application extends Build {
   val appName = "akka-raft"
   val appVersion = "1.0-SNAPSHOT"
@@ -48,22 +44,7 @@ object STS2Application extends Build {
       // replace the original akka-actor jar with the instrumented classes in runtime
       fullClasspath in Runtime <<= useInstrumentedClasses(Runtime)
     )
-  ).configs(MultiJvm)
-   .settings(multiJvmSettings: _*)
-  // .settings(
+  )// .settings(
   //   libraryDependencies ++= generalDependencies
   //)
-
-  lazy val multiJvmSettings = SbtMultiJvm.multiJvmSettings ++ Seq(
-     // make sure that MultiJvm test are compiled by the default test compilation
-     compile in MultiJvm <<= (compile in MultiJvm) triggeredBy (compile in Test),
-     // disable parallel tests
-     parallelExecution in Test := false,
-     // make sure that MultiJvm tests are executed by the default test target
-     executeTests in Test <<=
-       ((executeTests in Test), (executeTests in MultiJvm)).map{
-         case (outputOfTests, outputOfMultiJVMTests)  =>
-           Tests.Output(Seq(outputOfTests.overall, outputOfMultiJVMTests.overall).sorted.reverse.head, outputOfTests.events ++ outputOfMultiJVMTests.events, outputOfTests.summaries ++ outputOfMultiJVMTests.summaries)
-      }
-  )
 }
