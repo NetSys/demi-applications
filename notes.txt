@@ -1,10 +1,9 @@
 TODO(cs): probably need the equivalent of BeginWaitQuiescence for Continue
           events? And WaitTimer events?
-TODO(cs): consider timers as unexpected events in STSSched's and GreedyED's optimization?
-          (unexpected.isEmpty)
 TODO(cs): in GreedyED, if any repeating timer t went off k times in \tau^0, we should make sure it only goes
 off k times in the executions we care about (i.e., we don't have to worry
 about it going off infinitely, etc.)
+TODO(cs): fix race condition in GreedyED
 
 
 ---------------
