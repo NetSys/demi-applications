@@ -127,29 +127,11 @@ object Main extends App {
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(500, weights, messageGen, prefix)
 
-  var violationFound : ViolationFingerprint = null
-  var traceFound : EventTrace = null
-  while (violationFound == null) {
-    val fuzzTest = fuzzer.generateFuzzTest()
-    println("Trying: " + fuzzTest)
-
-    val sched = new RandomScheduler(1, false, 30, false)
-    sched.setInvariant(invariant)
-    Instrumenter().scheduler = sched
-    sched.explore(fuzzTest) match {
-      case None =>
-        println("Returned to main with events")
-        sched.shutdown()
-        println("shutdown successfully")
-        raftChecks = new RaftChecks
-      case Some((trace, violation)) => {
-        println("Found a safety violation!")
-        violationFound = violation
-        traceFound = trace
-        sched.shutdown()
-      }
-    }
+  def shutdownCallback() = {
+    raftChecks = new RaftChecks
   }
+
+  var (violationFound, traceFound) = RunnerUtils.fuzz(fuzzer, invariant, shutdownCallback)
 
   println("----------")
   println("trace:")
@@ -163,23 +145,14 @@ object Main extends App {
       new RaftMessageSerializer)
   val experiment_dir = serializer.record_experiment("akka-raft-fuzz",
       traceFound.filterCheckpointMessages(), violationFound)
-  val deserializer = new ExperimentDeserializer(experiment_dir)
 
-  val replayer = new ReplayScheduler(new RaftMessageFingerprinter, false, false)
-  Instrumenter().scheduler = replayer
-  replayer.populateActorSystem(deserializer.get_actors)
-  val raftDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
-  val trace = deserializer.get_events(raftDeserializer, Instrumenter().actorSystem)
-  val violation = deserializer.get_violation(raftDeserializer)
-
-  /*
-  println("----------")
-  println("deserialized trace:")
-  for (e <- trace) {
+  val replayEvents = RunnerUtils.replayExperiment(experiment_dir,
+    new RaftMessageFingerprinter,
+    new RaftMessageDeserializer(Instrumenter().actorSystem))
+  println("events:")
+  for (e <- replayEvents) {
     println(e)
   }
-  println("----------")
-  */
 
   /*
   // Very important! Need to update the actor refs recorded in the event
@@ -203,18 +176,8 @@ object Main extends App {
         Some(m)
     }
   )
+
   */
-
-  // Now do the replay.
-  println("Trying replay:")
-  val events = replayer.replay(trace, populateActors=false)
-  println("Done with replay")
-  replayer.shutdown
-  println("events:")
-  for (e <- events) {
-    println(e)
-  }
-
   // Trying STSSched:
   // val minimizer : Minimizer = new LeftToRightRemoval(test_oracle)
   // val minimizer : Minimizer = new DeltaDebuggin(test_oracle)
