@@ -1,0 +1,60 @@
+======= Bug =========
+
+RandomScheduler?
+
+Checking invariant
+handleTick Actor[akka://new-system-0/user/raft-member-6#246399049]
+handleTick Actor[akka://new-system-0/user/raft-member-7#-548325259]
+[ERROR] [03/01/2015 18:35:51.006] [new-system-0-akka.actor.default-dispatcher-10] [akka://new-system-0/user/raft-member-9] null
+java.util.NoSuchElementException
+        at scala.collection.mutable.LinkedListLike$class.head(LinkedListLike.scala:75)
+        at scala.collection.mutable.LinkedList.head(LinkedList.scala:80)
+        at scala.collection.mutable.MutableList.head(MutableList.scala:53)
+        at scala.collection.LinearSeqOptimized$class.foreach(LinearSeqOptimized.scala:59)
+        at scala.collection.mutable.MutableList.foreach(MutableList.scala:29)
+        at scala.collection.TraversableLike$WithFilter.foreach(TraversableLike.scala:777)
+        at akka.dispatch.verification.ExternalEventInjector$class.send_external_messages(ExternalEventInjector.scala:130)
+        at akka.dispatch.verification.RandomScheduler.send_external_messages(RandomScheduler.scala:32)
+        at akka.dispatch.verification.ExternalEventInjector$class.send_external_messages(ExternalEventInjector.scala:114)
+        at akka.dispatch.verification.RandomScheduler.send_external_messages(RandomScheduler.scala:32)
+        at akka.dispatch.verification.RandomScheduler.schedule_new_message(RandomScheduler.scala:238)
+        at akka.dispatch.verification.Instrumenter.afterMessageReceive(Instrumenter.scala:249)
+        at sample.WeaveActor.ajc$after$sample_WeaveActor$3$79e3ab71(WeaveActor.aj:52)
+        at akka.actor.ActorCell.receiveMessage(ActorCell.scala:516)
+        at akka.actor.ActorCell.invoke(ActorCell.scala:487)
+        at akka.dispatch.Mailbox.processMailbox(Mailbox.scala:238)
+        at akka.dispatch.Mailbox.run(Mailbox.scala:220)
+        at akka.dispatch.ForkJoinExecutorConfigurator$AkkaForkJoinTask.exec(AbstractDispatcher.scala:393)
+        at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260)
+        at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339)
+        at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979)
+        at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107)
+
+
+======= Bug =========
+
+RaftChecks.scala, LogMatch invariant:
+
+java.lang.IndexOutOfBoundsException: 6
+        at scala.collection.LinearSeqOptimized$class.apply(LinearSeqOptimized.scala:51)
+        at scala.collection.immutable.List.apply(List.scala:83)
+        at pl.project13.scala.akka.raft.model.ReplicatedLog.apply(ReplicatedLog.scala:81)
+        at runner.raftchecks.LogMatchChecker$$anonfun$checkActor$1.apply(RaftChecks.scala:237)
+        at runner.raftchecks.LogMatchChecker$$anonfun$checkActor$1.apply(RaftChecks.scala:219)
+        at scala.collection.mutable.HashMap$$anonfun$foreach$1.apply(HashMap.scala:99)
+        at scala.collection.mutable.HashMap$$anonfun$foreach$1.apply(HashMap.scala:99)
+        at scala.collection.mutable.HashTable$class.foreachEntry(HashTable.scala:230)
+        at scala.collection.mutable.HashMap.foreachEntry(HashMap.scala:40)
+        at scala.collection.mutable.HashMap.foreach(HashMap.scala:99)
+        at runner.raftchecks.LogMatchChecker.checkActor(RaftChecks.scala:219)
+        at runner.raftchecks.RaftChecks.checkActor(RaftChecks.scala:179)
+        at runner.raftchecks.RaftChecks$$anonfun$check$2.apply(RaftChecks.scala:140)
+        at runner.raftchecks.RaftChecks$$anonfun$check$2.apply(RaftChecks.scala:138)
+        at scala.collection.TraversableLike$WithFilter$$anonfun$foreach$1.apply(TraversableLike.scala:778)
+        at scala.collection.mutable.HashMap$$anonfun$foreach$1.apply(HashMap.scala:99)
+        at scala.collection.mutable.HashMap$$anonfun$foreach$1.apply(HashMap.scala:99)
+        at scala.collection.mutable.HashTable$class.foreachEntry(HashTable.scala:230)
+        at scala.collection.mutable.HashMap.foreachEntry(HashMap.scala:40)
+        at scala.collection.mutable.HashMap.foreach(HashMap.scala:99)
+        at scala.collection.TraversableLike$WithFilter.foreach(TraversableLike.scala:777)
+        at runner.raftchecks.RaftChecks.check(RaftChecks.scala:138)

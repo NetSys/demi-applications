@@ -233,6 +233,12 @@ class LogMatchChecker(parent: RaftChecks) {
         }
         var currentIdx = 0
         while (currentIdx <= matchIdx) {
+          // TODO(cs): I think `index` is a misnomer; it doesn't mean index of the
+          // log's array. Hence the stack trace in RaftChecksStackTrace.txt. Either
+          // that, or I've got a bug in my own code.
+          if (log.length <= currentIdx || otherLog.length <= currentIdx) {
+            return Some("LogMatch:"+actor+":"+otherActor+":"+currentIdx+"notlongenough")
+          }
           val myEntry = log(currentIdx)
           val otherEntry = otherLog(currentIdx)
           if (myEntry.command != otherEntry.command ||

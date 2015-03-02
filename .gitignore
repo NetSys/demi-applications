@@ -19,5 +19,6 @@ project/plugins/project/
 # Python
 *.pyc
 experiments/*
+experiments
 
 *.out

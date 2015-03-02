@@ -78,8 +78,6 @@ object Main extends App {
   var raftChecks = new RaftChecks
 
   def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,Option[CheckpointReply]]) : Option[ViolationFingerprint] = {
-    return Some(RaftViolation(new HashSet[String]))
-    /*
     var livenessViolations = checkpoint.toSeq flatMap {
       case (k, None) => Some("Liveness:"+k)
       case _ => None
@@ -101,14 +99,11 @@ object Main extends App {
         println("Violations found! liveness" + livenessViolations)
         return Some(RaftViolation(new HashSet[String] ++ livenessViolations))
     }
-    */
   }
 
-  val members = (1 to 3) map { i => s"raft-member-$i" }
+  val members = (1 to 9) map { i => s"raft-member-$i" }
 
   val prefix = Array[ExternalEvent]() ++
-    //Array[ExternalEvent](Start(() =>
-    //  RaftClientActor.props(Instrumenter().actorSystem() / "raft-member-*"), "client")) ++
     members.map(member =>
       Start(() => Props.create(classOf[WordConcatRaftActor]), member)) ++
     members.map(member =>
@@ -166,7 +161,7 @@ object Main extends App {
   val serializer = new ExperimentSerializer(
       new RaftMessageFingerprinter,
       new RaftMessageSerializer)
-  val experiment_dir = serializer.record_experiment("akka-raft",
+  val experiment_dir = serializer.record_experiment("akka-raft-fuzz",
       traceFound.filterCheckpointMessages(), violationFound)
   val deserializer = new ExperimentDeserializer(experiment_dir)
 
@@ -177,12 +172,14 @@ object Main extends App {
   val trace = deserializer.get_events(raftDeserializer, Instrumenter().actorSystem)
   val violation = deserializer.get_violation(raftDeserializer)
 
+  /*
   println("----------")
   println("deserialized trace:")
   for (e <- trace) {
     println(e)
   }
   println("----------")
+  */
 
   /*
   // Very important! Need to update the actor refs recorded in the event
@@ -209,6 +206,7 @@ object Main extends App {
   */
 
   // Now do the replay.
+  println("Trying replay:")
   val events = replayer.replay(trace, populateActors=false)
   println("Done with replay")
   replayer.shutdown
