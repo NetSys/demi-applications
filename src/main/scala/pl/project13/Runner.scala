@@ -131,7 +131,7 @@ object Main extends App {
     raftChecks = new RaftChecks
   }
 
-  var (violationFound, traceFound) = RunnerUtils.fuzz(fuzzer, invariant, shutdownCallback)
+  var (traceFound, violationFound) = RunnerUtils.fuzz(fuzzer, invariant, shutdownCallback)
 
   println("----------")
   println("trace:")
