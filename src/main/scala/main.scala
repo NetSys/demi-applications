@@ -10,6 +10,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import scala.annotation.tailrec
+import java.util.concurrent.Semaphore
 
 // Failure detector messages (the FD is perfect in this case)
 final case class Killed (name: String) {}
@@ -48,25 +49,33 @@ object Test extends App {
             state(act)), act)) ++
     //actors.map(Send(_, GroupMembership(actors))) ++ 
     Array[ExternalEvent](
-    WaitQuiescence,
-    Partition("bcast8", "bcast1"),
+    //WaitQuiescence,
+    //Partition("bcast8", "bcast1"),
     Send("bcast5", () => Bcast(null, Msg("Foo", 1))),
-    Send("bcast8", () => Bcast(null, Msg("Bar", 2))),
-    Partition("bcast8", "bcast2"),
-    Partition("bcast8", "bcast3"),
-    Partition("bcast8", "bcast4"),
-    Partition("bcast8", "bcast5"),
-    Partition("bcast8", "bcast6"),
-    Partition("bcast8", "bcast7")
+    Send("bcast5", () => Bcast(null, Msg("Foo", 2))),
+    Send("bcast8", () => Bcast(null, Msg("Bar", 2)))
+    //Partition("bcast8", "bcast2"),
+    //Partition("bcast8", "bcast3"),
+    //Partition("bcast8", "bcast4"),
+    //Partition("bcast8", "bcast5"),
+    //Partition("bcast8", "bcast6"),
+    //Partition("bcast8", "bcast7")
   )
 
-  val sched = new PeekScheduler
+  val sched = new DPORwFailures
   Instrumenter().scheduler = sched
-  val events = sched.peek(trace0)
-  println("Returned to main with events")
-  println("Shutting down")
-  sched.shutdown
-  println("Shutdown successful")
+  //val events = sched.peek(trace0)
+  val traceSem = new Semaphore(0)
 
-  verifyState(actors, state) 
+  sched.run(trace0, 
+            (q) => println(q),
+            (_) => traceSem.release)
+  println("Returned to main, waiting")
+  traceSem.acquire
+  println("Done")
+  //println("Shutting down")
+  ////sched.shutdown
+  //println("Shutdown successful")
+
+  //verifyState(actors, state) 
 }
