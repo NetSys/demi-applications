@@ -44,14 +44,14 @@ object Test extends App {
 
   val trace0 = Array[ExternalEvent]() ++
     actors.map(
-      act => Start(Props.create(classOf[ReliableBCast],
+      act => Start(() => Props.create(classOf[ReliableBCast],
             state(act)), act)) ++
     //actors.map(Send(_, GroupMembership(actors))) ++ 
     Array[ExternalEvent](
     WaitQuiescence,
     Partition("bcast8", "bcast1"),
-    Send("bcast5", Bcast(null, Msg("Foo", 1))),
-    Send("bcast8", Bcast(null, Msg("Bar", 2))),
+    Send("bcast5", () => Bcast(null, Msg("Foo", 1))),
+    Send("bcast8", () => Bcast(null, Msg("Bar", 2))),
     Partition("bcast8", "bcast2"),
     Partition("bcast8", "bcast3"),
     Partition("bcast8", "bcast4"),
