@@ -139,7 +139,10 @@ object Main extends App {
     println(e)
   }
   println("----------")
-  */
+
+  val serializer = new ExperimentSerializer(
+      new RaftMessageFingerprinter,
+      new RaftMessageSerializer)
 
   val dir = serializer.record_experiment("akka-raft-fuzz",
       traceFound.filterCheckpointMessages(), violationFound)
@@ -152,10 +155,6 @@ object Main extends App {
     println(e)
   }
   println("-------")
-
-  val serializer = new ExperimentSerializer(
-      new RaftMessageFingerprinter,
-      new RaftMessageSerializer)
 
   println("Trying randomDDMin")
   var (mcs1, stats1, mcs_execution1, violation1) =
