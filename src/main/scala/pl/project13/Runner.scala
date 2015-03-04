@@ -101,7 +101,6 @@ object Main extends App {
     }
   }
 
-  /*
   val members = (1 to 9) map { i => s"raft-member-$i" }
 
   val prefix = Array[ExternalEvent]() ++
@@ -142,25 +141,23 @@ object Main extends App {
   println("----------")
   */
 
-  /*
-  val experiment_dir = serializer.record_experiment("akka-raft-fuzz",
+  val dir = serializer.record_experiment("akka-raft-fuzz",
       traceFound.filterCheckpointMessages(), violationFound)
 
-  val replayEvents = RunnerUtils.replayExperiment(experiment_dir,
+  val replayEvents = RunnerUtils.replayExperiment(dir,
     new RaftMessageFingerprinter,
     new RaftMessageDeserializer(Instrumenter().actorSystem))
   println("events:")
   for (e <- replayEvents) {
     println(e)
   }
-  */
-
-  val dir = "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-election-safety-violation-short"
+  println("-------")
 
   val serializer = new ExperimentSerializer(
       new RaftMessageFingerprinter,
       new RaftMessageSerializer)
 
+  println("Trying randomDDMin")
   var (mcs1, stats1, mcs_execution1, violation1) =
     RunnerUtils.randomDDMin(dir,
       new RaftMessageFingerprinter,
@@ -190,6 +187,8 @@ object Main extends App {
     }
   }
 
+
+  println("Trying STSSchedDDMinNoPeak")
   // Dissallow peek:
   var (mcs2, stats2, mcs_execution2, violation2) =
     RunnerUtils.stsSchedDDMin(dir,
@@ -200,6 +199,7 @@ object Main extends App {
 
   serializer.serializeMCS(dir, mcs2, stats2, mcs_execution2, violation2)
 
+  println("Trying STSSchedDDMin")
   // Allow peek:
   var (mcs3, stats3, mcs_execution3, violation3) =
     RunnerUtils.stsSchedDDMin(dir,
