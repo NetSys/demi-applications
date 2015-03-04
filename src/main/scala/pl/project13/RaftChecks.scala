@@ -84,6 +84,30 @@ case class RaftViolation(fingerprints: HashSet[String]) extends ViolationFingerp
 }
 
 class RaftChecks {
+  def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,Option[CheckpointReply]]) : Option[ViolationFingerprint] = {
+    var livenessViolations = checkpoint.toSeq flatMap {
+      case (k, None) => Some("Liveness:"+k)
+      case _ => None
+    }
+
+    var normalReplies = checkpoint flatMap {
+      case (k, None) => None
+      case (k, Some(v)) => Some((k,v))
+    }
+
+    check(normalReplies) match {
+      case Some(violations) =>
+        println("Violations found! " + violations)
+        return Some(RaftViolation(violations ++ livenessViolations))
+      case None =>
+        if (livenessViolations.isEmpty) {
+          return None
+        }
+        println("Violations found! liveness" + livenessViolations)
+        return Some(RaftViolation(new HashSet[String] ++ livenessViolations))
+    }
+  }
+
   // -- Checkers --
   val electionSafety = new ElectionSafetyChecker(this)
   val logMatch = new LogMatchChecker(this)
@@ -309,3 +333,7 @@ class StateMachineChecker(parent: RaftChecks) {
   }
 }
 
+
+object RaftInvariant {
+
+}

@@ -73,47 +73,29 @@ class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator
   }
 }
 
-object Main extends App {
-  // TODO(cs): reset raftChecks as a restart hook.
-  var raftChecks = new RaftChecks
-
-  def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,Option[CheckpointReply]]) : Option[ViolationFingerprint] = {
-    var livenessViolations = checkpoint.toSeq flatMap {
-      case (k, None) => Some("Liveness:"+k)
-      case _ => None
-    }
-
-    var normalReplies = checkpoint flatMap {
-      case (k, None) => None
-      case (k, Some(v)) => Some((k,v))
-    }
-
-    raftChecks.check(normalReplies) match {
-      case Some(violations) =>
-        println("Violations found! " + violations)
-        return Some(RaftViolation(violations ++ livenessViolations))
-      case None =>
-        if (livenessViolations.isEmpty) {
-          return None
-        }
-        println("Violations found! liveness" + livenessViolations)
-        return Some(RaftViolation(new HashSet[String] ++ livenessViolations))
-    }
+object Init {
+  def actorCtor(): Props = {
+    return Props.create(classOf[WordConcatRaftActor])
   }
 
-  /*
+  def startCtor(): Any = {
+    val clusterRefs = Instrumenter().actorMappings.filter({
+        case (k,v) => k != "client" && !ActorTypes.systemActor(k)
+    }).values
+    return ChangeConfiguration(ClusterConfiguration(clusterRefs))
+  }
+}
+
+object Main extends App {
+  var raftChecks = new RaftChecks
+
   val members = (1 to 9) map { i => s"raft-member-$i" }
 
   val prefix = Array[ExternalEvent]() ++
     members.map(member =>
-      Start(() => Props.create(classOf[WordConcatRaftActor]), member)) ++
+      Start(Init.actorCtor, member)) ++
     members.map(member =>
-      Send(member, () => {
-        val clusterRefs = Instrumenter().actorMappings.filter({
-            case (k,v) => k != "client" && !ActorTypes.systemActor(k)
-        }).values
-        ChangeConfiguration(ClusterConfiguration(clusterRefs))
-      })) ++
+      Send(member, Init.startCtor)) ++
     Array[ExternalEvent](
     WaitQuiescence,
     WaitTimers(1),
@@ -132,7 +114,7 @@ object Main extends App {
     raftChecks = new RaftChecks
   }
 
-  var (traceFound, violationFound) = RunnerUtils.fuzz(fuzzer, invariant, shutdownCallback)
+  var (traceFound, violationFound) = RunnerUtils.fuzz(fuzzer, raftChecks.invariant, shutdownCallback)
 
   println("----------")
   println("trace:")
@@ -140,13 +122,11 @@ object Main extends App {
     println(e)
   }
   println("----------")
-  */
 
   val serializer = new ExperimentSerializer(
       new RaftMessageFingerprinter,
       new RaftMessageSerializer)
 
-/*
   val dir = serializer.record_experiment("akka-raft-fuzz",
       traceFound.filterCheckpointMessages(), violationFound)
 
@@ -158,16 +138,15 @@ object Main extends App {
     println(e)
   }
   println("-------")
-*/
 
-  val dir = "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_04_15_35_33"
+  //val dir = "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_04_15_35_33"
 
   println("Trying randomDDMin")
   var (mcs1, stats1, mcs_execution1, violation1) =
     RunnerUtils.randomDDMin(dir,
       new RaftMessageFingerprinter,
       new RaftMessageDeserializer(Instrumenter().actorSystem),
-      invariant)
+      raftChecks.invariant)
 
   serializer.serializeMCS(dir, mcs1, stats1, mcs_execution1, violation1)
 
@@ -201,7 +180,7 @@ object Main extends App {
       new RaftMessageFingerprinter,
       new RaftMessageDeserializer(Instrumenter().actorSystem),
       false,
-      invariant,
+      raftChecks.invariant,
       Some(event_mapper))
 
   serializer.serializeMCS(dir, mcs2, stats2, mcs_execution2, violation2)
@@ -213,7 +192,7 @@ object Main extends App {
       new RaftMessageFingerprinter,
       new RaftMessageDeserializer(Instrumenter().actorSystem),
       true,
-      invariant,
+      raftChecks.invariant,
       Some(event_mapper))
 
   serializer.serializeMCS(dir, mcs3, stats3, mcs_execution3, violation3)
