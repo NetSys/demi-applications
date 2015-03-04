@@ -101,6 +101,7 @@ object Main extends App {
     }
   }
 
+  /*
   val members = (1 to 9) map { i => s"raft-member-$i" }
 
   val prefix = Array[ExternalEvent]() ++
@@ -139,11 +140,13 @@ object Main extends App {
     println(e)
   }
   println("----------")
+  */
 
   val serializer = new ExperimentSerializer(
       new RaftMessageFingerprinter,
       new RaftMessageSerializer)
 
+/*
   val dir = serializer.record_experiment("akka-raft-fuzz",
       traceFound.filterCheckpointMessages(), violationFound)
 
@@ -155,12 +158,16 @@ object Main extends App {
     println(e)
   }
   println("-------")
+*/
+
+  val dir = "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_04_15_35_33"
 
   println("Trying randomDDMin")
   var (mcs1, stats1, mcs_execution1, violation1) =
     RunnerUtils.randomDDMin(dir,
       new RaftMessageFingerprinter,
-      new RaftMessageDeserializer(Instrumenter().actorSystem))
+      new RaftMessageDeserializer(Instrumenter().actorSystem),
+      invariant)
 
   serializer.serializeMCS(dir, mcs1, stats1, mcs_execution1, violation1)
 
@@ -194,6 +201,7 @@ object Main extends App {
       new RaftMessageFingerprinter,
       new RaftMessageDeserializer(Instrumenter().actorSystem),
       false,
+      invariant,
       Some(event_mapper))
 
   serializer.serializeMCS(dir, mcs2, stats2, mcs_execution2, violation2)
@@ -205,6 +213,7 @@ object Main extends App {
       new RaftMessageFingerprinter,
       new RaftMessageDeserializer(Instrumenter().actorSystem),
       true,
+      invariant,
       Some(event_mapper))
 
   serializer.serializeMCS(dir, mcs3, stats3, mcs_execution3, violation3)
