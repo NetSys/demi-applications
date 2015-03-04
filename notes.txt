@@ -1,5 +1,6 @@
+TODO(cs): save smallest trace recorded so far. Not necessarily MCS!
 TODO(cs): set up instrumentation: how long it took, how many executions, how
-many events replays, etc.
+          many events replays, etc.
 TODO(cs): probably need the equivalent of BeginWaitQuiescence for Continue
           events? And WaitTimer events?
 TODO(cs): in GreedyED, if any repeating timer t went off k times in \tau^0, we should make sure it only goes
