@@ -101,6 +101,7 @@ object Main extends App {
     }
   }
 
+  /*
   val members = (1 to 9) map { i => s"raft-member-$i" }
 
   val prefix = Array[ExternalEvent]() ++
@@ -139,10 +140,9 @@ object Main extends App {
     println(e)
   }
   println("----------")
+  */
 
-  val serializer = new ExperimentSerializer(
-      new RaftMessageFingerprinter,
-      new RaftMessageSerializer)
+  /*
   val experiment_dir = serializer.record_experiment("akka-raft-fuzz",
       traceFound.filterCheckpointMessages(), violationFound)
 
@@ -153,6 +153,18 @@ object Main extends App {
   for (e <- replayEvents) {
     println(e)
   }
+  */
+
+  val dir = "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-election-safety-violation-short"
+  val (mcs, stats, mcs_execution, violation) =
+    RunnerUtils.randomDDMin(dir,
+      new RaftMessageFingerprinter,
+      new RaftMessageDeserializer(Instrumenter().actorSystem))
+
+  val serializer = new ExperimentSerializer(
+      new RaftMessageFingerprinter,
+      new RaftMessageSerializer)
+  serializer.serializeMCS(dir, mcs, stats, mcs_execution, violation)
 
   /*
   // Very important! Need to update the actor refs recorded in the event
