@@ -156,17 +156,18 @@ object Main extends App {
   */
 
   val dir = "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-election-safety-violation-short"
-  val (mcs, stats, mcs_execution, violation) =
-    RunnerUtils.randomDDMin(dir,
-      new RaftMessageFingerprinter,
-      new RaftMessageDeserializer(Instrumenter().actorSystem))
 
   val serializer = new ExperimentSerializer(
       new RaftMessageFingerprinter,
       new RaftMessageSerializer)
-  serializer.serializeMCS(dir, mcs, stats, mcs_execution, violation)
 
-  /*
+  var (mcs1, stats1, mcs_execution1, violation1) =
+    RunnerUtils.randomDDMin(dir,
+      new RaftMessageFingerprinter,
+      new RaftMessageDeserializer(Instrumenter().actorSystem))
+
+  serializer.serializeMCS(dir, mcs1, stats1, mcs_execution1, violation1)
+
   // Very important! Need to update the actor refs recorded in the event
   // trace, since they are no longer valid for this new actor system.
   // TODO(cs): I don't understand why Akka's deserialization magic doesn't
@@ -178,7 +179,7 @@ object Main extends App {
     return newRef
   }
 
-  replayer.setEventMapper((e: Event) =>
+  val event_mapper = (e: Event) => {
     e match {
       case MsgSend(snd,rcv,ChangeConfiguration(config)) =>
         val updatedRefs = config.members.map(updateActorRef)
@@ -187,11 +188,25 @@ object Main extends App {
       case m =>
         Some(m)
     }
-  )
+  }
 
-  */
-  // Trying STSSched:
-  // val minimizer : Minimizer = new LeftToRightRemoval(test_oracle)
-  // val minimizer : Minimizer = new DeltaDebuggin(test_oracle)
-  // val events = minimizer.minimize(trace)
+  // Dissallow peek:
+  var (mcs2, stats2, mcs_execution2, violation2) =
+    RunnerUtils.stsSchedDDMin(dir,
+      new RaftMessageFingerprinter,
+      new RaftMessageDeserializer(Instrumenter().actorSystem),
+      false,
+      Some(event_mapper))
+
+  serializer.serializeMCS(dir, mcs2, stats2, mcs_execution2, violation2)
+
+  // Allow peek:
+  var (mcs3, stats3, mcs_execution3, violation3) =
+    RunnerUtils.stsSchedDDMin(dir,
+      new RaftMessageFingerprinter,
+      new RaftMessageDeserializer(Instrumenter().actorSystem),
+      true,
+      Some(event_mapper))
+
+  serializer.serializeMCS(dir, mcs3, stats3, mcs_execution3, violation3)
 }

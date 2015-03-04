@@ -1,4 +1,3 @@
-TODO(cs): need to populateActors (or updateEvents) for every new execution in RandomScheduler.
 TODO(cs): right-to-left-removal
 TODO(cs): save smallest trace recorded so far. Not necessarily MCS!
 TODO(cs): probably need the equivalent of BeginWaitQuiescence for Continue
@@ -7,10 +6,6 @@ TODO(cs): in GreedyED, if any repeating timer t went off k times in \tau^0, we s
 off k times in the executions we care about (i.e., we don't have to worry
 about it going off infinitely, etc.)
 TODO(cs): fix race condition in GreedyED
-TODO(cs): edit-distance=0 evaluation (STSSched without Peek)
-          Note: not strictly edit-distance=0, I think the EFF folks would say
-          that if an expected event doesn't up, that's divergence, which is a
-          stricter defn. of edit-distance=0.
 
 ---------------
 TODO(cs): do we handle context.system.eventStream.publish properly? It's
