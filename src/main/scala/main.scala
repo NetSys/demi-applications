@@ -72,7 +72,7 @@ object Test extends App {
   val traceSem = new Semaphore(0)
 
   sched.run(trace0, 
-            (q) => println(q),
+            (q) => (),
             (_) => traceSem.release)
   println("Returned to main, waiting")
   traceSem.acquire
