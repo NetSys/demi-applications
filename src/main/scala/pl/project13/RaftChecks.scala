@@ -81,6 +81,7 @@ case class RaftViolation(fingerprints: HashSet[String]) extends ViolationFingerp
 
 class RaftChecks {
   def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,Option[CheckpointReply]]) : Option[ViolationFingerprint] = {
+    println("RaftChecks.invariant. Checkpoint: " + checkpoint)
     var crashViolations = checkpoint.toSeq flatMap {
       case (k, None) => Some("Crash:"+k)
       case _ => None
@@ -120,6 +121,7 @@ class RaftChecks {
   var allCommitted = new HashSet[(Cmnd, Term, Int)]
 
   def clear() {
+    println("RaftChecks, clear()'ing state")
     electionSafety = new ElectionSafetyChecker(this)
     logMatch = new LogMatchChecker(this)
     leaderCompleteness = new LeaderCompletenessChecker(this)
@@ -246,6 +248,8 @@ class ElectionSafetyChecker(parent: RaftChecks) {
 class LogMatchChecker(parent: RaftChecks) {
 
   def checkActor(actor: String) : Option[String] = {
+    return None
+    /*
     val otherActorLogs = parent.actor2log.filter { case (a,_) => a != actor }
     val log = parent.actor2log(actor)
     for (otherActorLog <- otherActorLogs) {
@@ -283,6 +287,7 @@ class LogMatchChecker(parent: RaftChecks) {
       }
     }
     return None
+    */
   }
 }
 
@@ -292,6 +297,8 @@ class LogMatchChecker(parent: RaftChecks) {
 class LeaderCompletenessChecker(parent: RaftChecks) {
 
   def check() : Option[String] = {
+    return None
+    /*
     val sortedTerms = parent.term2leader.keys.toArray.sortWith((a,b) => a < b)
     if (sortedTerms.isEmpty) {
       return None
@@ -318,6 +325,7 @@ class LeaderCompletenessChecker(parent: RaftChecks) {
       }
     }
     return None
+    */
   }
 }
 
@@ -330,6 +338,8 @@ class StateMachineChecker(parent: RaftChecks) {
   // time they apply an entry (which, AFAICT, happens immediately after they infer
   // infer that they should commit an given entry)
   def check() : Option[String] = {
+    return None
+    /*
     val allCommittedIndices = parent.allCommitted.toArray.map(c => c._3)
     if (parent.allCommitted.size != allCommittedIndices.size) {
       val counts = new MultiSet[Int]
@@ -338,5 +348,6 @@ class StateMachineChecker(parent: RaftChecks) {
       return Some("StateMachine:"+duplicates.toString)
     }
     return None
+    */
   }
 }

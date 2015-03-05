@@ -1,3 +1,5 @@
+Worth noting that there is some non-determinism in how we replay akka-raft.
+Not sure if it's pernicious though?
 TODO(cs): need to cap steps random takes
 TODO(cs): right-to-left-removal
 TODO(cs): save smallest trace recorded so far. Not necessarily MCS!

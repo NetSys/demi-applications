@@ -116,25 +116,28 @@ object Main extends App {
 
   Instrumenter().registerShutdownCallback(shutdownCallback)
 
-  /*
-  var (traceFound, violationFound) = RunnerUtils.fuzz(fuzzer, raftChecks.invariant)
+  val fuzz = false
 
-  println("----------")
-  println("trace:")
-  for (e <- traceFound) {
-    println(e)
+  if (fuzz) {
+    var (traceFound, violationFound) = RunnerUtils.fuzz(fuzzer, raftChecks.invariant)
+
+    println("----------")
+    println("trace:")
+    for (e <- traceFound) {
+      println(e)
+    }
+    println("----------")
   }
-  println("----------")
-  */
 
   val serializer = new ExperimentSerializer(
       new RaftMessageFingerprinter,
       new RaftMessageSerializer)
 
-  //val dir = serializer.record_experiment("akka-raft-fuzz",
-  //    traceFound.filterCheckpointMessages(), violationFound)
+  // val dir = serializer.record_experiment("akka-raft-fuzz",
+  //     traceFound.filterCheckpointMessages(), violationFound)
 
-  val dir = "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_04_21_55_11"
+  val dir =
+  "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_04_22_37_30"
 
   val replayEvents = RunnerUtils.replayExperiment(dir,
     new RaftMessageFingerprinter,
