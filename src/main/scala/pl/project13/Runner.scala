@@ -141,6 +141,7 @@ object Main extends App {
 
   //val dir = "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_04_15_35_33"
 
+  /*
   println("Trying randomDDMin")
   var (mcs1, stats1, mcs_execution1, violation1) =
     RunnerUtils.randomDDMin(dir,
@@ -149,6 +150,7 @@ object Main extends App {
       raftChecks.invariant)
 
   serializer.serializeMCS(dir, mcs1, stats1, mcs_execution1, violation1)
+  */
 
   // Very important! Need to update the actor refs recorded in the event
   // trace, since they are no longer valid for this new actor system.
@@ -171,7 +173,6 @@ object Main extends App {
         Some(m)
     }
   }
-
 
   println("Trying STSSchedDDMinNoPeak")
   // Dissallow peek:

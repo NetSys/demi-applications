@@ -58,3 +58,40 @@ java.lang.IndexOutOfBoundsException: 6
         at scala.collection.mutable.HashMap.foreach(HashMap.scala:99)
         at scala.collection.TraversableLike$WithFilter.foreach(TraversableLike.scala:777)
         at runner.raftchecks.RaftChecks.check(RaftChecks.scala:138)
+
+======= Bug =========
+
+After many DDMIN(RandomFuzzer) runs (after split):
+
+I'm guessing this is an issue with how we use AtomicEvents
+
+Exception in thread "main" java.lang.RuntimeException: UnPartition without preceding Partition
+        at akka.dispatch.verification.UnmodifiedEventDag$$anonfun$get_atomic_events$1.apply(Util.scala:217)
+        at akka.dispatch.verification.UnmodifiedEventDag$$anonfun$get_atomic_events$1.apply(Util.scala:189)
+        at scala.collection.immutable.List.foreach(List.scala:381)
+        at scala.collection.generic.TraversableForwarder$class.foreach(TraversableForwarder.scala:35)
+        at scala.collection.mutable.ListBuffer.foreach(ListBuffer.scala:45)
+        at akka.dispatch.verification.UnmodifiedEventDag.get_atomic_events(Util.scala:189)
+        at akka.dispatch.verification.EventDagView.get_atomic_events(Util.scala:266)
+        at akka.dispatch.verification.DDMin.ddmin2(DeltaDebugging.scala:44)
+        at akka.dispatch.verification.DDMin.ddmin2(DeltaDebugging.scala:78)
+        at akka.dispatch.verification.DDMin.ddmin2(DeltaDebugging.scala:80)
+        at akka.dispatch.verification.DDMin.ddmin2(DeltaDebugging.scala:80)
+        at akka.dispatch.verification.DDMin.ddmin2(DeltaDebugging.scala:80)
+        at akka.dispatch.verification.DDMin.ddmin2(DeltaDebugging.scala:80)
+        at akka.dispatch.verification.DDMin.ddmin2(DeltaDebugging.scala:80)
+        at akka.dispatch.verification.DDMin.ddmin2(DeltaDebugging.scala:78)
+        at akka.dispatch.verification.DDMin.minimize(DeltaDebugging.scala:32)
+        at akka.dispatch.verification.RunnerUtils$.randomDDMin(RunnerUtils.scala:72)
+        at Main$.delayedEndpoint$Main$1(Runner.scala:146)
+        at Main$delayedInit$body.apply(Runner.scala:89)
+        at scala.Function0$class.apply$mcV$sp(Function0.scala:40)
+        at scala.runtime.AbstractFunction0.apply$mcV$sp(AbstractFunction0.scala:12)
+        at scala.App$$anonfun$main$1.apply(App.scala:76)
+        at scala.App$$anonfun$main$1.apply(App.scala:76)
+        at scala.collection.immutable.List.foreach(List.scala:381)
+        at scala.collection.generic.TraversableForwarder$class.foreach(TraversableForwarder.scala:35)
+        at scala.App$class.main(App.scala:76)
+        at Main$.main(Runner.scala:89)
+        at Main.main(Runner.scala)
+
