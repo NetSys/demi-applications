@@ -65,7 +65,7 @@ import pl.project13.scala.akka.raft.model._
 //     the same index. §5.4.3
 // -------------
 // + A simple one:
-// Liveness: no node should crash.
+// crash: no node should crash.
 
 case class RaftViolation(fingerprints: HashSet[String]) extends ViolationFingerprint {
   def matches(other: ViolationFingerprint) : Boolean = {
@@ -77,16 +77,12 @@ case class RaftViolation(fingerprints: HashSet[String]) extends ViolationFingerp
       case _ => return false
     }
   }
-
-  def serialize() = {
-    //(new Tuple1(fingerprints)).pickleTo(file)
-  }
 }
 
 class RaftChecks {
   def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,Option[CheckpointReply]]) : Option[ViolationFingerprint] = {
-    var livenessViolations = checkpoint.toSeq flatMap {
-      case (k, None) => Some("Liveness:"+k)
+    var crashViolations = checkpoint.toSeq flatMap {
+      case (k, None) => Some("Crash:"+k)
       case _ => None
     }
 
@@ -98,30 +94,42 @@ class RaftChecks {
     check(normalReplies) match {
       case Some(violations) =>
         println("Violations found! " + violations)
-        return Some(RaftViolation(violations ++ livenessViolations))
+        return Some(RaftViolation(violations ++ crashViolations))
       case None =>
-        if (livenessViolations.isEmpty) {
+        if (crashViolations.isEmpty) {
           return None
         }
-        println("Violations found! liveness" + livenessViolations)
-        return Some(RaftViolation(new HashSet[String] ++ livenessViolations))
+        println("Violations found! crash" + crashViolations)
+        return Some(RaftViolation(new HashSet[String] ++ crashViolations))
     }
   }
 
   // -- Checkers --
-  val electionSafety = new ElectionSafetyChecker(this)
-  val logMatch = new LogMatchChecker(this)
-  val leaderCompleteness = new LeaderCompletenessChecker(this)
-  val stateMachine = new StateMachineChecker(this)
+  var electionSafety = new ElectionSafetyChecker(this)
+  var logMatch = new LogMatchChecker(this)
+  var leaderCompleteness = new LeaderCompletenessChecker(this)
+  var stateMachine = new StateMachineChecker(this)
 
   // -- State --
   var term2leader = new HashMap[Term, String]
   // Only contains the most recent ReplicatedLogs.
   // TODO(cs): could potentially find more violations if we kept a history of
   // all replicated logs.
-  val actor2log = new HashMap[String, ReplicatedLog[Cmnd]]
-  val actor2AllEntries = new HashMap[String, HashSet[(Cmnd, Term, Int)]]
-  val allCommitted = new HashSet[(Cmnd, Term, Int)]
+  var actor2log = new HashMap[String, ReplicatedLog[Cmnd]]
+  var actor2AllEntries = new HashMap[String, HashSet[(Cmnd, Term, Int)]]
+  var allCommitted = new HashSet[(Cmnd, Term, Int)]
+
+  def clear() {
+    electionSafety = new ElectionSafetyChecker(this)
+    logMatch = new LogMatchChecker(this)
+    leaderCompleteness = new LeaderCompletenessChecker(this)
+    stateMachine = new StateMachineChecker(this)
+
+    term2leader = new HashMap[Term, String]
+    actor2log = new HashMap[String, ReplicatedLog[Cmnd]]
+    actor2AllEntries = new HashMap[String, HashSet[(Cmnd, Term, Int)]]
+    allCommitted = new HashSet[(Cmnd, Term, Int)]
+  }
 
   def ingestCheckpoint(checkpoint: HashMap[String,CheckpointReply]) = {
     for ((actor, reply) <- checkpoint) {
@@ -331,9 +339,4 @@ class StateMachineChecker(parent: RaftChecks) {
     }
     return None
   }
-}
-
-
-object RaftInvariant {
-
 }
