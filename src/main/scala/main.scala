@@ -54,7 +54,7 @@ object Test extends App {
     Send("bcast5", () => Bcast(null, Msg("Foo", 1))),
     Send("bcast5", () => Bcast(null, Msg("Foo", 2))),
     Send("bcast8", () => Bcast(null, Msg("Bar", 2))),
-    WaitQuiescence,
+    Unique(WaitQuiescence),
     Send("bcast5", () => Bcast(null, Msg("Foo", 1))),
     Send("bcast5", () => Bcast(null, Msg("Foo", 2))),
     Send("bcast8", () => Bcast(null, Msg("Bar", 2)))
