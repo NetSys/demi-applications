@@ -34,7 +34,7 @@ import com.typesafe.scalalogging.LazyLogging,
 
 
 // DPOR scheduler.
-class DPORwFailures extends Scheduler with LazyLogging {
+class DPORwHeuristics extends Scheduler with LazyLogging {
   
   final val SCHEDULER = "__SCHEDULER__"
   final val PRIORITY = "__PRIORITY__"
@@ -93,7 +93,7 @@ class DPORwFailures extends Scheduler with LazyLogging {
   }
   
   def getRootEvent() : Unique = {
-    var root = Unique(RootEvent, 0)
+    var root = Unique(MsgEvent("null", "null", null), 0)
     addGraphNode(root)
     return root
   }
@@ -163,8 +163,8 @@ class DPORwFailures extends Scheduler with LazyLogging {
   mutableTraceIterator(nextTrace) match {
     // All spawn events are ignored.
     case some @ Some(Unique(s: SpawnEvent, id)) => getNextTraceMessage()
-    // Root event needs to be ignored.
-    case some @ Some(Unique(RootEvent, 0)) => getNextTraceMessage()
+    // All system messages need to ignored.
+    case some @ Some(Unique(t, 0)) => getNextTraceMessage()
     case some @ Some(Unique(t, id)) => some
     case None => None
     case _ => throw new Exception("internal error")
@@ -251,8 +251,7 @@ class DPORwFailures extends Scheduler with LazyLogging {
             case None =>  None
           }
 
-        case Some(u @ Unique(WaitQuiescence, _)) => 
-          // Look at the pending events to see if such message event exists. 
+        case Some(u @ Unique(WaitQuiescence, _)) => // Look at the pending events to see if such message event exists. 
           pendingEvents.get(SCHEDULER) match {
             case Some(queue) => queue.dequeueFirst(equivalentTo(u, _))
             case None =>  None
@@ -457,7 +456,6 @@ class DPORwFailures extends Scheduler with LazyLogging {
     
     val parent = parentEvent match {
       case u @ Unique(m: MsgEvent, id) => u
-      case u @ Unique(RootEvent, 0) => u
       case _ => throw new Exception("parent event not a message")
     }
 
@@ -549,8 +547,6 @@ class DPORwFailures extends Scheduler with LazyLogging {
       logger.debug(Console.BLUE + "Current trace: " +
           Util.traceStr(currentTrace) + Console.RESET)
 
-      for (Unique(ev, id) <- currentTrace) 
-        logger.debug(Console.BLUE + " " + id + " " + ev + Console.RESET)
       
       nextTrace.clear()
       
@@ -727,9 +723,7 @@ class DPORwFailures extends Scheduler with LazyLogging {
       // Quiescence is never co-enabled
       case (Unique(WaitQuiescence, _), _) => false
       case (_, Unique(WaitQuiescence, _)) => false
-      // Root event is not coenabled
-      case (Unique(RootEvent, _), _) => false
-      case (_, Unique(RootEvent, _)) => false
+      //case (_, _) =>
       case (Unique(m1 : MsgEvent, _), Unique(m2 : MsgEvent, _)) =>
         if (m1.receiver != m2.receiver) 
           return false
@@ -762,16 +756,10 @@ class DPORwFailures extends Scheduler with LazyLogging {
       for(earlierI <- 0 to laterI - 1) {
         val earlier @ Unique(earlierEvent, earlierID) = getEvent(earlierI, trace) 
         
-        //val sameReceiver = earlierMsg.receiver == laterMsg.receiver
         if ( isCoEnabeled(earlier, later)) {
           
           analyize_dep(earlierI, laterI, trace) match {
             case Some((branchI, needToReplayV)) =>    
-              
-              //logger.info(Console.GREEN +
-              //  "Found a race between " + earlier.id + " and " +
-              //  later.id + " with a common index " + branchI +
-              //  Console.RESET)
               
               // Since we're exploring an already executed trace, we can
               // safely mark the interleaving of (earlier, later) as
@@ -797,7 +785,7 @@ class DPORwFailures extends Scheduler with LazyLogging {
       }
   
       val maxIndex = backTrack.keySet.max
-
+      
       // If we have finished all explorations from this backtracking point, then remove it.
       backTrack(maxIndex).headOption match {
         case Some(((u1, u2), eventList)) => (u1, u2)
@@ -819,6 +807,8 @@ class DPORwFailures extends Scheduler with LazyLogging {
 
     getNext() match {
       case Some((maxIndex, (e1, e2), replayThis)) =>
+        //println(backTrack(maxIndex).head._2.map(x => x.id))
+        
 
         logger.info(Console.RED + "Exploring a new message interleaving " + 
            e1.id + " and " + e2.id  + " at index " + maxIndex + Console.RESET)
