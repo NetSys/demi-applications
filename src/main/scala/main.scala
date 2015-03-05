@@ -11,6 +11,9 @@ import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import scala.annotation.tailrec
 import java.util.concurrent.Semaphore
+import scalax.collection.mutable.Graph,
+       scalax.collection.GraphEdge.DiEdge,
+       scalax.collection.edge.LDiEdge
 
 // Failure detector messages (the FD is perfect in this case)
 final case class Killed (name: String) {}
@@ -75,9 +78,13 @@ object Test extends App {
   //val events = sched.peek(trace0)
   val traceSem = new Semaphore(0)
   val traces = new MutableList[sched.Trace]
+  val graph = Graph[Unique, DiEdge]()
   sched.run(trace0, 
             (q) => traces += (new sched.Trace ++ q),
-            (_) => traceSem.release)
+            (g) => {
+              graph ++= g
+              traceSem.release
+            })
   println("Returned to main, waiting")
   traceSem.acquire
   println("Done, explored " + traces.size)
@@ -87,8 +94,9 @@ object Test extends App {
   val traces2 = new MutableList[sched.Trace]
   sched.run(trace1, 
             (q) => traces2 += (new sched.Trace ++ q),
-            (_) => traceSem.release,
-            Some(traces.last))
+            (g) => { traceSem.release },
+            Some(traces.last),
+            Some(graph))
   println("Returned to main, waiting")
   traceSem.acquire
   println("Done, explored " + traces2.size)
