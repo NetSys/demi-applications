@@ -47,10 +47,7 @@ object Test extends App {
     actors.map(
       act => Start(() => Props.create(classOf[ReliableBCast],
             state(act)), act)) ++
-    //actors.map(Send(_, GroupMembership(actors))) ++ 
     Array[ExternalEvent](
-    //WaitQuiescence,
-    //Partition("bcast8", "bcast1"),
     Send("bcast5", () => Bcast(null, Msg("Foo", 1))),
     Send("bcast5", () => Bcast(null, Msg("Foo", 2))),
     Send("bcast8", () => Bcast(null, Msg("Bar", 2))),
@@ -58,28 +55,44 @@ object Test extends App {
     Send("bcast5", () => Bcast(null, Msg("Foo", 1))),
     Send("bcast5", () => Bcast(null, Msg("Foo", 2))),
     Send("bcast8", () => Bcast(null, Msg("Bar", 2)))
-    //Partition("bcast8", "bcast2"),
-    //Partition("bcast8", "bcast3"),
-    //Partition("bcast8", "bcast4"),
-    //Partition("bcast8", "bcast5"),
-    //Partition("bcast8", "bcast6"),
-    //Partition("bcast8", "bcast7")
   )
 
-  val sched = new DPORwFailures
+  val trace1 = Array[ExternalEvent]() ++
+    actors.map(
+      act => Start(() => Props.create(classOf[ReliableBCast],
+            state(act)), act)) ++
+    Array[ExternalEvent](
+    Send("bcast5", () => Bcast(null, Msg("Foo", 1))),
+    Send("bcast5", () => Bcast(null, Msg("Foo", 2))),
+    Send("bcast8", () => Bcast(null, Msg("Bar", 2))),
+    Unique(WaitQuiescence),
+    Send("bcast5", () => Bcast(null, Msg("Foo", 1))),
+    Send("bcast8", () => Bcast(null, Msg("Bar", 2)))
+  )
+
+  val sched = new DPORwHeuristics
   Instrumenter().scheduler = sched
   //val events = sched.peek(trace0)
   val traceSem = new Semaphore(0)
-
+  val traces = new MutableList[sched.Trace]
   sched.run(trace0, 
-            (q) => (),
+            (q) => traces += (new sched.Trace ++ q),
             (_) => traceSem.release)
   println("Returned to main, waiting")
   traceSem.acquire
-  println("Done")
-  //println("Shutting down")
-  ////sched.shutdown
-  //println("Shutdown successful")
+  println("Done, explored " + traces.size)
+  println("Rerunning with different initial trace seed " + Util.traceStr(traces.last))
+  println(Util.traceList(traces.last))
+
+  val traces2 = new MutableList[sched.Trace]
+  sched.run(trace1, 
+            (q) => traces2 += (new sched.Trace ++ q),
+            (_) => traceSem.release,
+            Some(traces.last))
+  println("Returned to main, waiting")
+  traceSem.acquire
+  println("Done, explored " + traces2.size)
+
 
   //verifyState(actors, state) 
 }
