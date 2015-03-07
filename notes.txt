@@ -1,3 +1,4 @@
+TODO(cs): generalize combine_graphs.py
 TODO(cs): right-to-left-removal
 TODO(cs): save smallest trace recorded so far. Not necessarily MCS!
 TODO(cs): if any repeating timer t went off k times in \tau^0, we should make sure it only goes
