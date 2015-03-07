@@ -84,6 +84,25 @@ object Init {
     }).values
     return ChangeConfiguration(ClusterConfiguration(clusterRefs))
   }
+
+  // Very important! Need to update the actor refs recorded in the event
+  // trace, since they are no longer valid for this new actor system.
+  def updateActorRef(ref: ActorRef) : ActorRef = {
+    val newRef = Instrumenter().actorSystem.actorFor("/user/" + ref.path.name)
+    assert(newRef.path.name != "deadLetters")
+    return newRef
+  }
+
+  def eventMapper(e: Event) : Option[Event] = {
+    e match {
+      case MsgSend(snd,rcv,ChangeConfiguration(config)) =>
+        val updatedRefs = config.members.map(Init.updateActorRef)
+        val updatedConfig = ChangeConfiguration(ClusterConfiguration(updatedRefs))
+        return Some(MsgSend(snd,rcv,updatedConfig))
+      case m =>
+        return Some(m)
+    }
+  }
 }
 
 object Main extends App {
@@ -116,10 +135,17 @@ object Main extends App {
 
   Instrumenter().registerShutdownCallback(shutdownCallback)
 
-  val fuzz = false
+  val fuzz = true
 
+  var traceFound: EventTrace = null
+  var violationFound: ViolationFingerprint = null
   if (fuzz) {
-    var (traceFound, violationFound) = RunnerUtils.fuzz(fuzzer, raftChecks.invariant)
+    val replayer = new ReplayScheduler(new RaftMessageFingerprinter, false, false)
+    replayer.setEventMapper(Init.eventMapper)
+    val pair = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
+                                validate_replay=Some(replayer))
+    traceFound = pair._1
+    violationFound = pair._2
 
     println("----------")
     println("trace:")
@@ -133,22 +159,9 @@ object Main extends App {
       new RaftMessageFingerprinter,
       new RaftMessageSerializer)
 
-  // val dir = serializer.record_experiment("akka-raft-fuzz",
-  //     traceFound.filterCheckpointMessages(), violationFound)
-
-  val dir =
-  "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_04_22_37_30"
-
-  val replayEvents = RunnerUtils.replayExperiment(dir,
-    new RaftMessageFingerprinter,
-    new RaftMessageDeserializer(Instrumenter().actorSystem))
-  println("events:")
-  for (e <- replayEvents) {
-    println(e)
-  }
-  println("-------")
-
-  //val dir = "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_04_15_35_33"
+  val dir = if (fuzz) serializer.record_experiment("akka-raft-fuzz",
+    traceFound.filterCheckpointMessages(), violationFound) else
+    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_06_16_57_12"
 
   /*
   println("Trying randomDDMin")
@@ -161,27 +174,6 @@ object Main extends App {
   serializer.serializeMCS(dir, mcs1, stats1, mcs_execution1, violation1)
   */
 
-  // Very important! Need to update the actor refs recorded in the event
-  // trace, since they are no longer valid for this new actor system.
-  // TODO(cs): I don't understand why Akka's deserialization magic doesn't
-  // obviate the need to do this?
-  def updateActorRef(ref: ActorRef) : ActorRef = {
-    println("Updating ActorRef: " + ref.path.name)
-    val newRef = Instrumenter().actorSystem.actorFor("/user/" + ref.path.name)
-    require(newRef.path.name != "deadLetters")
-    return newRef
-  }
-
-  val event_mapper = (e: Event) => {
-    e match {
-      case MsgSend(snd,rcv,ChangeConfiguration(config)) =>
-        val updatedRefs = config.members.map(updateActorRef)
-        val updatedConfig = ChangeConfiguration(ClusterConfiguration(updatedRefs))
-        Some(MsgSend(snd,rcv,updatedConfig))
-      case m =>
-        Some(m)
-    }
-  }
 
   println("Trying STSSchedDDMinNoPeak")
   // Dissallow peek:
@@ -191,7 +183,7 @@ object Main extends App {
       new RaftMessageDeserializer(Instrumenter().actorSystem),
       false,
       raftChecks.invariant,
-      Some(event_mapper))
+      Some(Init.eventMapper))
 
   serializer.serializeMCS(dir, mcs2, stats2, mcs_execution2, violation2)
 
@@ -203,7 +195,7 @@ object Main extends App {
       new RaftMessageDeserializer(Instrumenter().actorSystem),
       true,
       raftChecks.invariant,
-      Some(event_mapper))
+      Some(Init.eventMapper))
 
   serializer.serializeMCS(dir, mcs3, stats3, mcs_execution3, violation3)
 }
