@@ -1,16 +1,8 @@
-
-Why are those XXX showing up twice in the log?
-
-Worth noting that there is some non-determinism in how we replay akka-raft.
-Not sure if it's pernicious though?
 TODO(cs): right-to-left-removal
 TODO(cs): save smallest trace recorded so far. Not necessarily MCS!
-TODO(cs): probably need the equivalent of BeginWaitQuiescence for Continue
-          events? And WaitTimer events?
-TODO(cs): in GreedyED, if any repeating timer t went off k times in \tau^0, we should make sure it only goes
+TODO(cs): if any repeating timer t went off k times in \tau^0, we should make sure it only goes
 off k times in the executions we care about (i.e., we don't have to worry
 about it going off infinitely, etc.)
-TODO(cs): fix race condition in GreedyED
 
 ---------------
 TODO(cs): understand why my optimization of pruning out Sends to non-existent

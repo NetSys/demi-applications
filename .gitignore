@@ -22,3 +22,7 @@ experiments/*
 experiments
 
 *.out
+*.gpi
+*.dat
+*.pdf
+*.json
