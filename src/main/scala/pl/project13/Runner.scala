@@ -116,7 +116,7 @@ object Main extends App {
     members.map(member =>
       Send(member, Init.startCtor)) ++
     Array[ExternalEvent](
-    WaitQuiescence,
+    WaitQuiescence(),
     WaitTimers(1),
     Continue(10)
     //WaitQuiescence
@@ -135,7 +135,7 @@ object Main extends App {
 
   Instrumenter().registerShutdownCallback(shutdownCallback)
 
-  val fuzz = true
+  val fuzz = false
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -161,7 +161,7 @@ object Main extends App {
 
   val dir = if (fuzz) serializer.record_experiment("akka-raft-fuzz",
     traceFound.filterCheckpointMessages(), violationFound) else
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_06_16_57_12"
+    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_06_20_20_13"
 
   /*
   println("Trying randomDDMin")

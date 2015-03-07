@@ -1,6 +1,8 @@
+
+Why are those XXX showing up twice in the log?
+
 Worth noting that there is some non-determinism in how we replay akka-raft.
 Not sure if it's pernicious though?
-TODO(cs): need to cap steps random takes
 TODO(cs): right-to-left-removal
 TODO(cs): save smallest trace recorded so far. Not necessarily MCS!
 TODO(cs): probably need the equivalent of BeginWaitQuiescence for Continue
@@ -11,6 +13,9 @@ about it going off infinitely, etc.)
 TODO(cs): fix race condition in GreedyED
 
 ---------------
+TODO(cs): understand why my optimization of pruning out Sends to non-existent
+actors wasn't correct
+TODO(cs): Nuke GreedyED
 TODO(cs): do we handle context.system.eventStream.publish properly? It's
           apparently only a local facility, not a cluster facility.
 TODO(cs): raise exception if any of the other scheduler.schedule methods are
