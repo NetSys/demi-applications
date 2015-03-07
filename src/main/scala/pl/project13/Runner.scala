@@ -175,7 +175,6 @@ object Main extends App {
   */
 
 
-  /*
   println("Trying STSSchedDDMinNoPeak")
   // Dissallow peek:
   var (mcs2, stats2, mcs_execution2, violation2) =
@@ -187,8 +186,8 @@ object Main extends App {
       Some(Init.eventMapper))
 
   serializer.serializeMCS(dir, mcs2, stats2, mcs_execution2, violation2)
-  */
 
+  /*
   println("Trying STSSchedDDMin")
   // Allow peek:
   var (mcs3, stats3, mcs_execution3, violation3) =
@@ -200,4 +199,5 @@ object Main extends App {
       Some(Init.eventMapper))
 
   serializer.serializeMCS(dir, mcs3, stats3, mcs_execution3, violation3)
+  */
 }
