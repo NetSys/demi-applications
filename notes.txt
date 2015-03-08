@@ -1,6 +1,6 @@
+TODO(cs): generalize combine_graphs.py
 TODO(cs): the no pending timers for alive actors issue might affect other schedulers
           that don't invoke handle_quiescence.
-TODO(cs): generalize combine_graphs.py
 TODO(cs): right-to-left-removal
 TODO(cs): save smallest trace recorded so far. Not necessarily MCS!
 TODO(cs): if any repeating timer t went off k times in \tau^0, we should make sure it only goes
@@ -10,7 +10,6 @@ about it going off infinitely, etc.)
 ---------------
 TODO(cs): understand why my optimization of pruning out Sends to non-existent
 actors wasn't correct
-TODO(cs): Nuke GreedyED
 TODO(cs): do we handle context.system.eventStream.publish properly? It's
           apparently only a local facility, not a cluster facility.
 TODO(cs): raise exception if any of the other scheduler.schedule methods are
