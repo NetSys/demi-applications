@@ -135,7 +135,7 @@ object Main extends App {
 
   Instrumenter().registerShutdownCallback(shutdownCallback)
 
-  val fuzz = false
+  val fuzz = true
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -187,7 +187,6 @@ object Main extends App {
 
   serializer.serializeMCS(dir, mcs2, stats2, mcs_execution2, violation2)
 
-  /*
   println("Trying STSSchedDDMin")
   // Allow peek:
   var (mcs3, stats3, mcs_execution3, violation3) =
@@ -199,5 +198,13 @@ object Main extends App {
       Some(Init.eventMapper))
 
   serializer.serializeMCS(dir, mcs3, stats3, mcs_execution3, violation3)
-  */
+
+  println("Trying RoundRobinDDMin")
+  var (mcs4, stats4, mcs_execution4, violation4) =
+    RunnerUtils.roundRobinDDMin(dir,
+      new RaftMessageFingerprinter,
+      new RaftMessageDeserializer(Instrumenter().actorSystem),
+      raftChecks.invariant)
+
+  serializer.serializeMCS(dir, mcs4, stats4, mcs_execution4, violation4)
 }
