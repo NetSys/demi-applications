@@ -1,4 +1,4 @@
-TODO(cs): generalize combine_graphs.py
+TODO(cs): deal with sts2-bugs.txt
 TODO(cs): the no pending timers for alive actors issue might affect other schedulers
           that don't invoke handle_quiescence.
 TODO(cs): right-to-left-removal
