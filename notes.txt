@@ -1,3 +1,5 @@
+TODO(cs): the no pending timers for alive actors issue might affect other schedulers
+          that don't invoke handle_quiescence.
 TODO(cs): generalize combine_graphs.py
 TODO(cs): right-to-left-removal
 TODO(cs): save smallest trace recorded so far. Not necessarily MCS!

@@ -135,7 +135,7 @@ object Main extends App {
 
   Instrumenter().registerShutdownCallback(shutdownCallback)
 
-  val fuzz = true
+  val fuzz = false
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -161,7 +161,7 @@ object Main extends App {
 
   val dir = if (fuzz) serializer.record_experiment("akka-raft-fuzz",
     traceFound.filterCheckpointMessages(), violationFound) else
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_06_20_20_13"
+    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_07_16_28_29"
 
   /*
   println("Trying randomDDMin")
@@ -173,7 +173,6 @@ object Main extends App {
 
   serializer.serializeMCS(dir, mcs1, stats1, mcs_execution1, violation1)
   */
-
 
   println("Trying STSSchedDDMinNoPeak")
   // Dissallow peek:
