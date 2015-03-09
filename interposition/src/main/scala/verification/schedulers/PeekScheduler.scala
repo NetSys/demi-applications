@@ -17,11 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 // TODO(cs): PeekScheduler should really be parameterized to allow us to try
 // different scheduling strategies (FIFO, round-robin) during Peek.
 
-// TODO(cs): PeekScheduler does not invoke EventTrace.appendMsgSend nor
-// EventTrace.appendMsgEvent, and therefore does not provide a mapping between
-// Send's and their corresponding delivery events. This prevents some
-// optimizations, e.g. EventTrace.filterKnownAbsentInternals.
-
 /**
  * Takes a sequence of ExternalEvents as input, and plays the execution
  * forward in the same way as FairScheduler. While playing forward,
@@ -32,6 +27,17 @@ import java.util.concurrent.atomic.AtomicBoolean
 class PeekScheduler(enableFailureDetector: Boolean)
     extends FairScheduler with ExternalEventInjector[ExternalEvent] with TestOracle {
   def this() = this(true)
+
+  def getName: String = "FairScheduler"
+
+  // Allow the user to place a bound on how many messages are delivered.
+  // Useful for dealing with non-terminating systems.
+  var maxMessages = Int.MaxValue
+  def setMaxMessages(_maxMessages: Int) = {
+    maxMessages = _maxMessages
+  }
+
+  var messagesScheduledSoFar = 0
 
   var test_invariant : Invariant = null
 
@@ -52,13 +58,15 @@ class PeekScheduler(enableFailureDetector: Boolean)
   override def event_produced(cell: ActorCell, envelope: Envelope) = {
     val snd = envelope.sender.path.name
     val rcv = cell.self.path.name
-    val msgs = pendingEvents.getOrElse(rcv, new Queue[(ActorCell, Envelope)])
+    val msgs = pendingEvents.getOrElse(rcv, new Queue[Uniq[(ActorCell, Envelope)]])
+    val uniq = Uniq[(ActorCell, Envelope)]((cell, envelope))
+    event_orchestrator.events.appendMsgSend(snd, rcv, envelope.message, uniq.id)
     handle_event_produced(snd, rcv, envelope) match {
       case SystemMessage => None
       case CheckpointReplyMessage => None
       case _ => {
         if (!crosses_partition(snd, rcv)) {
-          pendingEvents(rcv) = msgs += ((cell, envelope))
+          pendingEvents(rcv) = msgs += uniq
         }
       }
     }
@@ -81,9 +89,32 @@ class PeekScheduler(enableFailureDetector: Boolean)
   }
 
   override def schedule_new_message() : Option[(ActorCell, Envelope)] = {
-    send_external_messages
+    // Check if we've exceeded our message limit
+    if (messagesScheduledSoFar > maxMessages) {
+      println("Exceeded maxMessages")
+      numWaitingFor.set(0)
+      event_orchestrator.finish_early
+      return None
+    }
+
+    send_external_messages()
     // FairScheduler gives us round-robin message dispatches.
-    return super.schedule_new_message()
+    val uniq_option = find_message_to_schedule()
+    uniq_option match {
+      case Some(uniq) =>
+        event_orchestrator.events.appendMsgEvent(uniq.element, uniq.id)
+        uniq.element._2.message match {
+          case CheckpointRequest => None
+          case _ =>
+            messagesScheduledSoFar += 1
+            if (messagesScheduledSoFar == Int.MaxValue) {
+              messagesScheduledSoFar = 1
+            }
+        }
+        return Some(uniq.element)
+      case None =>
+        return None
+    }
   }
 
   override def notify_quiescence () {
@@ -117,7 +148,14 @@ class PeekScheduler(enableFailureDetector: Boolean)
     super[ExternalEventInjector].enqueue_message(receiver, msg)
   }
 
-  def test(events: Seq[ExternalEvent], violation_fingerprint: ViolationFingerprint) : Boolean = {
+  override def reset_all_state() = {
+    super.reset_all_state
+    messagesScheduledSoFar = 0
+  }
+
+  def test(events: Seq[ExternalEvent],
+           violation_fingerprint: ViolationFingerprint,
+           stats: MinimizationStats) : Option[EventTrace] = {
     Instrumenter().scheduler = this
     peek(events)
     if (test_invariant == null) {
@@ -131,7 +169,16 @@ class PeekScheduler(enableFailureDetector: Boolean)
         violation_found = fingerprint.matches(violation_fingerprint)
       case None => None
     }
-    shutdown()
-    return !violation_found
+    val ret = violation_found match {
+      case true => Some(event_orchestrator.events)
+      case false => None
+    }
+
+    // reset ExternalEventInjector
+    reset_state
+    // reset FairScheduler
+    reset_all_state
+
+    return ret
   }
 }
