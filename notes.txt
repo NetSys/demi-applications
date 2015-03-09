@@ -1,3 +1,16 @@
+Adapting to DPORwHeuristics:
+  - Convert all timers into external messages? (Issue: can't serialize timers)
+  - Simply remove all WaitTimers
+  - Also remove all Continue()'s?
+  - Also remove all Partitions/Unpartitions, since we only have support for
+    Partitions. Maybe keep around intermediate Partitions.
+  - Remove all Kills (and intermediate Starts) too?
+  - Create a Dependency graph
+  - Create a Trace (Queue[Unique])
+  - Add message fingerprints to DPOR?
+
+
+----------------
 TODO(cs): deal with sts2-bugs.txt
 TODO(cs): the no pending timers for alive actors issue might affect other schedulers
           that don't invoke handle_quiescence.
@@ -6,10 +19,9 @@ TODO(cs): save smallest trace recorded so far. Not necessarily MCS!
 TODO(cs): if any repeating timer t went off k times in \tau^0, we should make sure it only goes
 off k times in the executions we care about (i.e., we don't have to worry
 about it going off infinitely, etc.)
-
----------------
 TODO(cs): understand why my optimization of pruning out Sends to non-existent
 actors wasn't correct
+-----------------
 TODO(cs): do we handle context.system.eventStream.publish properly? It's
           apparently only a local facility, not a cluster facility.
 TODO(cs): raise exception if any of the other scheduler.schedule methods are
