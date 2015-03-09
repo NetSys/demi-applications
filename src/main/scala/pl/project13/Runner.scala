@@ -17,6 +17,10 @@ import runner.raftchecks._
 import runner.raftserialization._
 import java.nio._
 
+import scalax.collection.mutable.Graph,
+       scalax.collection.GraphEdge.DiEdge,
+       scalax.collection.edge.LDiEdge
+
 class RaftMessageFingerprinter extends MessageFingerprinter {
   // TODO(cs): might be an easier way to do this. See ActorRef API.
   val refRegex = ".*raft-member-(\\d+).*".r
@@ -139,13 +143,15 @@ object Main extends App {
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
+  var depGraph: Graph[Unique, DiEdge]= null
   if (fuzz) {
     val replayer = new ReplayScheduler(new RaftMessageFingerprinter, false, false)
     replayer.setEventMapper(Init.eventMapper)
-    val pair = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
+    val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                 validate_replay=Some(replayer))
-    traceFound = pair._1
-    violationFound = pair._2
+    traceFound = tuple._1
+    violationFound = tuple._2
+    depGraph = tuple._3
 
     println("----------")
     println("trace:")
@@ -160,7 +166,7 @@ object Main extends App {
       new RaftMessageSerializer)
 
   val dir = if (fuzz) serializer.record_experiment("akka-raft-fuzz",
-    traceFound.filterCheckpointMessages(), violationFound) else
+    traceFound.filterCheckpointMessages(), violationFound, depGraph=Some(depGraph)) else
     "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_07_16_28_29"
 
   /*
