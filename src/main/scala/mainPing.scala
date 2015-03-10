@@ -27,7 +27,7 @@ object TestPings extends App {
     Send("ping1", () => StopPinging)
   )
 
-  val sched = new DPORwHeuristics
+  val sched = new DPORwHeuristics(Some(6))
   Instrumenter().scheduler = sched
   val traceSem = new Semaphore(0)
   val traces = new MutableList[sched.Trace]
