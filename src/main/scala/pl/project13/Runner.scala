@@ -162,8 +162,8 @@ object Main extends App {
   }
 
   val serializer = new ExperimentSerializer(
-      new RaftMessageFingerprinter,
-      new RaftMessageSerializer)
+    new RaftMessageFingerprinter,
+    new RaftMessageSerializer)
 
   val dir = if (fuzz) serializer.record_experiment("akka-raft-fuzz",
     traceFound.filterCheckpointMessages(), violationFound, depGraph=Some(depGraph)) else
@@ -178,7 +178,6 @@ object Main extends App {
       raftChecks.invariant)
 
   serializer.serializeMCS(dir, mcs1, stats1, mcs_execution1, violation1)
-  */
 
   println("Trying STSSchedDDMinNoPeak")
   // Dissallow peek:
@@ -212,4 +211,5 @@ object Main extends App {
       raftChecks.invariant)
 
   serializer.serializeMCS(dir, mcs4, stats4, mcs_execution4, violation4)
+  */
 }
