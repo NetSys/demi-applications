@@ -1,12 +1,17 @@
+Merge
+
+Review Panda's new cancellable interface
+
+Record events seen in DPORwHeuristics. Or, figure out how to return Trace in
+test()
+
 Adapting to DPORwHeuristics:
-  - Implement TestOracle interface
-  - Read from DPOR.reachabilityMap
   - Add support for Unpartitions
-  - Create a Trace (Queue[Unique]). Should only contains MsgEvents, SpawnEvents, and NetworkPartitions
   - Add message fingerprints to DPOR? [Panda working on this?]
+  - Set max # of schedules to explore
 
 ----------------
-TODO(cs): use Panda's push interface for cancellations
+TODO(cs): check invariants more often in DPORwHeuristics?
 TODO(cs): check that clear()'ing of Instrumenter().random() doesn't screw up
 checkpoints.
 TODO(cs): deal with sts2-bugs.txt
