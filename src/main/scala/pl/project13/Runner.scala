@@ -22,21 +22,14 @@ import scalax.collection.mutable.Graph,
        scalax.collection.edge.LDiEdge
 
 class RaftMessageFingerprinter extends MessageFingerprinter {
-  // TODO(cs): might be an easier way to do this. See ActorRef API.
-  val refRegex = ".*raft-member-(\\d+).*".r
-  val systemRegex = ".*(new-system-\\d+).*".r
-
-  override def fingerprint(msg: Any) : MessageFingerprint = {
-    val superResult = super.fingerprint(msg)
-    if (superResult != null) {
-      return superResult
+  override def fingerprint(msg: Any) : Option[MessageFingerprint] = {
+    val alreadyFingerprint = super.fingerprint(msg)
+    if (alreadyFingerprint != None) {
+      return alreadyFingerprint
     }
 
     def removeId(ref: ActorRef) : String = {
-      ref.toString match {
-        case refRegex(member) => return "raft-member-" + member
-        case _ => return ref.toString
-      }
+      return ref.path.name
     }
     val str = msg match {
       case RequestVote(term, ref, lastTerm, lastIdx) =>
@@ -44,14 +37,13 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
       case LeaderIs(Some(ref), msg) =>
         ("LeaderIs", removeId(ref)).toString
       case m =>
-        // Lazy person's approach: instead of dealing properly with all
-        // message types, just do a regex on the string
-        m.toString match {
-          case systemRegex(system) => m.toString.replace(system, "")
-          case _ => m.toString
-        }
+        ""
     }
-    return BasicFingerprint(str)
+
+    if (str != "") {
+      return Some(BasicFingerprint(str))
+    }
+    return None
   }
 }
 
@@ -127,6 +119,9 @@ object Main extends App {
     // Continue(500)
   )
 
+  val fingerprintFactory = new FingerprintFactory
+  fingerprintFactory.registerFingerprinter(new RaftMessageFingerprinter)
+
   val weights = new FuzzerWeights(kill=0.01, send=0.3, wait_quiescence=0.1,
                                   wait_timers=0.3, partition=0.1, unpartition=0,
                                   continue=0.3)
@@ -145,10 +140,10 @@ object Main extends App {
   var violationFound: ViolationFingerprint = null
   var depGraph: Graph[Unique, DiEdge]= null
   if (fuzz) {
-    val replayer = new ReplayScheduler(new RaftMessageFingerprinter, false, false)
+    val replayer = new ReplayScheduler(fingerprintFactory, false, false)
     replayer.setEventMapper(Init.eventMapper)
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
-                                 new RaftMessageFingerprinter,
+                                 fingerprintFactory,
                                  validate_replay=Some(replayer))
     traceFound = tuple._1
     violationFound = tuple._2
@@ -163,7 +158,7 @@ object Main extends App {
   }
 
   val serializer = new ExperimentSerializer(
-    new RaftMessageFingerprinter,
+    fingerprintFactory,
     new RaftMessageSerializer)
 
   val dir = if (fuzz) serializer.record_experiment("akka-raft-fuzz",
@@ -174,7 +169,7 @@ object Main extends App {
   println("Trying randomDDMin")
   var (mcs1, stats1, mcs_execution1, violation1) =
     RunnerUtils.randomDDMin(dir,
-      new RaftMessageFingerprinter,
+      fingerprintFactory,
       new RaftMessageDeserializer(Instrumenter().actorSystem),
       raftChecks.invariant)
 
@@ -184,7 +179,7 @@ object Main extends App {
   // Dissallow peek:
   var (mcs2, stats2, mcs_execution2, violation2) =
     RunnerUtils.stsSchedDDMin(dir,
-      new RaftMessageFingerprinter,
+      fingerprintFactory,
       new RaftMessageDeserializer(Instrumenter().actorSystem),
       false,
       raftChecks.invariant,
@@ -196,7 +191,7 @@ object Main extends App {
   // Allow peek:
   var (mcs3, stats3, mcs_execution3, violation3) =
     RunnerUtils.stsSchedDDMin(dir,
-      new RaftMessageFingerprinter,
+      fingerprintFactory,
       new RaftMessageDeserializer(Instrumenter().actorSystem),
       true,
       raftChecks.invariant,
@@ -207,7 +202,7 @@ object Main extends App {
   println("Trying RoundRobinDDMin")
   var (mcs4, stats4, mcs_execution4, violation4) =
     RunnerUtils.roundRobinDDMin(dir,
-      new RaftMessageFingerprinter,
+      fingerprintFactory,
       new RaftMessageDeserializer(Instrumenter().actorSystem),
       raftChecks.invariant)
 
@@ -216,7 +211,7 @@ object Main extends App {
 
   var (mcs5, stats5, mcs_execution5, violation5) =
     RunnerUtils.editDistanceDporDDMin(dir,
-      new RaftMessageFingerprinter,
+      fingerprintFactory,
       new RaftMessageDeserializer(Instrumenter().actorSystem),
       raftChecks.invariant)
 
