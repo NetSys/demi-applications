@@ -32,6 +32,7 @@ class Pinger extends FSM[State, Data] {
     case Event(StopPinging, _) =>
       goto(Idle) using Undefined
     case Event(StateTimeout, PingActor(actor)) =>
+      println(self.path.name + " sending ping ")
       setTimer("pong_timeout", PongDelay, 0.1 seconds, false)
       context.actorFor("../" + actor) ! Ping
       stay
@@ -47,7 +48,7 @@ class Pinger extends FSM[State, Data] {
                            stay
     case Event(PongDelay, _) => println(self.path.name + " Didn't see a pong in fixed time ")
                                 stay
-    case Event(_, _) => println(self.path.name + " Unhandled event")
+    case Event(ev, s) => println(self.path.name + " Unhandled event " + s + " " + ev)
                         stay
   }
 
