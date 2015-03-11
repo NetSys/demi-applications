@@ -1,5 +1,3 @@
-Merge
-
 Review Panda's new cancellable interface
 
 Record events seen in DPORwHeuristics. Or, figure out how to return Trace in
