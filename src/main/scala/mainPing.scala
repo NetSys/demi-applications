@@ -24,8 +24,8 @@ object TestPings extends App {
       act => Start(() => Props[Pinger], act)) ++
     Array[ExternalEvent](
     Send("ping1", () => StartPinging("ping2")),
-    NetworkPartition(Set("ping1"), Set("ping2")),
-    NetworkUnpartition(Set("ping1"), Set("ping2")),
+    Unique(NetworkPartition(Set("ping1"), Set("ping2"))),
+    Unique(NetworkUnpartition(Set("ping1"), Set("ping2"))),
     Send("ping1", () => StopPinging)
   )
 
