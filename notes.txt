@@ -2,8 +2,8 @@ Record events seen in DPORwHeuristics. Or, figure out how to return Trace in
 test()
 
 Adapting to DPORwHeuristics:
-  - Add message fingerprints to DPOR?
   - Set max # of schedules to explore
+  - unisolate nodes at start properly
 
 ----------------
 TODO(cs): check invariants more often in DPORwHeuristics?

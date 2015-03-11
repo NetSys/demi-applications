@@ -148,7 +148,8 @@ object Main extends App {
     val replayer = new ReplayScheduler(new RaftMessageFingerprinter, false, false)
     replayer.setEventMapper(Init.eventMapper)
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
-                                validate_replay=Some(replayer))
+                                 new RaftMessageFingerprinter,
+                                 validate_replay=Some(replayer))
     traceFound = tuple._1
     violationFound = tuple._2
     depGraph = tuple._3
