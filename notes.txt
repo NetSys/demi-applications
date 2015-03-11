@@ -1,9 +1,13 @@
 Record events seen in DPORwHeuristics. Or, figure out how to return Trace in
 test()
 
-Adapting to DPORwHeuristics:
-  - Set max # of schedules to explore
-  - unisolate nodes at start properly
+Set max # of schedules to explore
+
+Deal with TimerDelivery properly
+
+verify that timers and Send()s are matched correctly by DPOR
+does DPOR assume that system messages all have id=0? see
+getNextTraceMessage
 
 ----------------
 TODO(cs): check invariants more often in DPORwHeuristics?

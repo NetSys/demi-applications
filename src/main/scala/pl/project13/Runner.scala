@@ -139,7 +139,7 @@ object Main extends App {
 
   Instrumenter().registerShutdownCallback(shutdownCallback)
 
-  val fuzz = true
+  val fuzz = false
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -168,7 +168,7 @@ object Main extends App {
 
   val dir = if (fuzz) serializer.record_experiment("akka-raft-fuzz",
     traceFound.filterCheckpointMessages(), violationFound, depGraph=Some(depGraph)) else
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_07_16_28_29"
+    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_11_04_55_01"
 
   /*
   println("Trying randomDDMin")
