@@ -9,6 +9,7 @@ import akka.dispatch.verification._
 
 final case class StartPinging (actor: String)
 final case object Ping
+final case object PongDelay
 final case object Pong
 final case object StopPinging
 
@@ -31,6 +32,7 @@ class Pinger extends FSM[State, Data] {
     case Event(StopPinging, _) =>
       goto(Idle) using Undefined
     case Event(StateTimeout, PingActor(actor)) =>
+      setTimer("pong_timeout", PongDelay, 0.1 seconds, false)
       context.actorFor("../" + actor) ! Ping
       stay
   }
@@ -40,8 +42,12 @@ class Pinger extends FSM[State, Data] {
                            sender ! Pong
                            stay
     case Event(Pong, _) => println(self.path.name + " Pong from " + sender.path.name)
+                           cancelTimer("pong_timeout")
+                           println("Cancelling pong_timeout")
                            stay
-    case Event(_, _) => println("Unhandled event")
+    case Event(PongDelay, _) => println(self.path.name + " Didn't see a pong in fixed time ")
+                                stay
+    case Event(_, _) => println(self.path.name + " Unhandled event")
                         stay
   }
 
