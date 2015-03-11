@@ -1,16 +1,12 @@
 Adapting to DPORwHeuristics:
-  - Convert all timers into external messages? (Issue: can't serialize timers)
-  - Simply remove all WaitTimers
-  - Also remove all Continue()'s?
-  - Also remove all Partitions/Unpartitions, since we only have support for
-    Partitions. Maybe keep around intermediate Partitions.
-  - Remove all Kills (and intermediate Starts) too?
-  - Create a Dependency graph
-  - Create a Trace (Queue[Unique])
-  - Add message fingerprints to DPOR?
-
+  - Implement TestOracle interface
+  - Read from DPOR.reachabilityMap
+  - Add support for Unpartitions
+  - Create a Trace (Queue[Unique]). Should only contains MsgEvents, SpawnEvents, and NetworkPartitions
+  - Add message fingerprints to DPOR? [Panda working on this?]
 
 ----------------
+TODO(cs): use Panda's push interface for cancellations
 TODO(cs): check that clear()'ing of Instrumenter().random() doesn't screw up
 checkpoints.
 TODO(cs): deal with sts2-bugs.txt
