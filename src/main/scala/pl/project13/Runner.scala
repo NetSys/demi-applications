@@ -128,7 +128,7 @@ object Main extends App {
   )
 
   val weights = new FuzzerWeights(kill=0.01, send=0.3, wait_quiescence=0.1,
-                                  wait_timers=0.3, partition=0.1, unpartition=0.1,
+                                  wait_timers=0.3, partition=0.1, unpartition=0,
                                   continue=0.3)
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(500, weights, messageGen, prefix)
@@ -139,7 +139,7 @@ object Main extends App {
 
   Instrumenter().registerShutdownCallback(shutdownCallback)
 
-  val fuzz = false
+  val fuzz = true
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -212,4 +212,12 @@ object Main extends App {
 
   serializer.serializeMCS(dir, mcs4, stats4, mcs_execution4, violation4)
   */
+
+  var (mcs5, stats5, mcs_execution5, violation5) =
+    RunnerUtils.editDistanceDporDDMin(dir,
+      new RaftMessageFingerprinter,
+      new RaftMessageDeserializer(Instrumenter().actorSystem),
+      raftChecks.invariant)
+
+  serializer.serializeMCS(dir, mcs5, stats5, mcs_execution5, violation5)
 }
