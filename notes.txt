@@ -8,6 +8,8 @@ does DPOR assume that system messages all have id=0? see
 getNextTraceMessage
 
 ----------------
+TODO(cs): PeekScheduler and RandomScheduler should call
+stats.increment_replays() more than once, even if they don't ever find the bug...
 TODO(cs): check invariants more often in DPORwHeuristics?
 TODO(cs): check that clear()'ing of Instrumenter().random() doesn't screw up
 checkpoints.
