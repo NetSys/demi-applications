@@ -55,9 +55,10 @@ object Test extends App {
     Send("bcast5", () => Bcast(null, Msg("Foo", 2))),
     Send("bcast8", () => Bcast(null, Msg("Bar", 2))),
     Unique(WaitQuiescence()),
-    Send("bcast5", () => Bcast(null, Msg("Foo", 1))),
-    Send("bcast5", () => Bcast(null, Msg("Foo", 2))),
-    Send("bcast8", () => Bcast(null, Msg("Bar", 2)))
+    Send("bcast5", () => Bcast(null, Msg("Foo", 3))),
+    Send("bcast5", () => Bcast(null, Msg("Foo", 4))),
+    Send("bcast8", () => Bcast(null, Msg("Bar", 5))),
+    Send("bcast8", () => Bcast(null, Msg("Bar", 6)))
   )
 
   val trace1 = Array[ExternalEvent]() ++
@@ -69,8 +70,8 @@ object Test extends App {
     Send("bcast5", () => Bcast(null, Msg("Foo", 2))),
     Send("bcast8", () => Bcast(null, Msg("Bar", 2))),
     Unique(WaitQuiescence()),
-    Send("bcast5", () => Bcast(null, Msg("Foo", 1))),
-    Send("bcast8", () => Bcast(null, Msg("Bar", 2)))
+    Send("bcast5", () => Bcast(null, Msg("Foo", 3))),
+    Send("bcast8", () => Bcast(null, Msg("Bar", 5)))
   )
 
   val sched = new DPORwHeuristics
