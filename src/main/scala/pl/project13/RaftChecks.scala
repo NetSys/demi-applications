@@ -233,7 +233,7 @@ class ElectionSafetyChecker(parent: RaftChecks) {
     state match {
       case LeaderMeta(_, term, _) =>
         if ((term2leader contains term) && term2leader(term) != actor) {
-          return Some("ElectionSafety:" + actor + ":" + term)
+          return Some("ElectionSafety:" + actor + ":" + term2leader(term) + ":" + term)
         }
         term2leader(term) = actor
         return None
