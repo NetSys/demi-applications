@@ -135,16 +135,21 @@ object Main extends App {
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
-  var depGraph: Graph[Unique, DiEdge]= null
+  var depGraph : Graph[Unique, DiEdge] = null
+  var initialTrace : Queue[Unique] = null
   if (fuzz) {
-    val replayer = new ReplayScheduler(fingerprintFactory, false, false)
-    replayer.setEventMapper(Init.eventMapper)
+    def replayerCtor() : ReplayScheduler = {
+      val replayer =  new ReplayScheduler(fingerprintFactory, false, false)
+      replayer.setEventMapper(Init.eventMapper)
+      return replayer
+    }
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  fingerprintFactory,
-                                 validate_replay=Some(replayer))
+                                 validate_replay=Some(replayerCtor))
     traceFound = tuple._1
     violationFound = tuple._2
     depGraph = tuple._3
+    initialTrace = tuple._4
 
     println("----------")
     println("trace:")
@@ -159,8 +164,9 @@ object Main extends App {
     new RaftMessageSerializer)
 
   val dir = if (fuzz) serializer.record_experiment("akka-raft-fuzz",
-    traceFound.filterCheckpointMessages(), violationFound, depGraph=Some(depGraph)) else
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_11_04_55_01"
+    traceFound.filterCheckpointMessages(), violationFound,
+    depGraph=Some(depGraph), initialTrace=Some(initialTrace)) else
+    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_14_01_08_35"
 
   /*
   println("Trying randomDDMin")
