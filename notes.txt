@@ -1,13 +1,20 @@
+No corresponding "Became Leader" message; invariant check mistaken?
+
+After ~35 validation attempts, the system sometimes hangs. We probably have a
+race condition somewhere.
+
+[WARN] [03/13/2015 23:12:24.647] [new-system-0-akka.actor.default-dispatcher-3] [akka://new-system-0/user/raft-member-8] unhandled event StateTimeout in state Candidate
+
 Record events seen in DPORwHeuristics. Or, figure out how to return Trace in
 test()
 
-Set max # of schedules to explore
+Set max # of schedules to explore; implement fair ddmin
 
-verify that timers and Send()s are matched correctly by DPOR
-does DPOR assume that system messages all have id=0? see
-getNextTraceMessage
+Write verify_mcs for DPOR. Not clear what initialTrace to give it, since DDMin
+might not actually replay the execution -- it might be pieced together.
 
 ----------------
+TODO(cs): codesign DDMin and DPOR
 TODO(cs): PeekScheduler and RandomScheduler should call
 stats.increment_replays() more than once, even if they don't ever find the bug...
 TODO(cs): check invariants more often in DPORwHeuristics?
@@ -23,6 +30,12 @@ off k times in the executions we care about (i.e., we don't have to worry
 about it going off infinitely, etc.)
 TODO(cs): understand why my optimization of pruning out Sends to non-existent
 actors wasn't correct
+TODO(cs): don't actually need to generate DepGraph in RandomScheduler.scala.
+Could infer it Panda's way from the EventTrace.
+TODO(cs): seems like all these handleTick's during fuzzing are unnecessary...
+In fact, why are we relying on the akka scheduler at all? Why not just enqueue
+timers as soon as they're delivered?
+TODO(cs): timers break eventTrace.filterSends
 -----------------
 TODO(cs): do we handle context.system.eventStream.publish properly? It's
           apparently only a local facility, not a cluster facility.

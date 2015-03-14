@@ -95,3 +95,36 @@ Exception in thread "main" java.lang.RuntimeException: UnPartition without prece
         at Main$.main(Runner.scala:89)
         at Main.main(Runner.scala)
 
+======== Bug ========
+
+While fuzzing:
+
+
+[ERROR] [03/13/2015 01:43:37.685] [new-system-5527-akka.actor.default-dispatcher-9] [akka://new-system-5527/user/raft-member-1] null
+java.util.NoSuchElementException
+        at scala.collection.mutable.LinkedListLike$class.head(LinkedListLike.scala:75)
+        at scala.collection.mutable.LinkedList.head(LinkedList.scala:80)
+        at scala.collection.mutable.MutableList.head(MutableList.scala:53)
+        at scala.collection.LinearSeqOptimized$class.foreach(LinearSeqOptimized.scala:59)
+        at scala.collection.mutable.MutableList.foreach(MutableList.scala:29)
+        at scala.collection.TraversableLike$WithFilter.foreach(TraversableLike.scala:777)
+        at akka.dispatch.verification.ExternalEventInjector$class.send_external_messages(ExternalEventInjector.scala:139)
+        at akka.dispatch.verification.RandomScheduler.send_external_messages(RandomScheduler.scala:35)
+        at akka.dispatch.verification.ExternalEventInjector$class.send_external_messages(ExternalEventInjector.scala:123)
+        at akka.dispatch.verification.RandomScheduler.send_external_messages(RandomScheduler.scala:35)
+        at akka.dispatch.verification.RandomScheduler.schedule_new_message(RandomScheduler.scala:293)
+        at akka.dispatch.verification.Instrumenter.start_dispatch(Instrumenter.scala:334)
+        at akka.dispatch.verification.ExternalEventInjector$class.handle_quiescence(ExternalEventInjector.scala:325)
+        at akka.dispatch.verification.RandomScheduler.handle_quiescence(RandomScheduler.scala:35)
+        at akka.dispatch.verification.RandomScheduler.notify_quiescence(RandomScheduler.scala:335)
+        at akka.dispatch.verification.Instrumenter.afterMessageReceive(Instrumenter.scala:276)
+        at sample.WeaveActor.ajc$after$sample_WeaveActor$3$79e3ab71(WeaveActor.aj:53)
+        at akka.actor.ActorCell.receiveMessage(ActorCell.scala:516)
+        at akka.actor.ActorCell.invoke(ActorCell.scala:487)
+        at akka.dispatch.Mailbox.processMailbox(Mailbox.scala:238)
+        at akka.dispatch.Mailbox.run(Mailbox.scala:220)
+        at akka.dispatch.ForkJoinExecutorConfigurator$AkkaForkJoinTask.exec(AbstractDispatcher.scala:393)
+        at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260)
+        at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339)
+        at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979)
+        at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107)

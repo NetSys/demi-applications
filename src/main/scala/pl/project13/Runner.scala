@@ -112,9 +112,7 @@ object Main extends App {
     members.map(member =>
       Send(member, Init.startCtor)) ++
     Array[ExternalEvent](
-    WaitQuiescence(),
-    WaitTimers(1),
-    Continue(10)
+    WaitQuiescence()
     //WaitQuiescence
     // Continue(500)
   )
@@ -123,8 +121,7 @@ object Main extends App {
   fingerprintFactory.registerFingerprinter(new RaftMessageFingerprinter)
 
   val weights = new FuzzerWeights(kill=0.01, send=0.3, wait_quiescence=0.1,
-                                  wait_timers=0.3, partition=0.1, unpartition=0,
-                                  continue=0.3)
+                                  partition=0.1, unpartition=0)
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(500, weights, messageGen, prefix)
 
