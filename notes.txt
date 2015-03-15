@@ -1,3 +1,5 @@
+Prioritize when an absent event is detected in DPORwHeuristics.
+
 Sanity check: DPOR set up to stop as soon as initialTrace is done, should be
 equivalent to STSSched without peek.
 
@@ -17,6 +19,8 @@ Write verify_mcs for DPOR. Not clear what initialTrace to give it, since DDMin
 might not actually replay the execution -- it might be pieced together.
 
 ----------------
+TODO(cs): maybe no need to store DepGraph. It's already there in
+event_orchestrator.events!
 TODO(cs): codesign DDMin and DPOR
 TODO(cs): PeekScheduler and RandomScheduler should call
 stats.increment_replays() more than once, even if they don't ever find the bug...

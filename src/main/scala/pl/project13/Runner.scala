@@ -111,10 +111,7 @@ object Main extends App {
       Start(Init.actorCtor, member)) ++
     members.map(member =>
       Send(member, Init.startCtor)) ++
-    Array[ExternalEvent](
-    WaitQuiescence()
-    //WaitQuiescence
-    // Continue(500)
+    Array[ExternalEvent](WaitQuiescence()
   )
 
   val fingerprintFactory = new FingerprintFactory
@@ -150,13 +147,6 @@ object Main extends App {
     violationFound = tuple._2
     depGraph = tuple._3
     initialTrace = tuple._4
-
-    println("----------")
-    println("trace:")
-    for (e <- traceFound) {
-      println(e)
-    }
-    println("----------")
   }
 
   val serializer = new ExperimentSerializer(
