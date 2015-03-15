@@ -1,4 +1,5 @@
-Prioritize when an absent event is detected in DPORwHeuristics.
+Check invariant more frequently in DPOR; possibly add a new depth bound
+metric.
 
 Sanity check: DPOR set up to stop as soon as initialTrace is done, should be
 equivalent to STSSched without peek.
