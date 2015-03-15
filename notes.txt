@@ -1,3 +1,6 @@
+Sanity check: DPOR set up to stop as soon as initialTrace is done, should be
+equivalent to STSSched without peek.
+
 No corresponding "Became Leader" message; invariant check mistaken?
 
 After ~35 validation attempts, the system sometimes hangs. We probably have a
