@@ -128,3 +128,24 @@ java.util.NoSuchElementException
         at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339)
         at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979)
         at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107)
+
+
+============= Bug ===========
+
+Perhaps as a result of non-determinism:
+
+[ERROR] [03/15/2015 00:16:03.718] [new-system-5-akka.actor.default-dispatcher-9] [akka://new-system-5/user/raft-member-3] Unexpected path
+java.lang.Exception: Unexpected path
+        at akka.dispatch.verification.DPORwHeuristics.setParentEvent(DPORwHeuristics.scala:170)
+        at akka.dispatch.verification.DPORwHeuristics.schedule_new_message(DPORwHeuristics.scala:446)
+        at akka.dispatch.verification.Instrumenter.afterMessageReceive(Instrumenter.scala:263)
+        at sample.WeaveActor.ajc$after$sample_WeaveActor$3$79e3ab71(WeaveActor.aj:53)
+        at akka.actor.ActorCell.receiveMessage(ActorCell.scala:516)
+        at akka.actor.ActorCell.invoke(ActorCell.scala:487)
+        at akka.dispatch.Mailbox.processMailbox(Mailbox.scala:238)
+        at akka.dispatch.Mailbox.run(Mailbox.scala:220)
+        at akka.dispatch.ForkJoinExecutorConfigurator$AkkaForkJoinTask.exec(AbstractDispatcher.scala:393)
+        at scala.concurrent.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260)
+        at scala.concurrent.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339)
+        at scala.concurrent.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979)
+        at scala.concurrent.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107)
