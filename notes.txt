@@ -1,5 +1,7 @@
+CheckPointRequests currently perturb the system! Use Panda's receive method...
+
 Check invariant more frequently in DPOR; possibly add a new depth bound
-metric.
+metric, or "stop at end of nextTrace" metric
 
 Sanity check: DPOR set up to stop as soon as initialTrace is done, should be
 equivalent to STSSched without peek.
@@ -14,11 +16,30 @@ race condition somewhere.
 Record events seen in DPORwHeuristics. Or, figure out how to return Trace in
 test()
 
-Set max # of schedules to explore; implement fair ddmin
-
 Write verify_mcs for DPOR. Not clear what initialTrace to give it, since DDMin
 might not actually replay the execution -- it might be pieced together.
 
+---------
+Track happens-before
+
+DPOR that stops at a certain edit-distance, then resumes. (Don't clear
+exploredTracker). Do this somehow by looking at the backtrack points, and
+deciding which ones are still eligible for exploration.
+
+DPOR that tracks the smallest failing execution it has seen so far.
+
+DDMin that iteratively feeds larger and larger edit-distances to DPOR.
+
+DDMin that splits along DAG (DepGraph) lines...
+
+Possibly find a hackier version of CheckpointRequests that doesn't require us
+to send messages.
+
+DPOR that just tries to remove (not add or reorder) internal events. Might be
+able to do this statically based on DepGraph!
+
+IDEA: try first pruning external events that have long happens-before
+chains leading up to bug.
 ----------------
 TODO(cs): maybe no need to store DepGraph. It's already there in
 event_orchestrator.events!
