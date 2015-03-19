@@ -67,25 +67,30 @@ import pl.project13.scala.akka.raft.model._
 // + A simple one:
 // crash: no node should crash.
 
-case class RaftViolation(fingerprints: HashSet[String]) extends ViolationFingerprint {
+case class RaftViolation(fingerprint2affectedNodes: Map[String, Set[String]])
+                         extends ViolationFingerprint {
   def matches(other: ViolationFingerprint) : Boolean = {
     other match {
-      case RaftViolation(otherFingerprint) =>
+      case RaftViolation(otherMap) =>
         // Slack matching algorithm for now: if any fingerprint matches, the whole
         // thing matches
-        return !fingerprints.intersect(otherFingerprint).isEmpty
+        return !fingerprint2affectedNodes.keys.toSet.intersect(otherMap.keys.toSet).isEmpty
       case _ => return false
     }
+  }
+
+  def affectedNodes() : Seq[String] = {
+    return fingerprint2affectedNodes.values.toSeq.flatten
   }
 }
 
 class RaftChecks {
   def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,Option[CheckpointReply]]) : Option[ViolationFingerprint] = {
     println("RaftChecks.invariant. Checkpoint: " + checkpoint)
-    var crashViolations = checkpoint.toSeq flatMap {
-      case (k, None) => Some("Crash:"+k)
+    var crashes = Util.map_from_iterable(checkpoint.toSeq flatMap {
+      case (k, None) => Some(("Crash:"+k, Set(k)))
       case _ => None
-    }
+    })
 
     var normalReplies = checkpoint flatMap {
       case (k, None) => None
@@ -93,15 +98,15 @@ class RaftChecks {
     }
 
     check(normalReplies) match {
-      case Some(violations) =>
-        println("Violations found! " + violations)
-        return Some(RaftViolation(violations ++ crashViolations))
+      case Some(violations2affectedNodes) =>
+        println("Violations found! " + violations2affectedNodes)
+        return Some(RaftViolation(violations2affectedNodes ++ crashes))
       case None =>
-        if (crashViolations.isEmpty) {
+        if (crashes.isEmpty) {
           return None
         }
-        println("Violations found! crash" + crashViolations)
-        return Some(RaftViolation(new HashSet[String] ++ crashViolations))
+        println("Violations found! crash" + crashes)
+        return Some(RaftViolation(crashes))
     }
   }
 
@@ -163,61 +168,62 @@ class RaftChecks {
     }
   }
 
-  def check(checkpoint: HashMap[String,CheckpointReply]) : Option[HashSet[String]] = {
+  def check(checkpoint: HashMap[String,CheckpointReply]) :
+      Option[HashMap[String,Set[String]]] = {
     ingestCheckpoint(checkpoint)
 
-    var violations = new HashSet[String]()
+    var violations2affectedNodes = new HashMap[String, Set[String]]
 
     // Run checks that are specific to an individual actor
     for ((actor, reply) <- checkpoint) {
       val data = reply.data.asInstanceOf[List[Any]]
       checkActor(actor, data) match {
-        case Some(fingerprints) =>
-          violations ++= fingerprints
+        case Some(map) =>
+          violations2affectedNodes ++= map.map { case (k,v) => k -> v }
         case None => None
       }
     }
 
     // Run global checks
     leaderCompleteness.check() match {
-      case Some(fingerprint) =>
-        violations += fingerprint
+      case Some(map) =>
+        violations2affectedNodes ++= map.map { case (k,v) => k -> v }
       case None => None
     }
 
     stateMachine.check() match {
-      case Some(fingerprint) =>
-        violations += fingerprint
+      case Some(map) =>
+        violations2affectedNodes ++= map.map { case (k,v) => k -> v }
       case None => None
     }
 
-    if (!violations.isEmpty) {
-      return Some(violations)
+    if (!violations2affectedNodes.isEmpty) {
+      return Some(violations2affectedNodes)
     }
     return None
   }
 
   // Run checks that are specific to an individual actor
   // Pre: ingestCheckpoint was invoked prior to this.
-  def checkActor(actor: String, data: List[Any]) : Option[Seq[String]] = {
+  def checkActor(actor: String, data: List[Any]) : Option[HashMap[String, Set[String]]] = {
     val metaData = data(3).asInstanceOf[Metadata]
 
-    var violations = new ListBuffer[String]()
+    var violations2affectedNodes = new HashMap[String, Set[String]]
 
     electionSafety.checkActor(actor, metaData) match {
-      case Some(fingerprint) =>
-        violations += fingerprint
+      case Some(map) =>
+        violations2affectedNodes ++= map.map { case (k,v) => k -> v }
       case None => None
     }
 
     logMatch.checkActor(actor) match {
-      case Some(fingerprint) =>
-        violations += fingerprint
+      case Some(map) =>
+        violations2affectedNodes ++= map.map { case (k,v) => k -> v }
       case None => None
     }
 
-    if (!violations.isEmpty) {
-      return Some(violations)
+    if (!violations2affectedNodes.isEmpty) {
+      return Some(violations2affectedNodes)
     }
     return None
   }
@@ -229,11 +235,13 @@ class ElectionSafetyChecker(parent: RaftChecks) {
   // (Parent's assumes that ElectionSafety holds.)
   var term2leader = new HashMap[Term, String]
 
-  def checkActor(actor: String, state: Metadata) : Option[String] = {
+  def checkActor(actor: String, state: Metadata) : Option[Map[String, Set[String]]] = {
     state match {
       case LeaderMeta(_, term, _) =>
         if ((term2leader contains term) && term2leader(term) != actor) {
-          return Some("ElectionSafety:" + actor + ":" + term2leader(term) + ":" + term)
+          val fingerprint = "ElectionSafety:" + actor + ":" + term2leader(term) + ":" + term
+          val affected = Set(actor, term2leader(term))
+          return Some(new HashMap ++ Seq(fingerprint -> affected))
         }
         term2leader(term) = actor
         return None
@@ -247,8 +255,9 @@ class ElectionSafetyChecker(parent: RaftChecks) {
 //     the logs are identical in all entries up through the given index. §5.3
 class LogMatchChecker(parent: RaftChecks) {
 
-  def checkActor(actor: String) : Option[String] = {
+  def checkActor(actor: String) : Option[Map[String, Set[String]]] = {
     return None
+    // TODO(cs): return affected nodes
     /*
     val otherActorLogs = parent.actor2log.filter { case (a,_) => a != actor }
     val log = parent.actor2log(actor)
@@ -296,8 +305,9 @@ class LogMatchChecker(parent: RaftChecks) {
 //     terms. §5.4
 class LeaderCompletenessChecker(parent: RaftChecks) {
 
-  def check() : Option[String] = {
+  def check() : Option[Map[String, Set[String]]] = {
     return None
+    // TODO(cs): return affected nodes
     /*
     val sortedTerms = parent.term2leader.keys.toArray.sortWith((a,b) => a < b)
     if (sortedTerms.isEmpty) {
@@ -337,8 +347,9 @@ class StateMachineChecker(parent: RaftChecks) {
   // of applied entries, we'd need the RaftActors to send us a message every
   // time they apply an entry (which, AFAICT, happens immediately after they infer
   // infer that they should commit an given entry)
-  def check() : Option[String] = {
+  def check() : Option[Map[String, Set[String]]] = {
     return None
+    // TODO(cs): return affected nodes
     /*
     val allCommittedIndices = parent.allCommitted.toArray.map(c => c._3)
     if (parent.allCommitted.size != allCommittedIndices.size) {

@@ -134,6 +134,7 @@ object Main extends App {
   var violationFound: ViolationFingerprint = null
   var depGraph : Graph[Unique, DiEdge] = null
   var initialTrace : Queue[Unique] = null
+  var filteredTrace : Queue[Unique] = null
   if (fuzz) {
     def replayerCtor() : ReplayScheduler = {
       val replayer =  new ReplayScheduler(fingerprintFactory, false, false)
@@ -147,6 +148,7 @@ object Main extends App {
     violationFound = tuple._2
     depGraph = tuple._3
     initialTrace = tuple._4
+    filteredTrace = tuple._5
   }
 
   val serializer = new ExperimentSerializer(
@@ -155,7 +157,8 @@ object Main extends App {
 
   val dir = if (fuzz) serializer.record_experiment("akka-raft-fuzz",
     traceFound.filterCheckpointMessages(), violationFound,
-    depGraph=Some(depGraph), initialTrace=Some(initialTrace)) else
+    depGraph=Some(depGraph), initialTrace=Some(initialTrace),
+    filteredTrace=Some(filteredTrace)) else
     "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_14_01_08_35"
 
   /*
