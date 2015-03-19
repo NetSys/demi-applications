@@ -42,11 +42,16 @@ abstract class RaftActor extends Actor with LoggingFSM[RaftState, Metadata]
 
   // end of raft member state --------------
 
-  whenUnhandled {
-    case Event(CheckpointRequest, _) =>
+  // Deal with CheckpointRequests, for checking global invariants.
+  override def receive = {
+    case CheckpointRequest =>
       val state = List(replicatedLog, nextIndex, matchIndex, stateData)
       context.actorFor("../" + CheckpointSink.name) ! CheckpointReply(state)
-      stay
+    case m =>
+      //println("RAFT " + self.path.name + " FSM received " + m + " " + super.getLog.map(_.stateName) + " " +
+      //  isTimerActive(ElectionTimeoutTimerName) )
+      super.receive(m)
+      //println("RAFT " + self.path.name + " Done FSM received " + m + " " + super.getLog.map(_.stateName))
   }
 
   val heartbeatInterval: FiniteDuration = raftConfig.heartbeatInterval
