@@ -1,7 +1,8 @@
-CheckPointRequests currently perturb the system! Use Panda's receive method...
+Out of heap space in computing transitive closure. Get rid of that extra
+hashmap?
 
 Check invariant more frequently in DPOR; possibly add a new depth bound
-metric, or "stop at end of nextTrace" metric
+metric, or "stop at end of nextTrace" metric.
 
 Sanity check: DPOR set up to stop as soon as initialTrace is done, should be
 equivalent to STSSched without peek.
@@ -14,14 +15,12 @@ race condition somewhere.
 [WARN] [03/13/2015 23:12:24.647] [new-system-0-akka.actor.default-dispatcher-3] [akka://new-system-0/user/raft-member-8] unhandled event StateTimeout in state Candidate
 
 Record events seen in DPORwHeuristics. Or, figure out how to return Trace in
-test()
+test().
 
 Write verify_mcs for DPOR. Not clear what initialTrace to give it, since DDMin
 might not actually replay the execution -- it might be pieced together.
 
 ---------
-Track happens-before
-
 DPOR that stops at a certain edit-distance, then resumes. (Don't clear
 exploredTracker). Do this somehow by looking at the backtrack points, and
 deciding which ones are still eligible for exploration.
@@ -43,10 +42,8 @@ chains leading up to bug.
 ----------------
 TODO(cs): maybe no need to store DepGraph. It's already there in
 event_orchestrator.events!
-TODO(cs): codesign DDMin and DPOR
 TODO(cs): PeekScheduler and RandomScheduler should call
 stats.increment_replays() more than once, even if they don't ever find the bug...
-TODO(cs): check invariants more often in DPORwHeuristics?
 TODO(cs): check that clear()'ing of Instrumenter().random() doesn't screw up
 checkpoints.
 TODO(cs): deal with sts2-bugs.txt
