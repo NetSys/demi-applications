@@ -1,6 +1,3 @@
-Out of heap space in computing transitive closure. Get rid of that extra
-hashmap?
-
 Check invariant more frequently in DPOR; possibly add a new depth bound
 metric, or "stop at end of nextTrace" metric.
 
