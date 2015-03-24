@@ -26,6 +26,18 @@ import scala.collection.mutable.HashSet
 import scala.util.Random
 import scala.util.control.Breaks
 
+// Wrap cancellable so we get notified about cancellation
+class WrappedCancellable (c: Cancellable, rcv: ActorRef, msg: Any) extends Cancellable {
+  val instrumenter = Instrumenter()
+  def cancel(): Boolean = {
+    val success = c.cancel
+    instrumenter.cancelTimer(this, rcv, msg, success)
+    return success
+  }
+
+  def isCancelled: Boolean = c.isCancelled
+}
+
 class InstrumenterCheckpoint(
   val actorMappings : HashMap[String, ActorRef],
   val seenActors : HashSet[(ActorSystem, Any)],
@@ -33,6 +45,9 @@ class InstrumenterCheckpoint(
   val dispatchers : HashMap[ActorRef, MessageDispatcher],
   val vectorClocks : HashMap[String, VectorClock],
   val sys: ActorSystem,
+  var cancellableToTimer : HashMap[Cancellable, Tuple2[String, Any]],
+  var ongoingCancellableTasks : HashSet[Cancellable],
+  var timerToCancellable : HashMap[Tuple2[String,Any], Cancellable],
   // TODO(cs): add the random associated with this actor system
   val applicationCheckpoint: Any
 ) {}
@@ -66,14 +81,20 @@ class Instrumenter {
   var registeredCancellableTasks = new HashSet[Cancellable]
   // Mark which of the timers are scheduleOnce vs schedule [ongoing]
   var ongoingCancellableTasks = new HashSet[Cancellable]
-  // Allow a calling thread to block until all registered Timers have gone off.
-  // We initialize the semaphore to 0 rather than 1,
-  // so that the main thread blocks upon invoking acquire() until another
-  // thread release()'s it.
-  var awaitTimers = new Semaphore(0)
-  // How many timers we still have pending until awaitTimer should be
-  // released.
-  var pendingTimers = new AtomicInteger(0)
+  // Track which cancellables correspond to which messages
+  var cancellableToTimer = new HashMap[Cancellable, Tuple2[String, Any]]
+  // And vice versa
+  var timerToCancellable = new HashMap[Tuple2[String,Any], Cancellable]
+
+  private[dispatch] def cancelTimer (c: Cancellable, rcv: ActorRef, msg: Any, success: Boolean) = {
+    // Need this here since by the time DPORwHeuristics gets here the thing is already canceled
+    if (cancellableToTimer contains c) {
+      removeCancellable(c)
+    }
+    if (scheduler != null) {
+      scheduler.notify_timer_cancel(rcv, msg)
+    }
+  }
 
   // AspectJ runs into initialization problems if a new ActorSystem is created
   // by the constructor. Instead use a getter to create on demand.
@@ -81,19 +102,16 @@ class Instrumenter {
   def actorSystem () : ActorSystem = {
     if (_actorSystem == null) {
       _actorSystem = ActorSystem("new-system-" + counter)
-      _randoms(_actorSystem) = new Random(0)
+      _random = new Random(0)
       counter += 1
     }
     _actorSystem
   }
 
-  private[this] var _randoms = new HashMap[ActorSystem, Random]
+  private[this] var _random = new Random(0)
   def seededRandom() : Random = {
-    return _randoms(actorSystem())
+    return _random
   }
-
-  // TODO(cs):
-  // def seededRandomForActorSystem
  
   
   def await_enqueue() {
@@ -142,7 +160,7 @@ class Instrumenter {
   def reinitialize_system(sys: ActorSystem, argQueue: Queue[Any]) {
     require(scheduler != null)
     _actorSystem = ActorSystem("new-system-" + counter)
-    _randoms(_actorSystem) = new Random(0)
+    _random = new Random(0)
     counter += 1
     
     actorMappings.clear()
@@ -186,6 +204,10 @@ class Instrumenter {
         task.cancel()
       }
       registeredCancellableTasks.clear
+      ongoingCancellableTasks.clear
+      cancellableToTimer.clear
+      timerToCancellable.clear
+
       system.shutdown()
 
       println("Shut down the actor system. " + argQueue.size)
@@ -252,7 +274,9 @@ class Instrumenter {
   def dispatch_new_message(cell: ActorCell, envelope: Envelope) = {
     val snd = envelope.sender.path.name
     val rcv = cell.self.path.name
+    val msg = envelope.message
     Util.logger.mergeVectorClocks(snd, rcv)
+
     
     allowedEvents += ((cell, envelope) : (ActorCell, Envelope))        
 
@@ -263,6 +287,14 @@ class Instrumenter {
     
     scheduler.event_consumed(cell, envelope)
     dispatcher.dispatch(cell, envelope)
+    // Check if it was a repeating timer. If so, retrigger it.
+    if (timerToCancellable contains (rcv, msg)) {
+      val cancellable = timerToCancellable((rcv, msg))
+      if (ongoingCancellableTasks contains cancellable) {
+        println("Retriggering repeating timer: " + rcv + " " + msg)
+        handleTick(cell.self, msg, cancellable)
+      }
+    }
   }
   
   
@@ -310,42 +342,43 @@ class Instrumenter {
     }
   }
 
-  def await_timers(numTimers: Integer) {
-    if (numTimers <= 0) {
-      throw new IllegalArgumentException("numTimers must be > 0")
-    }
-    if (registeredCancellableTasks.isEmpty) {
-      throw new RuntimeException("No timers to wait for...")
-    }
-    pendingTimers.set(numTimers)
-    awaitTimers.acquire()
-  }
-
-  def await_timers() {
-    registeredCancellableTasks = registeredCancellableTasks.filterNot(c => c.isCancelled)
-    await_timers(registeredCancellableTasks.size)
-  }
-
   // When someone calls akka.actor.schedulerOnce to schedule a Timer, we
   // record the returned Cancellable object here, so that we can cancel it later.
-  def registerCancellable(c: Cancellable, ongoingTimer: Boolean) {
+  def registerCancellable(c: Cancellable, ongoingTimer: Boolean,
+                          rcv: ActorRef, msg: Any) {
+    val receiver = rcv.path.name
     registeredCancellableTasks += c
     if (ongoingTimer) {
       ongoingCancellableTasks += c
     }
+    cancellableToTimer(c) = ((receiver, msg))
+    // TODO(cs): for now, assume that msg's are unique. Don't assume that.
+    if (timerToCancellable contains (receiver, msg)) {
+      throw new RuntimeException("Non-unique timer: "+ receiver + " " + msg)
+    }
+    timerToCancellable((receiver, msg)) = c
+    // Schedule it immediately!
+    handleTick(rcv, msg, c)
+  }
+
+  def removeCancellable(c: Cancellable) {
+    registeredCancellableTasks -= c
+    val (receiver, msg) = cancellableToTimer(c)
+    timerToCancellable -= ((receiver, msg))
+    cancellableToTimer -= c
   }
 
   // When akka.actor.schedulerOnce decides to schedule a message to be sent,
   // we intercept it here.
   def handleTick(receiver: ActorRef, msg: Any, c: Cancellable) {
-    println("handleTick " + receiver)
-    scheduler.enqueue_message(receiver.path.name, msg)
-    if (!(ongoingCancellableTasks contains c)) {
-      registeredCancellableTasks -= c
+    // println("handleTick " + receiver + " " + msg)
+    if (!(registeredCancellableTasks contains c)) {
+      throw new IllegalArgumentException("Cancellable " + (receiver.path.name, msg) +
+                                         "is already cancelled...")
     }
-    val pending = pendingTimers.decrementAndGet()
-    if (pending == 0) {
-      awaitTimers.release()
+    scheduler.enqueue_timer(receiver.path.name, msg)
+    if (!(ongoingCancellableTasks contains c)) {
+      removeCancellable(c)
     }
   }
 
@@ -365,16 +398,10 @@ class Instrumenter {
    * method.
    */
   def checkpoint() : InstrumenterCheckpoint = {
-    // TODO(cs): for now we just cancel all timers in
-    // registeredCancellableTasks upon restart_system().
-    // Cancelling may affect the correctness of the application...
-    for (task <- registeredCancellableTasks.filterNot(c => c.isCancelled)) {
-      task.cancel()
-    }
-    registeredCancellableTasks.clear
-
-    // TODO(cs): the state of the application is going to be reset on
-    // reinitialize_system, due to shutdownCallback. This is problematic!
+    // TODO(cs): the shared state of the application is going to be reset on
+    // reinitialize_system, due to shutdownCallback. This is problematic,
+    // unless the application properly uses CheckpointSink's protocol for
+    // checking invariants
     val checkpoint = new InstrumenterCheckpoint(
       new HashMap[String, ActorRef] ++ actorMappings,
       new HashSet[(ActorSystem, Any)] ++ seenActors,
@@ -382,12 +409,20 @@ class Instrumenter {
       new HashMap[ActorRef, MessageDispatcher] ++ dispatchers,
       new HashMap[String, VectorClock] ++ Util.logger.actor2vc,
       _actorSystem,
+      new HashMap[Cancellable, Tuple2[String, Any]] ++ cancellableToTimer,
+      new HashSet[Cancellable] ++ ongoingCancellableTasks,
+      new HashMap[Tuple2[String,Any], Cancellable] ++ timerToCancellable,
       checkpointCallback()
     )
 
     Util.logger.reset
 
     // Reset all state so that a new actor system can be started.
+    registeredCancellableTasks.clear
+    ongoingCancellableTasks.clear
+    cancellableToTimer.clear
+    timerToCancellable.clear
+
     reinitialize_system(null, null)
 
     return checkpoint
@@ -408,6 +443,11 @@ class Instrumenter {
     dispatchers.clear
     dispatchers ++= checkpoint.dispatchers
     Util.logger.actor2vc = checkpoint.vectorClocks
+    cancellableToTimer = checkpoint.cancellableToTimer
+    ongoingCancellableTasks = checkpoint.ongoingCancellableTasks
+    timerToCancellable = checkpoint.timerToCancellable
+    registeredCancellableTasks.clear
+    registeredCancellableTasks ++= cancellableToTimer.keys
     _actorSystem = checkpoint.sys
     restoreCheckpointCallback(checkpoint.applicationCheckpoint)
   }

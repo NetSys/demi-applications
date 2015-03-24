@@ -15,10 +15,8 @@ object StableClasses {
   //   http://stackoverflow.com/questions/7157143/how-can-i-match-classes-in-a-scala-match-statement
   val ClassOfKill = classOf[Kill]
   val ClassOfSend = classOf[Send]
-  val ClassOfWaitTimers = classOf[WaitTimers]
   val ClassOfPartition = classOf[Partition]
   val ClassOfUnPartition = classOf[UnPartition]
-  val ClassOfContinue = classOf[Continue]
 }
 
 // Weights should be between 0 and 1.0.
@@ -27,19 +25,15 @@ case class FuzzerWeights(
   kill: Double = 0.01,
   send: Double = 0.3,
   wait_quiescence: Double = 0.1,
-  wait_timers: Double = 0.3,
   partition: Double = 0.1,
-  unpartition: Double = 0.1,
-  continue: Double = 0.3) {
+  unpartition: Double = 0.1) {
 
-  val allWeights = List(kill, send, wait_timers, partition,
-                        unpartition, continue)
+  val allWeights = List(kill, send, partition, unpartition)
 
   val totalMass = allWeights.sum + wait_quiescence
 
   val eventTypes = List(StableClasses.ClassOfKill, StableClasses.ClassOfSend,
-                        StableClasses.ClassOfWaitTimers, StableClasses.ClassOfPartition,
-                        StableClasses.ClassOfUnPartition, StableClasses.ClassOfContinue)
+                        StableClasses.ClassOfPartition, StableClasses.ClassOfUnPartition)
 
   // Takes a number between [0, 1.0]
   // Returns the class of an ExternalEvent, or None if the chosen class type
@@ -70,7 +64,6 @@ class Fuzzer(num_events: Integer,
              prefix: Seq[ExternalEvent]) {
 
   val rand = new Random
-  val maxContinueSteps = 40
 
   val nodes = prefix flatMap {
     case Start(_, name) => Some(name)
@@ -78,26 +71,18 @@ class Fuzzer(num_events: Integer,
   }
 
   // Note that we don't currently support node recoveries.
-  val currentlyAlive = new RandomizedHashSet[String]
-  for (node <- nodes) {
-    currentlyAlive.insert(node)
-  }
+  var currentlyAlive = new RandomizedHashSet[String]
 
   // N.B., only store one direction of the partition
-  val currentlyPartitioned = new RandomizedHashSet[(String, String)]
-  val currentlyUnpartitioned = new RandomizedHashSet[(String, String)]
-  for (i <- (0 to nodes.length-1)) {
-    for (j <- (i+1 to nodes.length-1)) {
-      currentlyUnpartitioned.insert((nodes(i), nodes(j)))
-    }
-  }
+  var currentlyPartitioned = new RandomizedHashSet[(String, String)]
+  var currentlyUnpartitioned = new RandomizedHashSet[(String, String)]
 
   // Return None if we have no choice, e.g. if we've killed all nodes, and
   // there's nothing interesting left to do in the execution.
   def generateNextEvent() : Option[ExternalEvent] = {
     val nextEventType = weights.getNextEventType(rand.nextDouble())
     nextEventType match {
-      case None => return Some(WaitQuiescence)
+      case None => return Some(WaitQuiescence())
       case Some(cls) =>
         cls match {
           case StableClasses.ClassOfKill =>
@@ -109,9 +94,6 @@ class Fuzzer(num_events: Integer,
           case StableClasses.ClassOfSend =>
             val send = message_gen.generateMessage(currentlyAlive)
             return Some(send)
-
-          case StableClasses.ClassOfWaitTimers =>
-            return Some(WaitTimers(1))
 
           case StableClasses.ClassOfPartition =>
             if (currentlyUnpartitioned.isEmpty) {
@@ -130,22 +112,20 @@ class Fuzzer(num_events: Integer,
             val pair = currentlyPartitioned.removeRandomElement()
             currentlyUnpartitioned.insert(pair)
             return Some(UnPartition(pair._1, pair._2))
-
-          case StableClasses.ClassOfContinue =>
-            return Some(Continue(rand.nextInt(maxContinueSteps) + 1))
         }
     }
     throw new IllegalStateException("Shouldn't get here")
   }
 
   def generateFuzzTest() : Seq[ExternalEvent] = {
+    reset()
     val fuzzTest = new ListBuffer[ExternalEvent] ++ prefix
     // Ensure that we don't inject two WaitQuiescense's in a row.
     var justInjectedWaitQuiescence = false
 
     def okToInject(event: Option[ExternalEvent]) : Boolean = {
       event match {
-        case Some(WaitQuiescence) => return !justInjectedWaitQuiescence
+        case Some(WaitQuiescence()) => return !justInjectedWaitQuiescence
         case _ => return true
       }
     }
@@ -158,7 +138,7 @@ class Fuzzer(num_events: Integer,
       nextEvent match {
         case Some(event) =>
           event match {
-            case WaitQuiescence =>
+            case WaitQuiescence() =>
               justInjectedWaitQuiescence = true
             case _ => None
               justInjectedWaitQuiescence = false
@@ -168,5 +148,20 @@ class Fuzzer(num_events: Integer,
       }
     }
     return fuzzTest
+  }
+
+  def reset() {
+    currentlyAlive = new RandomizedHashSet[String]
+    for (node <- nodes) {
+      currentlyAlive.insert(node)
+    }
+
+    currentlyPartitioned = new RandomizedHashSet[(String, String)]
+    currentlyUnpartitioned = new RandomizedHashSet[(String, String)]
+    for (i <- (0 to nodes.length-1)) {
+      for (j <- (i+1 to nodes.length-1)) {
+        currentlyUnpartitioned.insert((nodes(i), nodes(j)))
+      }
+    }
   }
 }

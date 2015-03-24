@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger
 abstract class MessageType()
 final case object ExternalMessage extends MessageType
 final case object InternalMessage extends MessageType
-final case object SystemMessage extends MessageType
+final case object FailureDetectorQuery extends MessageType
 final case object CheckpointReplyMessage extends MessageType
 
 /**
@@ -85,29 +85,43 @@ trait ExternalEventInjector[E] {
   // Assumes that external message objects never == internal message objects.
   // That assumption would be broken if, for example, nodes relayed external
   // messages to eachother...
+  // TODO(cs): include receiver here for safety?
   var enqueuedExternalMessages = new MultiSet[Any]
 
   // A set of external messages to send. Messages sent between actors are not
   // queued here.
   var messagesToSend = new SynchronizedQueue[(ActorRef, Any)]()
 
-  // Whenever we inject a "Continue" external event, this tracks how many
-  // events we have left to scheduled until we return to scheduling more
-  // external events.
-  var numWaitingFor = new AtomicInteger(0)
+  // Whether populateActors has been invoked.
+  var alreadyPopulated = false
+
+  // An optional callback that will be invoked when a WaitQuiescence has just
+  // caused us to arrive at Quiescence.
+  type QuiescenceCallback = () => Unit
+  var quiescenceCallback : QuiescenceCallback = () => None
+  def setQuiescenceCallback(c: QuiescenceCallback) { quiescenceCallback = c }
 
   // Enqueue an external message for future delivery
   def enqueue_message(receiver: String, msg: Any) {
     if (event_orchestrator.actorToActorRef contains receiver) {
       enqueue_message(event_orchestrator.actorToActorRef(receiver), msg)
     } else {
-      throw new IllegalArgumentException("Unknown receiver " + receiver)
+      println("WARNING! Unknown receiver " + receiver)
     }
   }
 
   def enqueue_message(actor: ActorRef, msg: Any) {
     enqueuedExternalMessages += msg
     messagesToSend += ((actor, msg))
+  }
+
+  // Enqueue a timer message for future delivery
+  def handle_timer(receiver: String, msg: Any) {
+    if (event_orchestrator.actorToActorRef contains receiver) {
+      messagesToSend += ((event_orchestrator.actorToActorRef(receiver), msg))
+    } else {
+      println("WARNING! Unknown receiver " + receiver)
+    }
   }
 
   def send_external_messages() {
@@ -141,6 +155,19 @@ trait ExternalEventInjector[E] {
     }
   }
 
+  // When deserializing an event trace, we need the actors to be prepopulated
+  // so we can resolve serialized ActorRefs. Here we populate the actor system
+  // give the names and props of all actors that will eventually appear in the
+  // execution.
+  def populateActorSystem(actorNamePropPairs: Seq[Tuple2[Props,String]]) = {
+    alreadyPopulated = true
+    for ((props, name) <- actorNamePropPairs) {
+      // Just start and isolate all actors we might eventually care about
+      Instrumenter().actorSystem.actorOf(props, name)
+      event_orchestrator.isolate_node(name)
+    }
+  }
+
   // Given an external event trace, see the events produced
   def execute_trace (_trace: Seq[E]) : EventTrace = {
     event_orchestrator.set_trace(_trace)
@@ -152,18 +179,13 @@ trait ExternalEventInjector[E] {
     if (_enableCheckpointing) {
       checkpointer.startCheckpointCollector(Instrumenter().actorSystem)
     }
-    // We begin by starting all actors at the beginning of time, just mark them as
-    // isolated (i.e., unreachable). Later, when we replay the `Start` event,
-    // we unisolate the actor.
-    for (t <- event_orchestrator.trace) {
-      t match {
-        case Start (propCtor, name) =>
-          // Just start and isolate all actors we might eventually care about [top-level actors]
-          Instrumenter().actorSystem.actorOf(propCtor(), name)
-          event_orchestrator.isolate_node(name)
-        case _ =>
-          None
-      }
+
+    if (!alreadyPopulated) {
+      populateActorSystem(_trace flatMap {
+        case SpawnEvent(_,props,name,_) => Some((props, name))
+        case Start(propCtor,name) => Some((propCtor(), name))
+        case _ => None
+      })
     }
 
     currentlyInjecting.set(true)
@@ -183,12 +205,6 @@ trait ExternalEventInjector[E] {
     schedSemaphore.acquire
     started.set(true)
     event_orchestrator.inject_until_quiescence(enqueue_message)
-    if (!event_orchestrator.trace_finished) {
-      event_orchestrator.current_event match {
-        case Continue(n) => numWaitingFor.set(n)
-        case _ => None
-      }
-    }
     schedSemaphore.release
     // Since this is always called during quiescence, once we have processed all
     // events, let us start dispatching
@@ -221,9 +237,9 @@ trait ExternalEventInjector[E] {
 
   def prepareCheckpoint() = {
     val actorRefs = event_orchestrator.
-                      actorToActorRef.
-                      filterNot({case (k,v) => ActorTypes.systemActor(k)}).
-                      values.toSeq
+                       actorToActorRef.
+                       filterNot({case (k,v) => ActorTypes.systemActor(k)}).
+                       values.toSeq
     val checkpointRequests = checkpointer.prepareRequests(actorRefs)
     // Put our requests at the front of the queue, and any existing requests
     // at the end of the queue.
@@ -246,7 +262,7 @@ trait ExternalEventInjector[E] {
       if (!_disableFailureDetector) {
         fd.handle_fd_message(envelope.message, snd)
       }
-      return SystemMessage
+      return FailureDetectorQuery
     } else if (rcv == CheckpointSink.name) {
       if (_enableCheckpointing) {
         checkpointer.handleCheckpointResponse(envelope.message, snd)
@@ -276,7 +292,6 @@ trait ExternalEventInjector[E] {
   }
 
   def handle_event_consumed(cell: ActorCell, envelope: Envelope) = {
-    numWaitingFor.decrementAndGet()
     val rcv = cell.self.path.name
     val msg = envelope.message
     if (enqueuedExternalMessages.contains(msg)) {
@@ -286,18 +301,18 @@ trait ExternalEventInjector[E] {
     event_orchestrator.events += ChangeContext(rcv)
   }
 
-  def handle_quiescence () {
+  def handle_quiescence(): Unit = {
     assert(started.get)
     started.set(false)
-    event_orchestrator.events += Quiescence
-    if (numWaitingFor.get() > 0) {
-      Instrumenter().await_timers(1)
-      started.set(true)
-      Instrumenter().start_dispatch()
-    } else if (blockedOnCheckpoint.get()) {
+    if (blockedOnCheckpoint.get()) {
       checkpointSem.release()
-    } else if (!event_orchestrator.trace_finished) {
+      return
+    }
+
+    if (!event_orchestrator.trace_finished) {
       // If waiting for quiescence.
+      event_orchestrator.events += Quiescence
+      quiescenceCallback()
       advanceTrace()
     } else {
       if (currentlyInjecting.get) {
@@ -310,6 +325,7 @@ trait ExternalEventInjector[E] {
   }
 
   def handle_shutdown () {
+    alreadyPopulated = false
     Instrumenter().restart_system
     shutdownSem.acquire
   }
@@ -324,6 +340,15 @@ trait ExternalEventInjector[E] {
 
   def handle_after_receive (cell: ActorCell) : Unit = {
     event_orchestrator.events += ChangeContext("scheduler")
+  }
+
+  // Return true if we found the timer in our messagesToSend
+  def handle_timer_cancel(rcv: ActorRef, msg: Any): Boolean = {
+    messagesToSend.dequeueFirst(tuple =>
+      tuple._1.path.name == rcv.path.name && tuple._2 == msg) match {
+      case Some(_) => return true
+      case None => return false
+    }
   }
 
   /**
@@ -349,7 +374,7 @@ trait ExternalEventInjector[E] {
     schedSemaphore = new Semaphore(1)
     enqueuedExternalMessages = new MultiSet[Any]
     messagesToSend = new SynchronizedQueue[(ActorRef, Any)]
-    numWaitingFor = new AtomicInteger(0)
+    alreadyPopulated = false
     println("state reset.")
   }
 }

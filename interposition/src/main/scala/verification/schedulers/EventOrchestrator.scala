@@ -29,11 +29,27 @@ class EventOrchestrator[E] {
   // Function that queues a message to be sent later.
   type EnqueueMessage = (String, Any) => Unit
 
+  // Callbacks
+  type KillCallback = (String, Set[String]) => Unit
+  type PartitionCallback = (String, String) => Unit
+  type UnPartitionCallback = (String, String) => Unit
+  var killCallback : KillCallback = (s: String, actors: Set[String]) => None
+  def setKillCallback(c: KillCallback) = killCallback = c
+  var partitionCallback : PartitionCallback = (a: String, b: String) => None
+  def setPartitionCallback(c: PartitionCallback) = partitionCallback = c
+  var unPartitionCallback : UnPartitionCallback = (a: String, b: String) => None
+  def setUnPartitionCallback(c: UnPartitionCallback) = unPartitionCallback = c
+
   // Pairs of actors that cannot communicate
   val partitioned = new HashSet[(String, String)]
 
   // Actors that are unreachable
   val inaccessible = new HashSet[String]
+
+  // Actors that have been explicitly killed.
+  // (Same as inaccessble, except that inaccessible also contains actors that
+  // have been created but not Start()'ed)
+  val killed = new HashSet[String]
 
   // Actors to actor ref
   // TODO(cs): make getter/setters for these
@@ -67,8 +83,19 @@ class EventOrchestrator[E] {
     traceIdx += 1
   }
 
+  def previous_event(): E = {
+    if (traceIdx - 0 < 0) {
+      throw new IllegalStateException("No previous event..")
+    }
+    trace(traceIdx - 1)
+  }
+
   def trace_finished() : Boolean = {
     return traceIdx >= trace.size
+  }
+
+  def finish_early() = {
+    traceIdx = trace.size
   }
 
   // A bit of a misnomer: current *trace* event, not current recorded event.
@@ -100,24 +127,19 @@ class EventOrchestrator[E] {
         case Start (_, name) =>
           trigger_start(name)
         case Kill (name) =>
+          killCallback(name, actorToActorRef.keys.toSet)
           trigger_kill(name)
         case Send (name, messageCtor) =>
           enqueue_message(name, messageCtor())
         case Partition (a, b) =>
+          partitionCallback(a,b)
           trigger_partition(a,b)
         case UnPartition (a, b) =>
+          unPartitionCallback(a,b)
           trigger_unpartition(a,b)
-        case WaitQuiescence =>
+        case WaitQuiescence() =>
           events += BeginWaitQuiescence
           loop = false // Start waiting for quiescence
-        case WaitTimers(n) =>
-          if (n < 0) {
-            Instrumenter().await_timers
-          } else {
-             Instrumenter().await_timers(n)
-          }
-        case Continue(n) =>
-          loop = false
       }
       trace_advanced()
     }
@@ -162,6 +184,7 @@ class EventOrchestrator[E] {
   def trigger_kill (name: String) = {
     events += KillEvent(name)
     Util.logger.log(name, "God killed me")
+    killed += name
     isolate_node(name)
     if (fd != null) {
       fd.handle_kill_event(name)
@@ -200,7 +223,7 @@ class EventOrchestrator[E] {
   }
 
   def crosses_partition (snd: String, rcv: String) : Boolean = {
-    if (snd == rcv) return false
+    if (snd == rcv && !(killed contains snd)) return false
     return ((partitioned contains (snd, rcv))
            || (partitioned contains (rcv, snd))
            || (inaccessible contains rcv)

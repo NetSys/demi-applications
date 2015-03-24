@@ -9,10 +9,11 @@ import scala.collection.mutable.HashMap
  */
 trait ViolationFingerprint {
   def matches(other: ViolationFingerprint) : Boolean
-  def serialize()
+  // Return the names of all nodes whose internal state exhibited the invariant violation.
+  def affectedNodes(): Seq[String]
 }
 
-trait TestOracle {
+object TestOracle {
   // An predicate that returns None if the safety condition is not violated,
   // i.e. the execution is correct. Otherwise, returns a
   // `fingerprint` that identifies how the safety violation manifests itself.
@@ -20,13 +21,21 @@ trait TestOracle {
   // argument is a checkpoint map from actor -> Some(checkpointReply), or
   // actor -> None if the actor has crashed.
   type Invariant = (Seq[ExternalEvent], HashMap[String,Option[CheckpointReply]]) => Option[ViolationFingerprint]
+}
+
+trait TestOracle {
+  type Invariant = (Seq[ExternalEvent], HashMap[String,Option[CheckpointReply]]) => Option[ViolationFingerprint]
+
+  // Return one of:
+  // {"RandomScheduler", "STSSchedNoPeek", "STSSched", "GreedyED", "DPOR", "FairScheduler"}
+  def getName() : String
 
   def setInvariant(invariant: Invariant)
 
   /**
-   * Returns false if there exists any execution containing the given external
+   * Returns Some(trace) if there exists any execution trace containing the given external
    * events that causes the given invariant violation to reappear.
-   * Otherwise, returns true.
+   * Otherwise, returns None.
    *
    * At the end of the invocation, it is the responsibility of the TestOracle
    * to ensure that the ActorSystem is returned to a clean initial state.
@@ -35,7 +44,8 @@ trait TestOracle {
   // Note that return value of this function is the opposite of what we
   // describe in the paper...
   def test(events: Seq[ExternalEvent],
-           violation_fingerprint: ViolationFingerprint) : Boolean
+           violation_fingerprint: ViolationFingerprint,
+           stats: MinimizationStats) : Option[EventTrace]
 }
 
 object StatelessTestOracle {
@@ -53,11 +63,15 @@ object StatelessTestOracle {
 class StatelessTestOracle(oracle_ctor: StatelessTestOracle.OracleConstructor) extends TestOracle {
   var invariant : Invariant = null
 
+  def getName: String = oracle_ctor().getName
+
   def setInvariant(inv: Invariant) = {
     invariant = inv
   }
 
-  def test(events: Seq[ExternalEvent], violation_fingerprint: ViolationFingerprint) : Boolean = {
+  def test(events: Seq[ExternalEvent],
+           violation_fingerprint: ViolationFingerprint,
+           stats: MinimizationStats) : Option[EventTrace] = {
     val oracle = oracle_ctor()
     try {
       Instrumenter().scheduler = oracle.asInstanceOf[Scheduler]
@@ -65,7 +79,7 @@ class StatelessTestOracle(oracle_ctor: StatelessTestOracle.OracleConstructor) ex
       case e: Exception => println("oracle not a scheduler?")
     }
     oracle.setInvariant(invariant)
-    val result = oracle.test(events, violation_fingerprint)
+    val result = oracle.test(events, violation_fingerprint, stats)
     Instrumenter().restart_system
     return result
   }

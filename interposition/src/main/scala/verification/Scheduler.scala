@@ -62,10 +62,17 @@ trait Scheduler {
   def event_consumed(cell: ActorCell, envelope: Envelope)
   // Tell the scheduler that it should eventually schedule the given message.
   // Used to feed messages from the external world into actor systems.
+
+   // Called when timer is cancelled
+  def notify_timer_cancel(receiver: ActorRef, msg: Any)
   
+  // Interface for (safely) sending external messages
   def enqueue_message(receiver: String, msg: Any)
+
+  // Interface for (safely) sending timers (akka.scheduler messages)
+  def enqueue_timer(receiver: String, msg: Any) = enqueue_message(receiver, msg)
+
   // Shut down the actor system.
   def shutdown()
 
 }
-
