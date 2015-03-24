@@ -1,27 +1,9 @@
-Check invariant more frequently in DPOR; possibly add a new depth bound
-metric, or "stop at end of nextTrace" metric.
-
 Sanity check: DPOR set up to stop as soon as initialTrace is done, should be
-equivalent to STSSched without peek.
+equivalent to STSSched without peek. DO THIS ON OUR RBBCAST
 
 No corresponding "Became Leader" message; invariant check mistaken?
 
-After ~35 validation attempts, the system sometimes hangs. We probably have a
-race condition somewhere.
-
-[WARN] [03/13/2015 23:12:24.647] [new-system-0-akka.actor.default-dispatcher-3] [akka://new-system-0/user/raft-member-8] unhandled event StateTimeout in state Candidate
-
-Record events seen in DPORwHeuristics. Or, figure out how to return Trace in
-test().
-
-Write verify_mcs for DPOR. Not clear what initialTrace to give it, since DDMin
-might not actually replay the execution -- it might be pieced together.
-
 ---------
-DPOR that stops at a certain edit-distance, then resumes. (Don't clear
-exploredTracker). Do this somehow by looking at the backtrack points, and
-deciding which ones are still eligible for exploration.
-
 DPOR that tracks the smallest failing execution it has seen so far.
 
 DDMin that iteratively feeds larger and larger edit-distances to DPOR.
@@ -36,7 +18,15 @@ able to do this statically based on DepGraph!
 
 IDEA: try first pruning external events that have long happens-before
 chains leading up to bug.
+
+Even with incremental edit-istance DDMin, there might be redundant external
+event sequences that we feed to it? Then again, DPOR might just stop
+immediately once it realizes it has already explored all those schedules.
 ----------------
+TODO(cs): Write verify_mcs for DPOR. Not clear what initialTrace to give it, since DDMin
+might not actually replay the execution -- it might be pieced together.
+TODO(cs): After ~35 validation attempts, the system sometimes hangs. We probably have a
+race condition somewhere.
 TODO(cs): maybe no need to store DepGraph. It's already there in
 event_orchestrator.events!
 TODO(cs): PeekScheduler and RandomScheduler should call

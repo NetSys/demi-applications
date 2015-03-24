@@ -137,7 +137,7 @@ object Main extends App {
   var filteredTrace : Queue[Unique] = null
   if (fuzz) {
     def replayerCtor() : ReplayScheduler = {
-      val replayer =  new ReplayScheduler(fingerprintFactory, false, false)
+      val replayer = new ReplayScheduler(fingerprintFactory, false, false)
       replayer.setEventMapper(Init.eventMapper)
       return replayer
     }
@@ -182,6 +182,7 @@ object Main extends App {
       Some(Init.eventMapper))
 
   serializer.serializeMCS(dir, mcs2, stats2, mcs_execution2, violation2)
+  */
 
   println("Trying STSSchedDDMin")
   // Allow peek:
@@ -195,6 +196,7 @@ object Main extends App {
 
   serializer.serializeMCS(dir, mcs3, stats3, mcs_execution3, violation3)
 
+  /*
   println("Trying RoundRobinDDMin")
   var (mcs4, stats4, mcs_execution4, violation4) =
     RunnerUtils.roundRobinDDMin(dir,
