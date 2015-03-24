@@ -1,0 +1,80 @@
+Aurojit:  i have a question about your edit distance thing
+or some comments
+but i was being lazy
+* I agree with your sentiment about not penalizing removal
+in the write up i had a long time ago, i had similarly suggested not penalizing addition
+* I wonder if penalizing reordering is necessarily a good idea
+we can kind of tell you more about reorderings
+there are two types in particular
+and the benign kind (these things commute, but the order changed because of the prefix) perhaps does not matter.
+* With "unexpected" events, in the cases where we are applyign DPOR, the case of this is that we changed something
+and hence new events emerged
+i don't know if i necessarily see them as good or bad
+so i am not sure about that bit
+thus endeth my comments
+ me:  ah, interesting point
+I agree that we shouldn't penalize reorderings that commute
+then again
+shouldn't DPOR not explore commutative schedules
+?
+*or rather, only explore one of them
+ Aurojit:  yes
+but i guess what i was saying was
+if DPOR happens to explore
+X Y Z A B C
+and they X A B C Y Z
+where Y C is not commutative
+hence CY was played
+and AB needed to be played this way to enable C
+if Z doesn't affect things
+then we shouldn't penalize its reordering
+does this make snese?
+ me:  how would we know if Z doesn't affect things?
+*that
+ Aurojit:  Z is commutative
+so let us say
+X goes to A
+Y goes to B
+Z goes to C
+A goes to D
+ah
+hols on
+i did bad things
+one sec
+X is msg receive at actor 1
+Y is msg receive at actor 2
+Z is msg receive at actor 3
+A is msg receive at actor 4
+B is message receive at actor 5
+C is message receive at actor 2
+Z is causally linked to X
+as is Y
+A -> B -> C is the causal chain on the other thing
+in that case
+the claim that DPOR is making is that
+X Z A B C Y
+and X A B C Y Z
+are equivalent
+the only ordeging we care about is b/w C and Y
+does that help at all?
+ me:  yeah, I think I basically understand
+so, it's almost as if
+we want to compute
+the longest common subsequence
+for every causal chain
+then take the union of them
+ Aurojit:  yeah
+i guess that is close to what i am saying
+ me:  and subtract that from the penalty
+ Aurojit:  i'd need to think if there is a difference
+but yes basically we should account for causality
+ me:  right
+ Aurojit:  and whether it matters
+ me:  that definitely makes sense to me
+we could emperically measure whether that makes a difference
+ Aurojit:  yeah
+i have no evidence
+i was just ponitification
+*pontificating
+ me:  yeah, that's a good point
+which I hadn't thought of

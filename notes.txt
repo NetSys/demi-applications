@@ -22,6 +22,10 @@ chains leading up to bug.
 Even with incremental edit-istance DDMin, there might be redundant external
 event sequences that we feed to it? Then again, DPOR might just stop
 immediately once it realizes it has already explored all those schedules.
+
+Edit distance metric that takes into account causal chains. Take union of
+longest common subsequences for each causal chain. Basically, don't want to
+penalize commutative reorderings.
 ----------------
 TODO(cs): Write verify_mcs for DPOR. Not clear what initialTrace to give it, since DDMin
 might not actually replay the execution -- it might be pieced together.
