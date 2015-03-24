@@ -1,7 +1,7 @@
 package broadcast;
 
 import akka.actor.{ Actor, ActorRef }
-import akka.actor.{ ActorSystem, Scheduler, Props }
+import akka.actor.{ ActorSystem, Scheduler, Props, Cancellable }
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.Await
@@ -9,6 +9,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import akka.dispatch.verification.{ NodeUnreachable, NodeReachable, FailureDetectorOnline }
 import akka.dispatch.verification.{ QueryReachableGroup, ReachableGroup, Util, Instrumenter }
+import akka.dispatch.verification.{ CheckpointRequest, CheckpointSink, CheckpointReply }
 import scala.collection.mutable.Queue
 
 // -- Application message type --
@@ -91,7 +92,7 @@ class PerfectLink(parent: BroadcastNode, destination: ActorRef, name: String) {
 
   def handle_ack(senderName: String, msgID: Int) {
     parent.log("Received ACK(" + msgID + ") from " +
-                 destinationName)
+               destinationName)
     unacked -= msgID
   }
 
@@ -132,6 +133,7 @@ class PerfectLink(parent: BroadcastNode, destination: ActorRef, name: String) {
 class TimerQueue(scheduler: Scheduler, source: ActorRef) {
   var timerPending = false
   var active = true
+  var cancellable : Cancellable = null
 
   def maybe_schedule(timerMillis: Int) {
     if (timerPending) {
@@ -140,7 +142,7 @@ class TimerQueue(scheduler: Scheduler, source: ActorRef) {
     timerPending = true
     active = true
 
-    scheduler.scheduleOnce(
+    cancellable = scheduler.scheduleOnce(
       timerMillis milliseconds,
       source,
       Tick)
@@ -157,12 +159,17 @@ class TimerQueue(scheduler: Scheduler, source: ActorRef) {
  */
 // delivery_order is for convenience: a shared data structure that allows us
 // to check invariants.
-class BroadcastNode(delivery_order: Queue[String]) extends Actor {
+class BroadcastNode(delivery_order: Queue[String],
+                    members:Option[Iterable[String]]=None) extends Actor {
   var name = self.path.name
   val timerQueue = new TimerQueue(context.system.scheduler, self)
   var allLinks: Set[PerfectLink] = Set()
   var dst2link: Map[String, PerfectLink] = Map()
   var delivered: Set[Int] = Set()
+  members match {
+    case Some(group) => handle_group_membership(group)
+    case None => None
+  }
 
   def handle_group_membership(group: Iterable[String]) {
     log("handle_group_membership " + group)
@@ -262,6 +269,9 @@ class BroadcastNode(delivery_order: Queue[String]) extends Actor {
     case ReachableGroup(group) => handle_group_membership(group)
     case Tick => handle_tick
     case StillActiveQuery => handle_active_query
+    case CheckpointRequest =>
+      val state = delivery_order
+      context.actorFor("../" + CheckpointSink.name) ! CheckpointReply(state)
     case unknown => println("Unknown message " + unknown)
   }
 }

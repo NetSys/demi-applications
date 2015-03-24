@@ -1,27 +1,82 @@
-import broadcast.{ BroadcastNode, RBBroadcast, DataMessage }
+import broadcast._
 import akka.actor.{ Actor, ActorRef, DeadLetter }
 import akka.actor.ActorSystem
 import akka.actor.Props
+import scala.util.Random
 import akka.dispatch.verification._
+import scala.collection.mutable.HashSet
 import scala.collection.mutable.Queue
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
 
-case class BroadcastViolation(fingerprint: String) extends ViolationFingerprint {
+import scalax.collection.mutable.Graph,
+       scalax.collection.GraphEdge.DiEdge,
+       scalax.collection.edge.LDiEdge
+
+case class BroadcastViolation(fingerprint: String, nodes: Seq[String]) extends ViolationFingerprint {
   def matches(other: ViolationFingerprint) : Boolean = {
     other match {
-      case BroadcastViolation(f) => return f == fingerprint
+      case BroadcastViolation(f, n) => return f == fingerprint && nodes == n
       case _ => return false
     }
   }
-  def serialize() = {}
+  def affectedNodes = nodes
+}
+
+class BroadcastMessageFingerprinter extends MessageFingerprinter {
+  override def fingerprint(msg: Any) : Option[MessageFingerprint] = {
+    val alreadyFingerprint = super.fingerprint(msg)
+    if (alreadyFingerprint != None) {
+      return alreadyFingerprint
+    }
+
+    val str = msg match {
+      // Ignore ids! Not sure this is exactly the right thing to do, but...
+      case DataMessage(data) =>
+        ("DataMessage", data).toString
+      case RBBroadcast(DataMessage(data)) =>
+        ("RBBroadcast", data).toString
+      case SLDeliver(snd, DataMessage(data)) =>
+        ("SLDeliver", snd, data).toString
+      case ACK(snd, _) =>
+        ("ACK", snd).toString
+      case m =>
+        ""
+    }
+
+    if (str != "") {
+      return Some(BasicFingerprint(str))
+    }
+    return None
+  }
+}
+
+class ClientMessageGenerator(actors: Seq[String]) extends MessageGenerator {
+  val wordsUsedSoFar = new HashSet[String]
+  val rand = new Random
+  val destinations = new RandomizedHashSet[String]
+  for (dst <- actors) {
+    destinations.insert(dst)
+  }
+
+  def generateMessage(alive: RandomizedHashSet[String]) : Send = {
+    val dst = destinations.getRandomElement()
+    // TODO(cs): 10000 is a bit arbitrary, and this algorithm fails
+    // disastrously as we start to approach 10000 Send events.
+    var word = rand.nextInt(10000).toString
+    while (wordsUsedSoFar contains word) {
+      word = rand.nextInt(10000).toString
+    }
+    wordsUsedSoFar += word
+    return Send(dst, () =>  RBBroadcast(DataMessage(word)))
+  }
 }
 
 object Main extends App {
-  val actors = Array("bcast0",
-                     "bcast1",
-                     "bcast2",
-                     "bcast3")
+  val actors = Seq("bcast0",
+                   "bcast1",
+                   "bcast2",
+                   "bcast3")
   val numNodes = actors.length
 
   val dpor = false
@@ -91,106 +146,91 @@ object Main extends App {
           println(d)
         }
         println("-------------")
-        return Some(BroadcastViolation("" + delivery_order))
+        return Some(BroadcastViolation("" + delivery_order, Seq(actor)))
       }
     }
     return None
   }
 
-  if (dpor) {
-    val trace = Array[ExternalEvent]() ++
-      // Start Actors.
-      actors.map(actor_name =>
-        Start(() => Props.create(classOf[BroadcastNode], state(actor_name)), actor_name)) ++
-      // Execute the interesting events.
-      Array[ExternalEvent](
-      Send("bcast0", () => RBBroadcast(DataMessage("Message1"))),
-      Send("bcast0", () => RBBroadcast(DataMessage("Message2")))
-    )
+  val prefix = Array[ExternalEvent]() ++
+    // Start Actors.
+    actors.map(actor_name =>
+      Start(() => Props.create(classOf[BroadcastNode], state(actor_name), Some(actors)), actor_name)) ++
+    // Execute the interesting events.
+    Array[ExternalEvent](
+    WaitQuiescence(),
+    Send("bcast0", () => RBBroadcast(DataMessage("Message1"))),
+    //Kill("bcast2"),
+    Send("bcast0", () => RBBroadcast(DataMessage("Message2"))),
+    WaitQuiescence()
+  )
 
-    val sched = new DPOR
-    Instrumenter().scheduler = sched
-    sched.run(trace)
-    println("Returned to main with events")
-  } else {
-    val trace = Array[ExternalEvent]() ++
-      // Start Actors.
-      actors.map(actor_name =>
-        Start(() => Props.create(classOf[BroadcastNode], state(actor_name)), actor_name)) ++
-      // Execute the interesting events.
-      Array[ExternalEvent](
-      WaitQuiescence,
-      Send("bcast0", () => RBBroadcast(DataMessage("Message1"))),
-      //Kill("bcast2"),
-      Send("bcast0", () => RBBroadcast(DataMessage("Message2"))),
-      WaitQuiescence
-    )
-
-    println("Minimizing:")
-    for (event <- trace) {
-      println(event.toString)
-    }
-
-    val sched = new RandomScheduler(3, true, 0, true)
-    Instrumenter().scheduler = sched
-    sched.setInvariant(
-      (current_trace: Seq[ExternalEvent], notUsed: HashMap[String,Option[CheckpointReply]]) =>
-      invariant(current_trace, state))
-
-    // val test_oracle = new RandomScheduler(3)
-    // test_oracle.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
-    // // val minimizer : Minimizer = new DDMin(test_oracle)
-    // val minimizer : Minimizer = new LeftToRightRemoval(test_oracle)
-    // val events = minimizer.minimize(trace)
-
-    // val events = sched.peek(trace)
-
-    val result = sched.explore(trace)
-    sched.shutdown
-    println("Returned to main with events")
-    result match {
-      case Some((events, violation)) =>
-        println(events.serialize())
-        val replayer = new ReplayScheduler(enableFailureDetector=true)
-        Instrumenter().scheduler = replayer
-        replayer.replay(events)
-        println("Replayed succesfully?")
-        replayer.shutdown
-      case None => None
-    }
-
-    /*
-    events match {
-      case None => None
-      case Some(event_trace) => {
-        println("events: ")
-        for (event <- event_trace) {
-          println(event.toString)
-        }
-
-        println("================")
-        for (peek <- List(true)) { // List(true, false)
-          // println("Trying STSScheduler")
-          // val sts = new StatelessTestOracle(() => new STSSched(event_trace, peek))
-          val greedy = new StatelessTestOracle(() => new GreedyED(event_trace, 2))
-          // Instrumenter().scheduler = sts
-          greedy.setInvariant((current_trace: Seq[ExternalEvent]) => invariant(current_trace, state))
-          val minimizer : Minimizer = new LeftToRightRemoval(greedy)
-          val minimized = minimizer.minimize(trace)
-          println("Minimized externals:")
-          for (external <- minimized) {
-            println(external)
-          }
-          println("================")
-        }
-      }
-    }
-    */
-
-    //println("Shutting down")
-    //sched.shutdown
-    //println("Shutdown successful")
+  val wrappedInvariant = {
+    (current_trace: Seq[ExternalEvent], notUsed: HashMap[String,Option[CheckpointReply]]) =>
+     invariant(current_trace, state)
   }
+
+  val fingerprintFactory = new FingerprintFactory
+  fingerprintFactory.registerFingerprinter(new BroadcastMessageFingerprinter)
+
+  val fuzz = false
+
+  var traceFound: EventTrace = null
+  var violationFound: ViolationFingerprint = null
+  var depGraph : Graph[Unique, DiEdge] = null
+  var initialTrace : Queue[Unique] = null
+  var filteredTrace : Queue[Unique] = null
+  if (fuzz) {
+    val weights = new FuzzerWeights(kill=0.0, send=0.3, wait_quiescence=0.1,
+                                    partition=0.0, unpartition=0)
+    val messageGen = new ClientMessageGenerator(actors)
+    val fuzzer = new Fuzzer(500, weights, messageGen, prefix)
+
+    //def replayerCtor() : ReplayScheduler = {
+    //  val replayer = new ReplayScheduler(fingerprintFactory, false, false)
+    //  replayer.setEventMapper(Init.eventMapper)
+    //  return replayer
+    //}
+    val tuple = RunnerUtils.fuzz(fuzzer, wrappedInvariant,
+                                 fingerprintFactory,
+                                 invariant_check_interval=200)
+                                 //validate_replay=Some(replayerCtor))
+    traceFound = tuple._1
+    violationFound = tuple._2
+    depGraph = tuple._3
+    initialTrace = tuple._4
+    filteredTrace = tuple._5
+  }
+
+  val serializer = new ExperimentSerializer(
+    fingerprintFactory,
+    new BasicMessageSerializer)
+
+  val dir = if (fuzz) serializer.record_experiment("rbcast-fuzz",
+    traceFound.filterCheckpointMessages(), violationFound,
+    depGraph=Some(depGraph), initialTrace=Some(initialTrace),
+    filteredTrace=Some(filteredTrace)) else
+    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_14_01_08_35"
+
+
+  println("Trying STSSchedDDMin")
+  // Allow peek:
+  var (mcs3, stats3, mcs_execution3, violation3) =
+    RunnerUtils.stsSchedDDMin(dir,
+      fingerprintFactory,
+      new BasicMessageDeserializer,
+      true,
+      wrappedInvariant)
+
+  serializer.serializeMCS(dir, mcs3, stats3, mcs_execution3, violation3)
+
+  var (mcs5, stats5, mcs_execution5, violation5) =
+    RunnerUtils.editDistanceDporDDMin(dir,
+      fingerprintFactory,
+      new BasicMessageDeserializer,
+      wrappedInvariant)
+
+  serializer.serializeMCS(dir, mcs5, stats5, mcs_execution5, violation5)
 
   // TODO(cs): either remove this code from the Broadcast nodes, or add it to the scheduler.
   // Wait for execution to terminate.
