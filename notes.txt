@@ -1,5 +1,7 @@
-Absent events in unmodified trace? (something wrong with provenance?)
+Absent events in unmodified trace? (something wrong with provenance? Then
+again, provenance is only applied to initialTrace, not used by STSSched)
 
+Doesn't terminate? It seems that it should...
 
 
 TODO:

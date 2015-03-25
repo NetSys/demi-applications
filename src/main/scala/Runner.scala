@@ -115,10 +115,12 @@ object Invariant {
       val delivery_order = state(actor)
       if (delivery_order.length > correct.length) {
         // TODO(cs): fingerprint too general?
+        println("Violation found! delivery_order.length > correct.length")
         return Some(BroadcastViolation(actor, Seq(actor)))
       }
       for ((d, i) <- delivery_order.zipWithIndex) {
         if (d != correct(i)) {
+          println("Violation found! " + d + "@" + i)
           return Some(BroadcastViolation(actor, Seq(actor)))
         }
       }
