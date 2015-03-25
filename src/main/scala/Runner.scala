@@ -52,77 +52,50 @@ class BroadcastMessageFingerprinter extends MessageFingerprinter {
 }
 
 class ClientMessageGenerator(actors: Seq[String]) extends MessageGenerator {
-  val wordsUsedSoFar = new HashSet[String]
+  var nextWord = 0
   val rand = new Random
-  val destinations = new RandomizedHashSet[String]
-  for (dst <- actors) {
-    destinations.insert(dst)
-  }
+  // val destinations = new RandomizedHashSet[String]
+  // for (dst <- actors) {
+  //   destinations.insert(dst)
+  // }
+  val destination = actors(0)
 
   def generateMessage(alive: RandomizedHashSet[String]) : Send = {
-    val dst = destinations.getRandomElement()
-    // TODO(cs): 10000 is a bit arbitrary, and this algorithm fails
-    // disastrously as we start to approach 10000 Send events.
-    var word = rand.nextInt(10000).toString
-    while (wordsUsedSoFar contains word) {
-      word = rand.nextInt(10000).toString
-    }
-    wordsUsedSoFar += word
-    return Send(dst, () =>  RBBroadcast(DataMessage(word)))
+    // val dst = destinations.getRandomElement()
+    nextWord += 1
+    var word = "" + nextWord
+    return Send(destination, () =>  RBBroadcast(DataMessage(word)))
   }
 }
 
-object Main extends App {
-  val actors = Seq("bcast0",
-                   "bcast1",
-                   "bcast2",
-                   "bcast3")
-  val numNodes = actors.length
-
-  val dpor = false
-
-  // Mapping from { actor name => contents of delivered messages, in order }
-  val state : Map[String, Queue[String]] = HashMap() ++
-              actors.map((_, new Queue[String]()))
-
-  def shutdownCallback() : Unit = {
-    state.values.map(v => v.clear())
-  }
-
-  def checkpointApplicationState() : Any = {
-    val checkpoint = new HashMap[String, Queue[String]] ++
-                     actors.map((_, new Queue[String]()))
-    state.foreach {
-      case (key, value) => checkpoint(key) ++= value
-    }
-    return checkpoint
-  }
-
-  def restoreCheckpoint(checkpoint: Any) = {
-    state.values.map(v => v.clear())
-    checkpoint.asInstanceOf[Map[String, Queue[String]]].foreach {
-      case (key, value) => state(key) ++= value
-    }
-  }
-
-  Instrumenter().registerShutdownCallback(shutdownCallback)
-  Instrumenter().registerCheckpointCallbacks(checkpointApplicationState, restoreCheckpoint)
-
+object Invariant {
   // Checks FIFO delivery. See 3.9.2 of "Reliable and Secure Distributed
   // Programming".
-  def invariant(current_trace: Seq[ExternalEvent], state: Map[String, Queue[String]]) : Option[akka.dispatch.verification.ViolationFingerprint]= {
-    // Correct sequence of deliveries: either 0, 1, or 2 messages in FIFO
+  def invariant(current_trace: Seq[ExternalEvent], checkpoint: HashMap[String,Option[CheckpointReply]]) :
+      Option[akka.dispatch.verification.ViolationFingerprint] = {
+
+    // Map from actor -> deliverOrder
+    var state = checkpoint flatMap {
+      case (k, None) => None
+      case (k, Some(v)) => Some((k,v.data.asInstanceOf[Queue[String]]))
+    }
+
+    // Correct sequence of deliveries: some prefix of messages in FIFO
     // order.
 
     // Assumes that only one node sent messages
     // TODO(cs): allow multiple nodes to send messages: maintain a list per
     // node, and check each list
-    val sends : Seq[Send] = current_trace flatMap {
-      case s: Send => Some(s)
+    val correct = current_trace flatMap {
+      case Send(_, ctor) =>
+        ctor() match {
+          case RBBroadcast(msg) =>
+            Some(msg.data)
+          case _ =>
+            None
+        }
       case _ => None
     }
-
-    val correct = sends.map(e => e.messageCtor().asInstanceOf[RBBroadcast].msg.data)
 
     // Only non-crashed nodes need to deliver those messages.
     // TODO(cs): what is the correctness condition for crash-recovery FIFO
@@ -140,40 +113,39 @@ object Main extends App {
 
     for (actor <- started.filterNot(a => crashed.contains(a))) {
       val delivery_order = state(actor)
-      if (!delivery_order.equals(correct)) {
-        println(actor + " produced incorrect order:")
-        for (d <- delivery_order) {
-          println(d)
+      if (delivery_order.length > correct.length) {
+        // TODO(cs): fingerprint too general?
+        return Some(BroadcastViolation(actor, Seq(actor)))
+      }
+      for ((d, i) <- delivery_order.zipWithIndex) {
+        if (d != correct(i)) {
+          return Some(BroadcastViolation(actor, Seq(actor)))
         }
-        println("-------------")
-        return Some(BroadcastViolation("" + delivery_order, Seq(actor)))
       }
     }
     return None
   }
+}
+
+object Main extends App {
+  val actors = Seq("bcast0",
+                   "bcast1",
+                   "bcast2",
+                   "bcast3")
+  val numNodes = actors.length
 
   val prefix = Array[ExternalEvent]() ++
     // Start Actors.
     actors.map(actor_name =>
-      Start(() => Props.create(classOf[BroadcastNode], state(actor_name), Some(actors)), actor_name)) ++
-    // Execute the interesting events.
-    Array[ExternalEvent](
-    WaitQuiescence(),
-    Send("bcast0", () => RBBroadcast(DataMessage("Message1"))),
-    //Kill("bcast2"),
-    Send("bcast0", () => RBBroadcast(DataMessage("Message2"))),
-    WaitQuiescence()
-  )
-
-  val wrappedInvariant = {
-    (current_trace: Seq[ExternalEvent], notUsed: HashMap[String,Option[CheckpointReply]]) =>
-     invariant(current_trace, state)
-  }
+      Start(() => Props.create(classOf[BroadcastNode]), actor_name)) ++
+    actors.map(actor_name =>
+      Send(actor_name, () => ReachableGroup(actors.toSet))) ++
+    Array[ExternalEvent](WaitQuiescence())
 
   val fingerprintFactory = new FingerprintFactory
   fingerprintFactory.registerFingerprinter(new BroadcastMessageFingerprinter)
 
-  val fuzz = false
+  val fuzz = true
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -191,7 +163,7 @@ object Main extends App {
     //  replayer.setEventMapper(Init.eventMapper)
     //  return replayer
     //}
-    val tuple = RunnerUtils.fuzz(fuzzer, wrappedInvariant,
+    val tuple = RunnerUtils.fuzz(fuzzer, Invariant.invariant,
                                  fingerprintFactory,
                                  invariant_check_interval=200)
                                  //validate_replay=Some(replayerCtor))
@@ -212,15 +184,14 @@ object Main extends App {
     filteredTrace=Some(filteredTrace)) else
     "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_03_14_01_08_35"
 
-
   println("Trying STSSchedDDMin")
-  // Allow peek:
+  // Dissallow peek:
   var (mcs3, stats3, mcs_execution3, violation3) =
     RunnerUtils.stsSchedDDMin(dir,
       fingerprintFactory,
       new BasicMessageDeserializer,
-      true,
-      wrappedInvariant)
+      false,
+      Invariant.invariant)
 
   serializer.serializeMCS(dir, mcs3, stats3, mcs_execution3, violation3)
 
@@ -228,7 +199,7 @@ object Main extends App {
     RunnerUtils.editDistanceDporDDMin(dir,
       fingerprintFactory,
       new BasicMessageDeserializer,
-      wrappedInvariant)
+      Invariant.invariant)
 
   serializer.serializeMCS(dir, mcs5, stats5, mcs_execution5, violation5)
 

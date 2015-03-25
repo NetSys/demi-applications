@@ -1,3 +1,7 @@
+Absent events in unmodified trace? (something wrong with provenance?)
+
+
+
 TODO:
   - Visualization shell script.
   - Start DPOR on my broadcast implementation.

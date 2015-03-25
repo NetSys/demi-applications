@@ -159,17 +159,13 @@ class TimerQueue(scheduler: Scheduler, source: ActorRef) {
  */
 // delivery_order is for convenience: a shared data structure that allows us
 // to check invariants.
-class BroadcastNode(delivery_order: Queue[String],
-                    members:Option[Iterable[String]]=None) extends Actor {
+class BroadcastNode extends Actor {
   var name = self.path.name
   val timerQueue = new TimerQueue(context.system.scheduler, self)
   var allLinks: Set[PerfectLink] = Set()
   var dst2link: Map[String, PerfectLink] = Map()
   var delivered: Set[Int] = Set()
-  members match {
-    case Some(group) => handle_group_membership(group)
-    case None => None
-  }
+  var delivery_order = new Queue[String]
 
   def handle_group_membership(group: Iterable[String]) {
     log("handle_group_membership " + group)
