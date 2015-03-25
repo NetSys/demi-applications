@@ -24,13 +24,15 @@ case class DataMessage(data: String) {
 
   override
   def toString() : String = {
-    "DataMessage(" + id + "," + data + ")"
+    "DataMessage(id=" + id + ",data=" + data + ")"
   }
 }
 
 // -- main() -> Node messages --
 case class StillActiveQuery()
 case class RBBroadcast(msg: DataMessage)
+// Same as ReachableGroup, but not sent by FailureDetector
+case class MyReachableGroup(group: Set[String])
 
 // -- Link -> Link messages --
 case class SLDeliver(senderName: String, msg: DataMessage)
@@ -263,6 +265,7 @@ class BroadcastNode extends Actor {
       context.actorFor("../" + fdName) ! QueryReachableGroup
     }
     case ReachableGroup(group) => handle_group_membership(group)
+    case MyReachableGroup(group) => handle_group_membership(group)
     case Tick => handle_tick
     case StillActiveQuery => handle_active_query
     case CheckpointRequest =>

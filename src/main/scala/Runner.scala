@@ -141,7 +141,7 @@ object Main extends App {
     actors.map(actor_name =>
       Start(() => Props.create(classOf[BroadcastNode]), actor_name)) ++
     actors.map(actor_name =>
-      Send(actor_name, () => ReachableGroup(actors.toSet))) ++
+      Send(actor_name, () => MyReachableGroup(actors.toSet))) ++
     Array[ExternalEvent](WaitQuiescence())
 
   val fingerprintFactory = new FingerprintFactory
