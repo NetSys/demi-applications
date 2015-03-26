@@ -27,6 +27,8 @@ Edit distance metric that takes into account causal chains. Take union of
 longest common subsequences for each causal chain. Basically, don't want to
 penalize commutative reorderings.
 ----------------
+TODO(cs): another degree of freedom we should emperically validate: how we
+react to absent events.
 TODO(cs): currently only DPORwHeuristics makes use of provenance optimization.
 TODO(cs): Write verify_mcs for DPOR. Not clear what initialTrace to give it, since DDMin
 might not actually replay the execution -- it might be pieced together.
