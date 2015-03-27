@@ -66,6 +66,8 @@ object RunnerUtils {
     }
 
     // Before returning, try to prune events that are concurrent with the violation.
+    // TODO(cs): currently only DPORwHeuristics makes use of this
+    // optimization...
     println("Pruning events not in provenance of violation. This may take awhile...")
     val provenenceTracker = new ProvenanceTracker(initialTrace, depGraph)
     val filtered = provenenceTracker.pruneConcurrentEvents(violationFound)
@@ -81,6 +83,7 @@ object RunnerUtils {
     val deserializer = new ExperimentDeserializer(experiment_dir)
     Instrumenter().scheduler = scheduler
     scheduler.populateActorSystem(deserializer.get_actors)
+    scheduler.setActorNamePropPairs(deserializer.get_actors)
     val violation = deserializer.get_violation(messageDeserializer)
     val trace = deserializer.get_events(messageDeserializer, Instrumenter().actorSystem)
     val dep_graph = deserializer.get_dep_graph()
@@ -98,6 +101,17 @@ object RunnerUtils {
     println("Done with replay")
     replayer.shutdown
     return events
+  }
+
+  def printMCS(mcs: Seq[ExternalEvent]) {
+    println("----------")
+    println("MCS: ")
+    mcs foreach {
+      case Send(rcv, msgCtor) =>
+        println("Send("+rcv+","+msgCtor()+")")
+      case e => println(e)
+    }
+    println("----------")
   }
 
   def randomDDMin(experiment_dir: String,
@@ -139,7 +153,14 @@ object RunnerUtils {
     sched.original_trace = trace
 
     val ddmin = new DDMin(sched)
-    val mcs = ddmin.minimize(trace.original_externals, violation)
+    // STSSched doesn't actually pay any attention to WaitQuiescence, so just
+    // get rid of them.
+    val filteredQuiescence = trace.original_externals flatMap {
+      case WaitQuiescence() => None
+      case e => Some(e)
+    }
+    val mcs = ddmin.minimize(filteredQuiescence, violation)
+    printMCS(mcs)
     println("Validating MCS...")
     val validated_mcs = ddmin.verify_mcs(mcs, violation)
     validated_mcs match {
@@ -162,6 +183,7 @@ object RunnerUtils {
     // Don't check unmodified execution, since RR will often fail
     val ddmin = new DDMin(sched, false)
     val mcs = ddmin.minimize(trace.original_externals, violation)
+    printMCS(mcs)
     println("Validating MCS...")
     val validated_mcs = ddmin.verify_mcs(mcs, violation)
     validated_mcs match {
@@ -174,7 +196,8 @@ object RunnerUtils {
   def editDistanceDporDDMin(experiment_dir: String,
                             fingerprintFactory: FingerprintFactory,
                             messageDeserializer: MessageDeserializer,
-                            invariant: TestOracle.Invariant) :
+                            invariant: TestOracle.Invariant,
+                            ignoreQuiescence:Boolean=true) :
         Tuple4[Seq[ExternalEvent], MinimizationStats, Option[EventTrace], ViolationFingerprint] = {
 
     val heuristic = new AdditionDistanceOrdering
@@ -225,13 +248,20 @@ object RunnerUtils {
     val filtered_externals = trace.original_externals flatMap {
       case s: Start => Some(s)
       case s: Send => Some(s)
-      case w: WaitQuiescence => Some(w)
-      case Kill(name) =>
-        Some(NetworkPartition(Set(name), allActorsSet))
-      case Partition(a,b) =>
-        Some(NetworkPartition(Set(a), Set(b)))
-      case UnPartition(a,b) =>
-        Some(NetworkUnpartition(Set(a), Set(b)))
+      // Convert the following externals into Unique's, since DPORwHeuristics
+      // needs ids to match them up correctly.
+      case w: WaitQuiescence =>
+        if (ignoreQuiescence) {
+          None
+        } else {
+          Some(Unique(w, id=w._id))
+        }
+      case k @ Kill(name) =>
+        Some(Unique(NetworkPartition(Set(name), allActorsSet), id=k._id))
+      case p @ Partition(a,b) =>
+        Some(Unique(NetworkPartition(Set(a), Set(b)), id=p._id))
+      case u @ UnPartition(a,b) =>
+        Some(Unique(NetworkUnpartition(Set(a), Set(b)), id=u._id))
       case _ => None
     }
 
@@ -239,6 +269,7 @@ object RunnerUtils {
     // TODO(cs): codesign DDMin and DPOR. Or, just invoke DPOR and not DDMin.
     val ddmin = new DDMin(sched, true)
     val mcs = ddmin.minimize(filtered_externals, violation)
+    printMCS(mcs)
     // TODO(cs): write a verify_mcs method that uses Replayer instead of
     // TestOracle.
     val verified_mcs = None
