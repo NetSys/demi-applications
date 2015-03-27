@@ -1,9 +1,6 @@
-Sanity check: DPOR set up to stop as soon as initialTrace is done, should be
-equivalent to STSSched without peek. DO THIS ON OUR RBBCAST
+When implementing incremental DDMin, should really keep backTracks around, or
+restore them somehow for each subsequence.
 
-No corresponding "Became Leader" message; invariant check mistaken?
-
----------
 DPOR that tracks the smallest failing execution it has seen so far.
 
 DDMin that iteratively feeds larger and larger edit-distances to DPOR.
