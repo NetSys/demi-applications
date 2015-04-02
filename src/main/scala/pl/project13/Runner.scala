@@ -184,6 +184,7 @@ object Main extends App {
   serializer.serializeMCS(dir, mcs2, stats2, mcs_execution2, violation2)
   */
 
+  /*
   println("Trying STSSchedDDMin")
   // Allow peek:
   var (mcs3, stats3, mcs_execution3, violation3) =
@@ -195,6 +196,7 @@ object Main extends App {
       Some(Init.eventMapper))
 
   serializer.serializeMCS(dir, mcs3, stats3, mcs_execution3, violation3)
+  */
 
   /*
   println("Trying RoundRobinDDMin")

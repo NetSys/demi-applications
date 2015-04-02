@@ -1,28 +1,31 @@
-When implementing incremental DDMin, should really keep backTracks around, or
-restore them somehow for each subsequence.
+TODO(cs): fix how DPOR's isolation of nodes from the beginning.
+
+== Minimizing internals ==
 
 DPOR that tracks the smallest failing execution it has seen so far.
-
-DDMin that iteratively feeds larger and larger edit-distances to DPOR.
-
-DDMin that splits along DAG (DepGraph) lines...
-
-Possibly find a hackier version of CheckpointRequests that doesn't require us
-to send messages.
 
 DPOR that just tries to remove (not add or reorder) internal events. Might be
 able to do this statically based on DepGraph!
 
+== Improved DDMin ==
+
+DDMin that splits along DAG (DepGraph) lines...
+
 IDEA: try first pruning external events that have long happens-before
 chains leading up to bug.
 
-Even with incremental edit-istance DDMin, there might be redundant external
-event sequences that we feed to it? Then again, DPOR might just stop
-immediately once it realizes it has already explored all those schedules.
+== Edit distance ==
 
 Edit distance metric that takes into account causal chains. Take union of
 longest common subsequences for each causal chain. Basically, don't want to
 penalize commutative reorderings.
+
+Compute edit distance online (incremental), rather than offline.
+
+== Hacks ==
+
+Possibly find a hackier version of CheckpointRequests that doesn't require us
+to send messages.
 ----------------
 TODO(cs): another degree of freedom we should emperically validate: how we
 react to absent events.
