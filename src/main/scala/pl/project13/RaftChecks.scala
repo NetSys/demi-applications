@@ -105,7 +105,7 @@ class RaftChecks {
         if (crashes.isEmpty) {
           return None
         }
-        println("Violations found! crash" + crashes)
+        println("Violations found! crash " + crashes)
         return Some(RaftViolation(crashes))
     }
   }

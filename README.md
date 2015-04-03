@@ -31,3 +31,8 @@ $ cd /tmp
 $ wget "https://dl.bintray.com/sbt/debian/sbt-0.13.7.deb"
 $ sudo dpkg -i sbt-0.13.7.deb
 ```
+
+
+#### Running:
+
+sbt assembly && java -d64 -Xmx15g -cp target/scala-2.11/randomSearch-assembly-0.1.jar Main 2>&1 | tee console.out

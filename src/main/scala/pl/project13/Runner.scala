@@ -143,7 +143,8 @@ object Main extends App {
     }
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  fingerprintFactory,
-                                 validate_replay=Some(replayerCtor))
+                                 validate_replay=Some(replayerCtor),
+                                 maxMessages=Some(170))
     traceFound = tuple._1
     violationFound = tuple._2
     depGraph = tuple._3
@@ -213,7 +214,8 @@ object Main extends App {
     RunnerUtils.editDistanceDporDDMin(dir,
       fingerprintFactory,
       new RaftMessageDeserializer(Instrumenter().actorSystem),
-      raftChecks.invariant)
+      raftChecks.invariant,
+      event_mapper=Some(Init.eventMapper))
 
   serializer.serializeMCS(dir, mcs5, stats5, mcs_execution5, violation5)
 }

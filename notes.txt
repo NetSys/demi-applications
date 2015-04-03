@@ -1,7 +1,5 @@
 == Minimizing internals ==
 
-DPOR that tracks the smallest failing execution it has seen so far.
-
 DPOR that just tries to remove (not add or reorder) internal events. Might be
 able to do this statically based on DepGraph!
 
@@ -14,6 +12,7 @@ chains leading up to bug.
 
 == Edit distance ==
 
+XXX
 Compute edit distance online (incremental), rather than offline.
 
 Edit distance metric that takes into account causal chains. Take union of
@@ -28,8 +27,6 @@ to send messages.
 TODO(cs): another degree of freedom we should emperically validate: how we
 react to absent events.
 TODO(cs): currently only DPORwHeuristics makes use of provenance optimization.
-TODO(cs): Write verify_mcs for DPOR. Not clear what initialTrace to give it, since DDMin
-might not actually replay the execution -- it might be pieced together.
 TODO(cs): After ~35 validation attempts, the system sometimes hangs. We probably have a
 race condition somewhere.
 TODO(cs): maybe no need to store DepGraph. It's already there in event_orchestrator.events!
