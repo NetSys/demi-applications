@@ -20,7 +20,6 @@ panda-rbcast | One of three reliable broadcast applications
 colin-rbcast | fully-fleshed out reliable broadcast application
 akka-raft    | akka-raft
 
-
 #### Prequisites
 
 ```
@@ -31,7 +30,6 @@ $ cd /tmp
 $ wget "https://dl.bintray.com/sbt/debian/sbt-0.13.7.deb"
 $ sudo dpkg -i sbt-0.13.7.deb
 ```
-
 
 #### Running:
 

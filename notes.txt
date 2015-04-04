@@ -10,15 +10,6 @@ DDMin that splits along DAG (DepGraph) lines...
 IDEA: try first pruning external events that have long happens-before
 chains leading up to bug.
 
-== Edit distance ==
-
-XXX
-Compute edit distance online (incremental), rather than offline.
-
-Edit distance metric that takes into account causal chains. Take union of
-longest common subsequences for each causal chain. Basically, don't want to
-penalize commutative reorderings.
-
 == Hacks ==
 
 Possibly find a hackier version of CheckpointRequests that doesn't require us
