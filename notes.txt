@@ -10,11 +10,20 @@ DDMin that splits along DAG (DepGraph) lines...
 IDEA: try first pruning external events that have long happens-before
 chains leading up to bug.
 
+== Edit Distance ==
+
+Online version using a prefix trie
+
 == Hacks ==
 
 Possibly find a hackier version of CheckpointRequests that doesn't require us
 to send messages.
 ----------------
+TODO(cs): graph a breakdown of (i) deliveries pruned by provenance, (ii)
+deliveries pruned by DDMin, (iii) deliveries pruned by internal minimization.
+TODO(cs): clean up how we deserialize MCSes. In general, decouple
+deserialization from the RunnerUtil execution functions.
+TODO(cs): provenance should consider TimerDeliveries
 TODO(cs): another degree of freedom we should emperically validate: how we
 react to absent events.
 TODO(cs): currently only DPORwHeuristics makes use of provenance optimization.
@@ -35,6 +44,7 @@ about it going off infinitely, etc.)
 TODO(cs): understand why my optimization of pruning out Sends to non-existent
 actors wasn't correct
 TODO(cs): timers break eventTrace.filterSends
+TODO(cs): CheckpointRequests/Reply should really be handled by Instrumenter()
 -----------------
 TODO(cs): do we handle context.system.eventStream.publish properly? It's
           apparently only a local facility, not a cluster facility.

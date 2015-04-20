@@ -128,7 +128,7 @@ object Main extends App {
 
   Instrumenter().registerShutdownCallback(shutdownCallback)
 
-  val fuzz = true
+  val fuzz = false
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -144,7 +144,7 @@ object Main extends App {
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  fingerprintFactory,
                                  validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(6000)) // 170
+                                 maxMessages=Some(170))
     traceFound = tuple._1
     violationFound = tuple._2
     depGraph = tuple._3
@@ -160,7 +160,7 @@ object Main extends App {
     traceFound.filterCheckpointMessages(), violationFound,
     depGraph=Some(depGraph), initialTrace=Some(initialTrace),
     filteredTrace=Some(filteredTrace)) else
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_04_02_19_54_17_IncDDMin_DPOR/"
+    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_04_03_15_59_16_IncDDMin_DPOR"
 
   /*
   println("Trying randomDDMin")
@@ -219,7 +219,51 @@ object Main extends App {
         event_mapper=Some(Init.eventMapper))
 
     serializer.serializeMCS(dir, mcs5, stats5, mcs_execution5, violation5)
+
+    mcs_execution5 match {
+      case Some(trace) =>
+        // TODO(cs): do a better job of decoupling deserialization and experiment runner functions
+        // in RunnerUtils. Have compose functions, that do both.
+        val deserializer = new ExperimentDeserializer(dir)
+
+        var (stats, lastFailingTrace) =
+          RunnerUtils.minimizeInternals(fingerprintFactory,
+                                        mcs5,
+                                        trace,
+                                        deserializer.get_actors,
+                                        raftChecks.invariant,
+                                        violation5,
+                                        event_mapper=Some(Init.eventMapper))
+
+        serializer.recordMinimizedInternals(dir, stats, lastFailingTrace)
+      case None =>
+        None
+    }
   }
 
-  // TODO(cs): minimize internals.
+  if (!fuzz) {
+    val mcs_dir = "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_04_19_15_35_23_IncDDMin_DPOR"
+    var msgDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
+
+    println("Trying replay..")
+    RunnerUtils.replayExperiment(mcs_dir, fingerprintFactory, msgDeserializer,
+                                 Some(raftChecks.invariant))
+
+    msgDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
+    val dummySched = new ReplayScheduler()
+    val (mcs, trace, violation, actors) = RunnerUtils.deserializeMCS(mcs_dir,
+                                                                     msgDeserializer,
+                                                                     dummySched)
+    dummySched.shutdown
+    var (stats, lastFailingTrace) =
+      RunnerUtils.minimizeInternals(fingerprintFactory,
+                                    mcs,
+                                    trace,
+                                    actors,
+                                    raftChecks.invariant,
+                                    violation,
+                                    event_mapper=Some(Init.eventMapper))
+
+    serializer.recordMinimizedInternals(mcs_dir, stats, lastFailingTrace)
+  }
 }
