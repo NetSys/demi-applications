@@ -239,7 +239,8 @@ class ElectionSafetyChecker(parent: RaftChecks) {
     state match {
       case LeaderMeta(_, term, _) =>
         if ((term2leader contains term) && term2leader(term) != actor) {
-          val fingerprint = "ElectionSafety:" + actor + ":" + term2leader(term) + ":" + term
+          val sorted = List(actor, term2leader(term)).sorted.mkString(":")
+          val fingerprint = "ElectionSafety:" + sorted + ":" + term
           val affected = Set(actor, term2leader(term))
           return Some(new HashMap ++ Seq(fingerprint -> affected))
         }
@@ -257,6 +258,7 @@ class LogMatchChecker(parent: RaftChecks) {
 
   def checkActor(actor: String) : Option[Map[String, Set[String]]] = {
     return None
+    // TODO(cs): sort actors in fingerprint string
     // TODO(cs): return affected nodes
     /*
     val otherActorLogs = parent.actor2log.filter { case (a,_) => a != actor }
@@ -307,6 +309,7 @@ class LeaderCompletenessChecker(parent: RaftChecks) {
 
   def check() : Option[Map[String, Set[String]]] = {
     return None
+    // TODO(cs): sort actors in fingerprint string
     // TODO(cs): return affected nodes
     /*
     val sortedTerms = parent.term2leader.keys.toArray.sortWith((a,b) => a < b)
@@ -349,6 +352,7 @@ class StateMachineChecker(parent: RaftChecks) {
   // infer that they should commit an given entry)
   def check() : Option[Map[String, Set[String]]] = {
     return None
+    // TODO(cs): sort actors in fingerprint string
     // TODO(cs): return affected nodes
     /*
     val allCommittedIndices = parent.allCommitted.toArray.map(c => c._3)
