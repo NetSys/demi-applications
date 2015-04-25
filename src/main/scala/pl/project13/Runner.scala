@@ -47,6 +47,29 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
   }
 }
 
+// Used for fuzzing:
+class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator {
+  val wordsUsedSoFar = new HashSet[String]
+  val rand = new Random
+  val destinations = new RandomizedHashSet[String]
+  for (dst <- raft_members) {
+    destinations.insert(dst)
+  }
+
+  def generateMessage(alive: RandomizedHashSet[String]) : Send = {
+    val dst = destinations.getRandomElement()
+    // TODO(cs): 10000 is a bit arbitrary, and this algorithm fails
+    // disastrously as we start to approach 10000 Send events.
+    var word = rand.nextInt(10000).toString
+    while (wordsUsedSoFar contains word) {
+      word = rand.nextInt(10000).toString
+    }
+    wordsUsedSoFar += word
+    return Send(dst, () =>
+      ClientMessage[AppendWord](Instrumenter().actorSystem.deadLetters, AppendWord(word)))
+  }
+}
+
 object Init {
   def actorCtor(): Props = {
     return Props.create(classOf[WordConcatRaftActor])
