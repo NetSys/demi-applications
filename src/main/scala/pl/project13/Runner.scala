@@ -47,28 +47,6 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
   }
 }
 
-class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator {
-  val wordsUsedSoFar = new HashSet[String]
-  val rand = new Random
-  val destinations = new RandomizedHashSet[String]
-  for (dst <- raft_members) {
-    destinations.insert(dst)
-  }
-
-  def generateMessage(alive: RandomizedHashSet[String]) : Send = {
-    val dst = destinations.getRandomElement()
-    // TODO(cs): 10000 is a bit arbitrary, and this algorithm fails
-    // disastrously as we start to approach 10000 Send events.
-    var word = rand.nextInt(10000).toString
-    while (wordsUsedSoFar contains word) {
-      word = rand.nextInt(10000).toString
-    }
-    wordsUsedSoFar += word
-    return Send(dst, () =>
-      ClientMessage[AppendWord](Instrumenter().actorSystem.deadLetters, AppendWord(word)))
-  }
-}
-
 object Init {
   def actorCtor(): Props = {
     return Props.create(classOf[WordConcatRaftActor])
@@ -92,6 +70,7 @@ object Init {
   def eventMapper(e: Event) : Option[Event] = {
     e match {
       case MsgSend(snd,rcv,ChangeConfiguration(config)) =>
+        // Regenerate the ChangeConfiguration message with new ActorRefs.
         val updatedRefs = config.members.map(Init.updateActorRef)
         val updatedConfig = ChangeConfiguration(ClusterConfiguration(updatedRefs))
         return Some(MsgSend(snd,rcv,updatedConfig))
@@ -104,8 +83,11 @@ object Init {
 object Main extends App {
   val raftChecks = new RaftChecks
 
-  val members = (1 to 9) map { i => s"raft-member-$i" }
+  val fingerprintFactory = new FingerprintFactory
+  fingerprintFactory.registerFingerprinter(new RaftMessageFingerprinter)
 
+  // -- Used for initial fuzzing: --
+  val members = (1 to 9) map { i => s"raft-member-$i" }
   val prefix = Array[ExternalEvent]() ++
     members.map(member =>
       Start(Init.actorCtor, member)) ++
@@ -113,14 +95,7 @@ object Main extends App {
       Send(member, Init.startCtor)) ++
     Array[ExternalEvent](WaitQuiescence()
   )
-
-  val fingerprintFactory = new FingerprintFactory
-  fingerprintFactory.registerFingerprinter(new RaftMessageFingerprinter)
-
-  val weights = new FuzzerWeights(kill=0.01, send=0.3, wait_quiescence=0.1,
-                                  partition=0.1, unpartition=0)
-  val messageGen = new ClientMessageGenerator(members)
-  val fuzzer = new Fuzzer(500, weights, messageGen, prefix)
+  // -- --
 
   def shutdownCallback() = {
     raftChecks.clear
@@ -128,142 +103,11 @@ object Main extends App {
 
   Instrumenter().registerShutdownCallback(shutdownCallback)
 
-  val fuzz = false
+  val mcs_dir = "experiments/akka-raft-fuzz_2015_04_19_15_35_23_IncDDMin_DPOR"
+  var msgDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
 
-  var traceFound: EventTrace = null
-  var violationFound: ViolationFingerprint = null
-  var depGraph : Graph[Unique, DiEdge] = null
-  var initialTrace : Queue[Unique] = null
-  var filteredTrace : Queue[Unique] = null
-  if (fuzz) {
-    def replayerCtor() : ReplayScheduler = {
-      val replayer = new ReplayScheduler(fingerprintFactory, false, false)
-      replayer.setEventMapper(Init.eventMapper)
-      return replayer
-    }
-    val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
-                                 fingerprintFactory,
-                                 validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(170))
-    traceFound = tuple._1
-    violationFound = tuple._2
-    depGraph = tuple._3
-    initialTrace = tuple._4
-    filteredTrace = tuple._5
-  }
-
-  val serializer = new ExperimentSerializer(
-    fingerprintFactory,
-    new RaftMessageSerializer)
-
-  val dir = if (fuzz) serializer.record_experiment("akka-raft-fuzz",
-    traceFound.filterCheckpointMessages(), violationFound,
-    depGraph=Some(depGraph), initialTrace=Some(initialTrace),
-    filteredTrace=Some(filteredTrace)) else
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_04_03_15_59_16_IncDDMin_DPOR"
-
-  /*
-  println("Trying randomDDMin")
-  var (mcs1, stats1, mcs_execution1, violation1) =
-    RunnerUtils.randomDDMin(dir,
-      fingerprintFactory,
-      new RaftMessageDeserializer(Instrumenter().actorSystem),
-      raftChecks.invariant)
-
-  serializer.serializeMCS(dir, mcs1, stats1, mcs_execution1, violation1)
-
-  println("Trying STSSchedDDMinNoPeak")
-  // Dissallow peek:
-  var (mcs2, stats2, mcs_execution2, violation2) =
-    RunnerUtils.stsSchedDDMin(dir,
-      fingerprintFactory,
-      new RaftMessageDeserializer(Instrumenter().actorSystem),
-      false,
-      raftChecks.invariant,
-      Some(Init.eventMapper))
-
-  serializer.serializeMCS(dir, mcs2, stats2, mcs_execution2, violation2)
-  */
-
-  /*
-  println("Trying STSSchedDDMin")
-  // Allow peek:
-  var (mcs3, stats3, mcs_execution3, violation3) =
-    RunnerUtils.stsSchedDDMin(dir,
-      fingerprintFactory,
-      new RaftMessageDeserializer(Instrumenter().actorSystem),
-      true,
-      raftChecks.invariant,
-      Some(Init.eventMapper))
-
-  serializer.serializeMCS(dir, mcs3, stats3, mcs_execution3, violation3)
-  */
-
-  /*
-  println("Trying RoundRobinDDMin")
-  var (mcs4, stats4, mcs_execution4, violation4) =
-    RunnerUtils.roundRobinDDMin(dir,
-      fingerprintFactory,
-      new RaftMessageDeserializer(Instrumenter().actorSystem),
-      raftChecks.invariant)
-
-  serializer.serializeMCS(dir, mcs4, stats4, mcs_execution4, violation4)
-  */
-
-  if (fuzz) {
-    var (mcs5, stats5, mcs_execution5, violation5) =
-      RunnerUtils.editDistanceDporDDMin(dir,
-        fingerprintFactory,
-        new RaftMessageDeserializer(Instrumenter().actorSystem),
-        raftChecks.invariant,
-        event_mapper=Some(Init.eventMapper))
-
-    serializer.serializeMCS(dir, mcs5, stats5, mcs_execution5, violation5)
-
-    mcs_execution5 match {
-      case Some(trace) =>
-        // TODO(cs): do a better job of decoupling deserialization and experiment runner functions
-        // in RunnerUtils. Have compose functions, that do both.
-        val deserializer = new ExperimentDeserializer(dir)
-
-        var (stats, lastFailingTrace) =
-          RunnerUtils.minimizeInternals(fingerprintFactory,
-                                        mcs5,
-                                        trace,
-                                        deserializer.get_actors,
-                                        raftChecks.invariant,
-                                        violation5,
-                                        event_mapper=Some(Init.eventMapper))
-
-        serializer.recordMinimizedInternals(dir, stats, lastFailingTrace)
-      case None =>
-        None
-    }
-  }
-
-  if (!fuzz) {
-    val mcs_dir = "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_04_19_15_35_23_IncDDMin_DPOR"
-    var msgDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
-
-    println("Trying replay..")
-    RunnerUtils.replayExperiment(mcs_dir, fingerprintFactory, msgDeserializer,
-                                 Some(raftChecks.invariant))
-
-    msgDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
-    val dummySched = new ReplayScheduler()
-    val (mcs, trace, violation, actors) = RunnerUtils.deserializeMCS(mcs_dir,
-                                                                     msgDeserializer,
-                                                                     dummySched)
-    dummySched.shutdown
-    var (stats, lastFailingTrace) =
-      RunnerUtils.minimizeInternals(fingerprintFactory,
-                                    mcs,
-                                    trace,
-                                    actors,
-                                    raftChecks.invariant,
-                                    violation,
-                                    event_mapper=Some(Init.eventMapper))
-
-    serializer.recordMinimizedInternals(mcs_dir, stats, lastFailingTrace)
-  }
+  println("Trying replay..")
+  RunnerUtils.replayExperiment(mcs_dir, fingerprintFactory, msgDeserializer,
+                               Some(raftChecks.invariant),
+                               traceFile=ExperimentSerializer.minimizedInternalTrace)
 }
