@@ -1,0 +1,11 @@
+Read more about ThreadPoolService
+
+Relevant:
+  ExecutorExitCode.scala. Used to communicate failures to the master.
+  StandaloneExecutorBackend.scala: the actor (and actor system)
+
+TODO(cs):
+  - SparkContext.parrallelize is the starting point.
+    -> calls LocalScheduler.start()
+    later calls DAGScheduler.start()
+  - Figure out how to set logging level
