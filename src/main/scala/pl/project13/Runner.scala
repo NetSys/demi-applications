@@ -74,30 +74,12 @@ object Init {
     return Props.create(classOf[WordConcatRaftActor])
   }
 
-  def startCtor(): Any = {
-    val clusterRefs = Instrumenter().actorMappings.filter({
-        case (k,v) => k != "client" && !ActorTypes.systemActor(k)
-    }).values
-    return ChangeConfiguration(ClusterConfiguration(clusterRefs))
-  }
-
   // Very important! Need to update the actor refs recorded in the event
   // trace, since they are no longer valid for this new actor system.
   def updateActorRef(ref: ActorRef) : ActorRef = {
     val newRef = Instrumenter().actorSystem.actorFor("/user/" + ref.path.name)
     assert(newRef.path.name != "deadLetters")
     return newRef
-  }
-
-  def eventMapper(e: Event) : Option[Event] = {
-    e match {
-      case MsgSend(snd,rcv,ChangeConfiguration(config)) =>
-        val updatedRefs = config.members.map(Init.updateActorRef)
-        val updatedConfig = ChangeConfiguration(ClusterConfiguration(updatedRefs))
-        return Some(MsgSend(snd,rcv,updatedConfig))
-      case m =>
-        return Some(m)
-    }
   }
 }
 
@@ -138,7 +120,6 @@ object Main extends App {
   if (fuzz) {
     def replayerCtor() : ReplayScheduler = {
       val replayer = new ReplayScheduler(fingerprintFactory, false, false)
-      replayer.setEventMapper(Init.eventMapper)
       return replayer
     }
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
@@ -179,8 +160,7 @@ object Main extends App {
       fingerprintFactory,
       new RaftMessageDeserializer(Instrumenter().actorSystem),
       false,
-      raftChecks.invariant,
-      Some(Init.eventMapper))
+      raftChecks.invariant)
 
   serializer.serializeMCS(dir, mcs2, stats2, mcs_execution2, violation2)
   */
@@ -193,8 +173,7 @@ object Main extends App {
       fingerprintFactory,
       new RaftMessageDeserializer(Instrumenter().actorSystem),
       true,
-      raftChecks.invariant,
-      Some(Init.eventMapper))
+      raftChecks.invariant)
 
   serializer.serializeMCS(dir, mcs3, stats3, mcs_execution3, violation3)
   */
@@ -212,11 +191,11 @@ object Main extends App {
 
   if (fuzz) {
     var (mcs5, stats5, mcs_execution5, violation5) =
-      RunnerUtils.editDistanceDporDDMin(dir,
+      RunnerUtils.stsSchedDDMin(dir,
         fingerprintFactory,
         new RaftMessageDeserializer(Instrumenter().actorSystem),
-        raftChecks.invariant,
-        event_mapper=Some(Init.eventMapper))
+        false,
+        raftChecks.invariant)
 
     serializer.serializeMCS(dir, mcs5, stats5, mcs_execution5, violation5)
 
@@ -232,8 +211,7 @@ object Main extends App {
                                         trace,
                                         deserializer.get_actors,
                                         raftChecks.invariant,
-                                        violation5,
-                                        event_mapper=Some(Init.eventMapper))
+                                        violation5)
 
         serializer.recordMinimizedInternals(dir, stats, lastFailingTrace)
       case None =>
@@ -261,8 +239,7 @@ object Main extends App {
                                     trace,
                                     actors,
                                     raftChecks.invariant,
-                                    violation,
-                                    event_mapper=Some(Init.eventMapper))
+                                    violation)
 
     serializer.recordMinimizedInternals(mcs_dir, stats, lastFailingTrace)
   }
