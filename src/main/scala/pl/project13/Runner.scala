@@ -32,6 +32,11 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
       return ref.path.name
     }
     val str = msg match {
+      case ChangeConfiguration(config) =>
+        // Ignore contents of bootstrap messages; they should be the same for
+        // all nodes in the system. This fingerprint is needed for shrinking
+        // external message contents.
+        "ChangeConfiguration"
       case RequestVote(term, ref, lastTerm, lastIdx) =>
         (("RequestVote", term, removeId(ref), lastTerm, lastIdx)).toString
       case LeaderIs(Some(ref), msg) =>
@@ -48,6 +53,12 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
 }
 
 class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator {
+  class AppendWordConstuctor(word: String) extends ExternalMessageConstructor {
+    def apply() : Any = {
+      return ClientMessage[AppendWord](Instrumenter().actorSystem.deadLetters, AppendWord(word))
+    }
+  }
+
   val wordsUsedSoFar = new HashSet[String]
   val rand = new Random
   val destinations = new RandomizedHashSet[String]
@@ -64,8 +75,31 @@ class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator
       word = rand.nextInt(10000).toString
     }
     wordsUsedSoFar += word
-    return Send(dst, () =>
-      ClientMessage[AppendWord](Instrumenter().actorSystem.deadLetters, AppendWord(word)))
+    return Send(dst, new AppendWordConstuctor(word))
+  }
+}
+
+case class BootstrapMessageConstructor(maskedIndices: Set[Int]) extends ExternalMessageConstructor {
+  @scala.transient
+  var components : Seq[ActorRef] = Seq.empty
+
+  def apply(): Any = {
+    val all = Instrumenter().actorMappings.filter({
+                case (k,v) => k != "client" && !ActorTypes.systemActor(k)
+              }).values.toSeq.sorted
+
+     // TODO(cs): factor zipWithIndex magic into a static method in ExternalMessageConstructor.
+     components = all.zipWithIndex.filterNot {
+       case (e,i) => maskedIndices contains i
+     }.map { case (e,i) => e }.toSeq
+
+    return ChangeConfiguration(ClusterConfiguration(components))
+  }
+
+  override def getComponents() = components
+
+  override def maskComponents(indices: Set[Int]) : ExternalMessageConstructor = {
+    return new BootstrapMessageConstructor(indices ++ maskedIndices)
   }
 }
 
@@ -92,7 +126,7 @@ object Main extends App {
     members.map(member =>
       Start(Init.actorCtor, member)) ++
     members.map(member =>
-      Send(member, Init.startCtor)) ++
+      Send(member, new BootstrapMessageConstructor(Set[Int]()))) ++
     Array[ExternalEvent](WaitQuiescence()
   )
 
@@ -110,7 +144,7 @@ object Main extends App {
 
   Instrumenter().registerShutdownCallback(shutdownCallback)
 
-  val fuzz = false
+  val fuzz = true
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -125,7 +159,7 @@ object Main extends App {
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  fingerprintFactory,
                                  validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(170))
+                                 maxMessages=Some(500))
     traceFound = tuple._1
     violationFound = tuple._2
     depGraph = tuple._3
@@ -141,7 +175,7 @@ object Main extends App {
     traceFound.filterCheckpointMessages(), violationFound,
     depGraph=Some(depGraph), initialTrace=Some(initialTrace),
     filteredTrace=Some(filteredTrace)) else
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_04_03_15_59_16_IncDDMin_DPOR"
+    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_05_16_15_44_26_DDMin_STSSchedNoPeek"
 
   /*
   println("Trying randomDDMin")
@@ -190,6 +224,14 @@ object Main extends App {
   */
 
   if (fuzz) {
+
+    val shrinked_externals = RunnerUtils.shrinkSendContents(fingerprintFactory,
+                                   traceFound.original_externals,
+                                   traceFound,
+                                   ExperimentSerializer.getActorNameProps(traceFound),
+                                   raftChecks.invariant,
+                                   violationFound)
+
     var (mcs5, stats5, mcs_execution5, violation5) =
       RunnerUtils.stsSchedDDMin(dir,
         fingerprintFactory,

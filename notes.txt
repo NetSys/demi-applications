@@ -1,3 +1,6 @@
+TODO(cs): should always be UniqueMsgEvents, not MsgEvents in trace.events.
+Assert that!
+
 == Minimizing internals ==
 
 DPOR that just tries to remove (not add or reorder) internal events. Might be
