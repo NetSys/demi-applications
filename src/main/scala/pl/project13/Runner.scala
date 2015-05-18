@@ -144,6 +144,18 @@ object Main extends App {
 
   Instrumenter().registerShutdownCallback(shutdownCallback)
 
+  val prefix_dir = "/Users/cs/Research/UCB/code/sts2-applications/experiments/"
+  val original = prefix_dir+"akka-raft-fuzz_2015_05_17_17_14_33"
+  val mcs_no_shrink = prefix_dir+"akka-raft-fuzz_2015_05_17_17_14_33_DDMin_STSSchedNoPeek"
+  val mcs_shrink = prefix_dir+"akka-raft-fuzz_2015_05_17_17_14_33_DDMin_STSSchedNoPeek_shrunk"
+  var msgDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
+  RunnerUtils.printMinimizationStats(original, mcs_no_shrink,
+    msgDeserializer)
+  RunnerUtils.printMinimizationStats(original, mcs_shrink,
+    msgDeserializer)
+  throw new IllegalStateException("wee")
+
+
   val fuzz = true
 
   var traceFound: EventTrace = null
