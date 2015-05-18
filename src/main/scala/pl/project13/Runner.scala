@@ -223,41 +223,46 @@ object Main extends App {
   serializer.serializeMCS(dir, mcs4, stats4, mcs_execution4, violation4)
   */
 
+  traceFound = traceFound.intersection(filteredTrace, fingerprintFactory)
+
   if (fuzz) {
 
-    val shrinked_externals = RunnerUtils.shrinkSendContents(fingerprintFactory,
-                                   traceFound.original_externals,
-                                   traceFound,
-                                   ExperimentSerializer.getActorNameProps(traceFound),
-                                   raftChecks.invariant,
-                                   violationFound)
+    for (shrink <- Seq(false, true)) {
+      if (shrink) {
+        traceFound.setOriginalExternalEvents(
+          RunnerUtils.shrinkSendContents(
+            fingerprintFactory,
+            traceFound.original_externals,
+            traceFound,
+            ExperimentSerializer.getActorNameProps(traceFound),
+            raftChecks.invariant,
+            violationFound))
+      }
 
-    var (mcs5, stats5, mcs_execution5, violation5) =
-      RunnerUtils.stsSchedDDMin(dir,
-        fingerprintFactory,
-        new RaftMessageDeserializer(Instrumenter().actorSystem),
-        false,
-        raftChecks.invariant)
+      var (mcs5, stats5, mcs_execution5, violation5) =
+        RunnerUtils.stsSchedDDMin(false,
+          fingerprintFactory,
+          traceFound,
+          raftChecks.invariant,
+          violationFound,
+          actorNameProps=Some(ExperimentSerializer.getActorNameProps(traceFound)))
 
-    serializer.serializeMCS(dir, mcs5, stats5, mcs_execution5, violation5)
+      val mcs_dir = serializer.serializeMCS(dir, mcs5, stats5, mcs_execution5, violation5, shrink)
 
-    mcs_execution5 match {
-      case Some(trace) =>
-        // TODO(cs): do a better job of decoupling deserialization and experiment runner functions
-        // in RunnerUtils. Have compose functions, that do both.
-        val deserializer = new ExperimentDeserializer(dir)
+      mcs_execution5 match {
+        case Some(trace) =>
+          var (stats, lastFailingTrace) =
+            RunnerUtils.minimizeInternals(fingerprintFactory,
+                                          mcs5,
+                                          trace,
+                                          ExperimentSerializer.getActorNameProps(traceFound),
+                                          raftChecks.invariant,
+                                          violation5)
 
-        var (stats, lastFailingTrace) =
-          RunnerUtils.minimizeInternals(fingerprintFactory,
-                                        mcs5,
-                                        trace,
-                                        deserializer.get_actors,
-                                        raftChecks.invariant,
-                                        violation5)
-
-        serializer.recordMinimizedInternals(dir, stats, lastFailingTrace)
-      case None =>
-        None
+          serializer.recordMinimizedInternals(mcs_dir, stats, lastFailingTrace)
+        case None =>
+          None
+      }
     }
   }
 
@@ -271,18 +276,19 @@ object Main extends App {
 
     msgDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
     val dummySched = new ReplayScheduler()
-    val (mcs, trace, violation, actors) = RunnerUtils.deserializeMCS(mcs_dir,
-                                                                     msgDeserializer,
-                                                                     dummySched)
-    dummySched.shutdown
-    var (stats, lastFailingTrace) =
-      RunnerUtils.minimizeInternals(fingerprintFactory,
-                                    mcs,
-                                    trace,
-                                    actors,
-                                    raftChecks.invariant,
-                                    violation)
+    // val (mcs, trace, violation, actors) = RunnerUtils.deserializeMCS(mcs_dir,
+    //                                                                  msgDeserializer,
 
-    serializer.recordMinimizedInternals(mcs_dir, stats, lastFailingTrace)
+    // dummySched.shutdown
+
+    // var (stats, lastFailingTrace) =
+    //   RunnerUtils.minimizeInternals(fingerprintFactory,
+    //                                 mcs,
+    //                                 trace,
+    //                                 actors,
+    //                                 raftChecks.invariant,
+    //                                 violation)
+
+    // serializer.recordMinimizedInternals(mcs_dir, stats, lastFailingTrace)
   }
 }

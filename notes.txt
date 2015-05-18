@@ -1,3 +1,5 @@
+TODO(cs): should have a tool for automatically generating the results table!
+(where minimization gains come from)
 TODO(cs): should always be UniqueMsgEvents, not MsgEvents in trace.events.
 Assert that!
 
