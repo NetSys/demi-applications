@@ -144,18 +144,13 @@ object Main extends App {
 
   Instrumenter().registerShutdownCallback(shutdownCallback)
 
-  val prefix_dir = "/Users/cs/Research/UCB/code/sts2-applications/experiments/"
-  val original = prefix_dir+"akka-raft-fuzz_2015_05_17_17_14_33"
-  val mcs_no_shrink = prefix_dir+"akka-raft-fuzz_2015_05_17_17_14_33_DDMin_STSSchedNoPeek"
-  val mcs_shrink = prefix_dir+"akka-raft-fuzz_2015_05_17_17_14_33_DDMin_STSSchedNoPeek_shrunk"
-  var msgDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
-  RunnerUtils.printMinimizationStats(original, mcs_no_shrink,
-    msgDeserializer)
-  RunnerUtils.printMinimizationStats(original, mcs_shrink,
-    msgDeserializer)
-  throw new IllegalStateException("wee")
+  val dir = "experiments/akka-raft-fuzz_2015_05_19_18_05_08_DDMin_STSSchedNoPeek_shrunk"
+  val msgDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
+  RunnerUtils.replayExperiment(dir, fingerprintFactory,
+                       msgDeserializer, invariant_check=Some(raftChecks.invariant),
+                       traceFile=ExperimentSerializer.minimizedInternalTrace)
 
-
+  /*
   val fuzz = true
 
   var traceFound: EventTrace = null
@@ -171,7 +166,7 @@ object Main extends App {
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  fingerprintFactory,
                                  validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(500))
+                                 maxMessages=Some(170))
     traceFound = tuple._1
     violationFound = tuple._2
     depGraph = tuple._3
@@ -189,53 +184,9 @@ object Main extends App {
     filteredTrace=Some(filteredTrace)) else
     "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_05_16_15_44_26_DDMin_STSSchedNoPeek"
 
-  /*
-  println("Trying randomDDMin")
-  var (mcs1, stats1, mcs_execution1, violation1) =
-    RunnerUtils.randomDDMin(dir,
-      fingerprintFactory,
-      new RaftMessageDeserializer(Instrumenter().actorSystem),
-      raftChecks.invariant)
-
-  serializer.serializeMCS(dir, mcs1, stats1, mcs_execution1, violation1)
-
-  println("Trying STSSchedDDMinNoPeak")
-  // Dissallow peek:
-  var (mcs2, stats2, mcs_execution2, violation2) =
-    RunnerUtils.stsSchedDDMin(dir,
-      fingerprintFactory,
-      new RaftMessageDeserializer(Instrumenter().actorSystem),
-      false,
-      raftChecks.invariant)
-
-  serializer.serializeMCS(dir, mcs2, stats2, mcs_execution2, violation2)
-  */
-
-  /*
-  println("Trying STSSchedDDMin")
-  // Allow peek:
-  var (mcs3, stats3, mcs_execution3, violation3) =
-    RunnerUtils.stsSchedDDMin(dir,
-      fingerprintFactory,
-      new RaftMessageDeserializer(Instrumenter().actorSystem),
-      true,
-      raftChecks.invariant)
-
-  serializer.serializeMCS(dir, mcs3, stats3, mcs_execution3, violation3)
-  */
-
-  /*
-  println("Trying RoundRobinDDMin")
-  var (mcs4, stats4, mcs_execution4, violation4) =
-    RunnerUtils.roundRobinDDMin(dir,
-      fingerprintFactory,
-      new RaftMessageDeserializer(Instrumenter().actorSystem),
-      raftChecks.invariant)
-
-  serializer.serializeMCS(dir, mcs4, stats4, mcs_execution4, violation4)
-  */
-
   traceFound = traceFound.intersection(filteredTrace, fingerprintFactory)
+
+  var msgDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
 
   if (fuzz) {
 
@@ -272,6 +223,9 @@ object Main extends App {
                                           violation5)
 
           serializer.recordMinimizedInternals(mcs_dir, stats, lastFailingTrace)
+
+          RunnerUtils.printMinimizationStats(dir, mcs_dir, msgDeserializer,
+                                             fingerprintFactory)
         case None =>
           None
       }
@@ -280,7 +234,6 @@ object Main extends App {
 
   if (!fuzz) {
     val mcs_dir = "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz_2015_04_19_15_35_23_IncDDMin_DPOR"
-    var msgDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
 
     println("Trying replay..")
     RunnerUtils.replayExperiment(mcs_dir, fingerprintFactory, msgDeserializer,
@@ -303,4 +256,5 @@ object Main extends App {
 
     // serializer.recordMinimizedInternals(mcs_dir, stats, lastFailingTrace)
   }
+  */
 }
