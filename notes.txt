@@ -1,5 +1,8 @@
-TODO(cs): should have a tool for automatically generating the results table!
-(where minimization gains come from)
+Hypothesis to test: if ChangeConfigurations always arrive at all nodes at the
+very beginning, will the same bugs appear?
+
+Another: does running Shrink() multiple times change things?
+
 TODO(cs): should always be UniqueMsgEvents, not MsgEvents in trace.events.
 Assert that!
 
