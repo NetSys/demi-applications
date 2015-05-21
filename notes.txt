@@ -5,7 +5,7 @@ Relevant:
   StandaloneExecutorBackend.scala: the actor (and actor system)
 
 TODO(cs):
-  - SparkContext.parrallelize is the starting point.
+  - SparkContext.parallelize is the starting point.
     -> calls LocalScheduler.start()
     later calls DAGScheduler.start()
   - Figure out how to set logging level
