@@ -18,6 +18,11 @@ Branch | Application
 -------|------------
 panda-rbcast | One of three reliable broadcast applications
 colin-rbcast | fully-fleshed out reliable broadcast application
+akka-raft | mainline akka-raft instrumentation
+spark | mainline spark instrumentation
+raft-leader-safety | https://github.com/ktoso/akka-raft/issues/47
+raft-shrunk-leader-safety | https://github.com/ktoso/akka-raft/issues/47
+raft-strange-cluster-membership | https://github.com/ktoso/akka-raft/issues/49
 
 
 #### Prequisites
