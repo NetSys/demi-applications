@@ -10,14 +10,15 @@ object STS2Application extends Build {
     settings = Defaults.defaultSettings ++ aspectjSettings ++ Seq(
       organization := "com.typesafe.sbt.aspectj",
       version := "0.1",
-      scalaVersion := "2.11.2",
+      scalaVersion := "2.10.4",
       libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.3.6",
       libraryDependencies += "com.typesafe.akka" %% "akka-cluster" % "2.3.6",
-      libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.2",
       libraryDependencies += "com.assembla.scala-incubator" %% "graph-core" % "1.9.0",
       libraryDependencies += "com.assembla.scala-incubator" %% "graph-dot" % "1.9.0",
-      libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
+      //libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging-api" % "2.1.2",
       libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.2",
+      //libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.2",
+      libraryDependencies += "org.scala-lang" % "scala-swing" % scalaVersion.value,
 
       // add akka-actor as an aspectj input (find it in the update report)
       inputs in Aspectj <++= update map { report =>
