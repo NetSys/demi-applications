@@ -150,9 +150,9 @@ object Main extends App {
   val mcs_shrink = prefix_dir+"akka-raft-fuzz_2015_05_17_17_14_33_DDMin_STSSchedNoPeek_shrunk"
   var msgDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
   RunnerUtils.printMinimizationStats(original, mcs_no_shrink,
-    msgDeserializer)
+    msgDeserializer, fingerprintFactory)
   RunnerUtils.printMinimizationStats(original, mcs_shrink,
-    msgDeserializer)
+    msgDeserializer, fingerprintFactory)
   throw new IllegalStateException("wee")
 
 
