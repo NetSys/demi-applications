@@ -20,6 +20,7 @@ package org.apache.spark.scheduler
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.BlockManagerId
+import org.apache.spark.util.CallSite
 
 /**
  * A stage is a set of independent tasks all computing the same function that need to run as part
@@ -35,25 +36,26 @@ import org.apache.spark.storage.BlockManagerId
  * Each Stage also has a jobId, identifying the job that first submitted the stage.  When FIFO
  * scheduling is used, this allows Stages from earlier jobs to be computed first or recovered
  * faster on failure.
+ *
+ * The callSite provides a location in user code which relates to the stage. For a shuffle map
+ * stage, the callSite gives the user code that created the RDD being shuffled. For a result
+ * stage, the callSite gives the user code that executes the associated action (e.g. count()).
+ *
  */
 private[spark] class Stage(
     val id: Int,
     val rdd: RDD[_],
-    val shuffleDep: Option[ShuffleDependency[_,_]],  // Output shuffle if stage is a map stage
+    val numTasks: Int,
+    val shuffleDep: Option[ShuffleDependency[_, _, _]],  // Output shuffle if stage is a map stage
     val parents: List[Stage],
     val jobId: Int,
-    callSite: Option[String])
+    val callSite: CallSite)
   extends Logging {
 
-  val isShuffleMap = shuffleDep != None
+  val isShuffleMap = shuffleDep.isDefined
   val numPartitions = rdd.partitions.size
   val outputLocs = Array.fill[List[MapStatus]](numPartitions)(Nil)
   var numAvailableOutputs = 0
-
-  /** When first task was submitted to scheduler. */
-  var submissionTime: Option[Long] = None
-  var completionTime: Option[Long] = None
-
   private var nextAttemptId = 0
 
   def isAvailable: Boolean = {
@@ -67,8 +69,9 @@ private[spark] class Stage(
   def addOutputLoc(partition: Int, status: MapStatus) {
     val prevList = outputLocs(partition)
     outputLocs(partition) = status :: prevList
-    if (prevList == Nil)
+    if (prevList == Nil) {
       numAvailableOutputs += 1
+    }
   }
 
   def removeOutputLoc(partition: Int, bmAddress: BlockManagerId) {
@@ -100,10 +103,13 @@ private[spark] class Stage(
   def newAttemptId(): Int = {
     val id = nextAttemptId
     nextAttemptId += 1
-    return id
+    id
   }
 
-  val name = callSite.getOrElse(rdd.origin)
+  def attemptId: Int = nextAttemptId
+
+  val name = callSite.short
+  val details = callSite.long
 
   override def toString = "Stage " + id
 

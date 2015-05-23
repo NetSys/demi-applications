@@ -19,29 +19,29 @@ package org.apache.spark.network.netty
 
 import java.util.concurrent.Executors
 
+import scala.collection.JavaConverters._
+
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.util.CharsetUtil
 
-import org.apache.spark.Logging
+import org.apache.spark.{Logging, SparkConf}
 import org.apache.spark.network.ConnectionManagerId
+import org.apache.spark.storage.BlockId
 
-import scala.collection.JavaConverters._
+private[spark] class ShuffleCopier(conf: SparkConf) extends Logging {
 
-
-private[spark] class ShuffleCopier extends Logging {
-
-  def getBlock(host: String, port: Int, blockId: String,
-      resultCollectCallback: (String, Long, ByteBuf) => Unit) {
+  def getBlock(host: String, port: Int, blockId: BlockId,
+      resultCollectCallback: (BlockId, Long, ByteBuf) => Unit) {
 
     val handler = new ShuffleCopier.ShuffleClientHandler(resultCollectCallback)
-    val connectTimeout = System.getProperty("spark.shuffle.netty.connect.timeout", "60000").toInt
+    val connectTimeout = conf.getInt("spark.shuffle.netty.connect.timeout", 60000)
     val fc = new FileClient(handler, connectTimeout)
 
     try {
       fc.init()
       fc.connect(host, port)
-      fc.sendRequest(blockId)
+      fc.sendRequest(blockId.name)
       fc.waitForClose()
       fc.close()
     } catch {
@@ -53,14 +53,14 @@ private[spark] class ShuffleCopier extends Logging {
     }
   }
 
-  def getBlock(cmId: ConnectionManagerId, blockId: String,
-      resultCollectCallback: (String, Long, ByteBuf) => Unit) {
+  def getBlock(cmId: ConnectionManagerId, blockId: BlockId,
+      resultCollectCallback: (BlockId, Long, ByteBuf) => Unit) {
     getBlock(cmId.host, cmId.port, blockId, resultCollectCallback)
   }
 
   def getBlocks(cmId: ConnectionManagerId,
-    blocks: Seq[(String, Long)],
-    resultCollectCallback: (String, Long, ByteBuf) => Unit) {
+    blocks: Seq[(BlockId, Long)],
+    resultCollectCallback: (BlockId, Long, ByteBuf) => Unit) {
 
     for ((blockId, size) <- blocks) {
       getBlock(cmId, blockId, resultCollectCallback)
@@ -71,22 +71,22 @@ private[spark] class ShuffleCopier extends Logging {
 
 private[spark] object ShuffleCopier extends Logging {
 
-  private class ShuffleClientHandler(resultCollectCallBack: (String, Long, ByteBuf) => Unit)
+  private class ShuffleClientHandler(resultCollectCallBack: (BlockId, Long, ByteBuf) => Unit)
     extends FileClientHandler with Logging {
 
     override def handle(ctx: ChannelHandlerContext, in: ByteBuf, header: FileHeader) {
-      logDebug("Received Block: " + header.blockId + " (" + header.fileLen + "B)");
+      logDebug("Received Block: " + header.blockId + " (" + header.fileLen + "B)")
       resultCollectCallBack(header.blockId, header.fileLen.toLong, in.readBytes(header.fileLen))
     }
 
-    override def handleError(blockId: String) {
+    override def handleError(blockId: BlockId) {
       if (!isComplete) {
         resultCollectCallBack(blockId, -1, null)
       }
     }
   }
 
-  def echoResultCollectCallBack(blockId: String, size: Long, content: ByteBuf) {
+  def echoResultCollectCallBack(blockId: BlockId, size: Long, content: ByteBuf) {
     if (size != -1) {
       logInfo("File: " + blockId + " content is : \" " + content.toString(CharsetUtil.UTF_8) + "\"")
     }
@@ -99,20 +99,20 @@ private[spark] object ShuffleCopier extends Logging {
     }
     val host = args(0)
     val port = args(1).toInt
-    val file = args(2)
+    val blockId = BlockId(args(2))
     val threads = if (args.length > 3) args(3).toInt else 10
 
     val copiers = Executors.newFixedThreadPool(80)
-    val tasks = (for (i <- Range(0, threads)) yield { 
+    val tasks = (for (i <- Range(0, threads)) yield {
       Executors.callable(new Runnable() {
         def run() {
-          val copier = new ShuffleCopier()
-          copier.getBlock(host, port, file, echoResultCollectCallBack)
+          val copier = new ShuffleCopier(new SparkConf)
+          copier.getBlock(host, port, blockId, echoResultCollectCallBack)
         }
       })
     }).asJava
     copiers.invokeAll(tasks)
-    copiers.shutdown
+    copiers.shutdown()
     System.exit(0)
   }
 }

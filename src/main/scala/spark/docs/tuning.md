@@ -10,7 +10,7 @@ Because of the in-memory nature of most Spark computations, Spark programs can b
 by any resource in the cluster: CPU, network bandwidth, or memory.
 Most often, if the data fits in memory, the bottleneck is network bandwidth, but sometimes, you
 also need to do some tuning, such as
-[storing RDDs in serialized form](scala-programming-guide.html#rdd-persistence), to
+[storing RDDs in serialized form](programming-guide.html#rdd-persistence), to
 decrease memory usage.
 This guide will cover two main topics: data serialization, which is crucial for good network
 performance and can also reduce memory use, and memory tuning. We also sketch several smaller topics.
@@ -38,13 +38,18 @@ in your operations) and performance. It provides two serialization libraries:
   `Serializable` types and requires you to *register* the classes you'll use in the program in advance
   for best performance.
 
-You can switch to using Kryo by calling `System.setProperty("spark.serializer", "org.apache.spark.serializer.KryoSerializer")`
-*before* creating your SparkContext. The only reason it is not the default is because of the custom
+You can switch to using Kryo by initializing your job with a [SparkConf](configuration.html#spark-properties)
+and calling `conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")`.
+This setting configures the serializer used for not only shuffling data between worker
+nodes but also when serializing RDDs to disk.  The only reason Kryo is not the default is because of the custom
 registration requirement, but we recommend trying it in any network-intensive application.
 
-Finally, to register your classes with Kryo, create a public class that extends
-[`org.apache.spark.serializer.KryoRegistrator`](api/core/index.html#org.apache.spark.serializer.KryoRegistrator) and set the
-`spark.kryo.registrator` system property to point to it, as follows:
+Spark automatically includes Kryo serializers for the many commonly-used core Scala classes covered
+in the AllScalaRegistrar from the [Twitter chill](https://github.com/twitter/chill) library.
+
+To register your own custom classes with Kryo, create a public class that extends
+[`org.apache.spark.serializer.KryoRegistrator`](api/scala/index.html#org.apache.spark.serializer.KryoRegistrator) and set the
+`spark.kryo.registrator` config property to point to it, as follows:
 
 {% highlight scala %}
 import com.esotericsoftware.kryo.Kryo
@@ -57,21 +62,21 @@ class MyRegistrator extends KryoRegistrator {
   }
 }
 
-// Make sure to set these properties *before* creating a SparkContext!
-System.setProperty("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-System.setProperty("spark.kryo.registrator", "mypackage.MyRegistrator")
-val sc = new SparkContext(...)
+val conf = new SparkConf().setMaster(...).setAppName(...)
+conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+conf.set("spark.kryo.registrator", "mypackage.MyRegistrator")
+val sc = new SparkContext(conf)
 {% endhighlight %}
 
 The [Kryo documentation](http://code.google.com/p/kryo/) describes more advanced
 registration options, such as adding custom serialization code.
 
 If your objects are large, you may also need to increase the `spark.kryoserializer.buffer.mb`
-system property. The default is 32, but this value needs to be large enough to hold the *largest*
+config property. The default is 2, but this value needs to be large enough to hold the *largest*
 object you will serialize.
 
-Finally, if you don't register your classes, Kryo will still work, but it will have to store the
-full class name with each object, which is wasteful.
+Finally, if you don't register your custom classes, Kryo will still work, but it will have to store
+the full class name with each object, which is wasteful.
 
 # Memory Tuning
 
@@ -85,9 +90,10 @@ than the "raw" data inside their fields. This is due to several reasons:
 * Each distinct Java object has an "object header", which is about 16 bytes and contains information
   such as a pointer to its class. For an object with very little data in it (say one `Int` field), this
   can be bigger than the data.
-* Java Strings have about 40 bytes of overhead over the raw string data (since they store it in an
+* Java `String`s have about 40 bytes of overhead over the raw string data (since they store it in an
   array of `Char`s and keep extra data such as the length), and store each character
-  as *two* bytes due to Unicode. Thus a 10-character string can easily consume 60 bytes.
+  as *two* bytes due to `String`'s internal usage of UTF-16 encoding. Thus a 10-character string can
+  easily consume 60 bytes.
 * Common collection classes, such as `HashMap` and `LinkedList`, use linked data structures, where
   there is a "wrapper" object for each entry (e.g. `Map.Entry`). This object not only has a header,
   but also pointers (typically 8 bytes each) to the next object in the list.
@@ -117,15 +123,14 @@ pointer-based data structures and wrapper objects. There are several ways to do 
 2. Avoid nested structures with a lot of small objects and pointers when possible.
 3. Consider using numeric IDs or enumeration objects instead of strings for keys.
 4. If you have less than 32 GB of RAM, set the JVM flag `-XX:+UseCompressedOops` to make pointers be
-   four bytes instead of eight. Also, on Java 7 or later, try `-XX:+UseCompressedStrings` to store
-   ASCII strings as just 8 bits per character. You can add these options in
+   four bytes instead of eight. You can add these options in
    [`spark-env.sh`](configuration.html#environment-variables-in-spark-envsh).
 
 ## Serialized RDD Storage
 
 When your objects are still too large to efficiently store despite this tuning, a much simpler way
 to reduce memory usage is to store them in *serialized* form, using the serialized StorageLevels in
-the [RDD persistence API](scala-programming-guide.html#rdd-persistence), such as `MEMORY_ONLY_SER`.
+the [RDD persistence API](programming-guide.html#rdd-persistence), such as `MEMORY_ONLY_SER`.
 Spark will then store each RDD partition as one large byte array.
 The only downside of storing data in serialized form is slower access times, due to having to
 deserialize each object on the fly.
@@ -159,12 +164,12 @@ their work directories), *not* on your driver program.
 **Cache Size Tuning**
 
 One important configuration parameter for GC is the amount of memory that should be used for caching RDDs.
-By default, Spark uses 66% of the configured executor memory (`spark.executor.memory` or `SPARK_MEM`) to
-cache RDDs. This means that 33% of memory is available for any objects created during task execution.
+By default, Spark uses 60% of the configured executor memory (`spark.executor.memory`) to
+cache RDDs. This means that 40% of memory is available for any objects created during task execution.
 
 In case your tasks slow down and you find that your JVM is garbage-collecting frequently or running out of
 memory, lowering this value will help reduce the memory consumption. To change this to say 50%, you can call
-`System.setProperty("spark.storage.memoryFraction", "0.5")`. Combined with the use of serialized caching,
+`conf.set("spark.storage.memoryFraction", "0.5")` on your SparkConf. Combined with the use of serialized caching,
 using a smaller cache should be sufficient to mitigate most of the garbage collection problems.
 In case you are interested in further tuning the Java GC, continue reading below.
 
@@ -175,7 +180,7 @@ To further tune garbage collection, we first need to understand some basic infor
 * Java Heap space is divided in to two regions Young and Old. The Young generation is meant to hold short-lived objects
   while the Old generation is intended for objects with longer lifetimes.
 
-* The Young generation is further divided into three regions [Eden, Survivor1, Survivor2].
+* The Young generation is further divided into three regions \[Eden, Survivor1, Survivor2\].
 
 * A simplified description of the garbage collection procedure: When Eden is full, a minor GC is run on Eden and objects
   that are alive from Eden and Survivor1 are copied to Survivor2. The Survivor regions are swapped. If an object is old
@@ -217,8 +222,8 @@ enough. Spark automatically sets the number of "map" tasks to run on each file a
 (though you can control it through optional parameters to `SparkContext.textFile`, etc), and for
 distributed "reduce" operations, such as `groupByKey` and `reduceByKey`, it uses the largest
 parent RDD's number of partitions. You can pass the level of parallelism as a second argument
-(see the [`spark.PairRDDFunctions`](api/core/index.html#org.apache.spark.rdd.PairRDDFunctions) documentation),
-or set the system property `spark.default.parallelism` to change the default.
+(see the [`spark.PairRDDFunctions`](api/scala/index.html#org.apache.spark.rdd.PairRDDFunctions) documentation),
+or set the config property `spark.default.parallelism` to change the default.
 In general, we recommend 2-3 tasks per CPU core in your cluster.
 
 ## Memory Usage of Reduce Tasks
@@ -234,7 +239,7 @@ number of cores in your clusters.
 
 ## Broadcasting Large Variables
 
-Using the [broadcast functionality](scala-programming-guide.html#broadcast-variables)
+Using the [broadcast functionality](programming-guide.html#broadcast-variables)
 available in `SparkContext` can greatly reduce the size of each serialized task, and the cost
 of launching a job over a cluster. If your tasks use any large object from the driver program
 inside of them (e.g. a static lookup table), consider turning it into a broadcast variable.
@@ -248,4 +253,4 @@ This has been a short guide to point out the main concerns you should know about
 Spark application -- most importantly, data serialization and memory tuning. For most programs,
 switching to Kryo serialization and persisting data in serialized form will solve most common
 performance issues. Feel free to ask on the
-[Spark mailing list](http://groups.google.com/group/spark-users) about other tuning best practices.
+[Spark mailing list](https://spark.apache.org/community.html) about other tuning best practices.

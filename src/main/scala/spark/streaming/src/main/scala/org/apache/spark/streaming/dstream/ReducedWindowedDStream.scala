@@ -26,10 +26,13 @@ import org.apache.spark.SparkContext._
 import org.apache.spark.storage.StorageLevel
 
 import scala.collection.mutable.ArrayBuffer
-import org.apache.spark.streaming.{Duration, Interval, Time, DStream}
+import org.apache.spark.streaming.{Duration, Interval, Time}
+
+import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 
 private[streaming]
-class ReducedWindowedDStream[K: ClassManifest, V: ClassManifest](
+class ReducedWindowedDStream[K: ClassTag, V: ClassTag](
     parent: DStream[(K, V)],
     reduceFunc: (V, V) => V,
     invReduceFunc: (V, V) => V,
@@ -40,7 +43,7 @@ class ReducedWindowedDStream[K: ClassManifest, V: ClassManifest](
   ) extends DStream[(K,V)](parent.ssc) {
 
   assert(_windowDuration.isMultipleOf(parent.slideDuration),
-    "The window duration of ReducedWindowedDStream (" + _slideDuration + ") " +
+    "The window duration of ReducedWindowedDStream (" + _windowDuration + ") " +
       "must be multiple of the slide duration of parent DStream (" + parent.slideDuration + ")"
   )
 
@@ -49,7 +52,7 @@ class ReducedWindowedDStream[K: ClassManifest, V: ClassManifest](
       "must be multiple of the slide duration of parent DStream (" + parent.slideDuration + ")"
   )
 
-  // Reduce each batch of data using reduceByKey which will be further reduced by window 
+  // Reduce each batch of data using reduceByKey which will be further reduced by window
   // by ReducedWindowedDStream
   val reducedStream = parent.reduceByKey(reduceFunc, partitioner)
 
@@ -75,7 +78,7 @@ class ReducedWindowedDStream[K: ClassManifest, V: ClassManifest](
 
   override def checkpoint(interval: Duration): DStream[(K, V)] = {
     super.checkpoint(interval)
-    //reducedStream.checkpoint(interval)
+    // reducedStream.checkpoint(interval)
     this
   }
 
@@ -84,7 +87,8 @@ class ReducedWindowedDStream[K: ClassManifest, V: ClassManifest](
     val invReduceF = invReduceFunc
 
     val currentTime = validTime
-    val currentWindow = new Interval(currentTime - windowDuration + parent.slideDuration, currentTime)
+    val currentWindow = new Interval(currentTime - windowDuration + parent.slideDuration,
+      currentTime)
     val previousWindow = currentWindow - slideDuration
 
     logDebug("Window time = " + windowDuration)
@@ -122,8 +126,9 @@ class ReducedWindowedDStream[K: ClassManifest, V: ClassManifest](
     val allRDDs = new ArrayBuffer[RDD[(K, V)]]() += previousWindowRDD ++= oldRDDs ++= newRDDs
 
     // Cogroup the reduced RDDs and merge the reduced values
-    val cogroupedRDD = new CoGroupedRDD[K](allRDDs.toSeq.asInstanceOf[Seq[RDD[(K, _)]]], partitioner)
-    //val mergeValuesFunc = mergeValues(oldRDDs.size, newRDDs.size) _
+    val cogroupedRDD = new CoGroupedRDD[K](allRDDs.toSeq.asInstanceOf[Seq[RDD[(K, _)]]],
+      partitioner)
+    // val mergeValuesFunc = mergeValues(oldRDDs.size, newRDDs.size) _
 
     val numOldValues = oldRDDs.size
     val numNewValues = newRDDs.size
@@ -170,5 +175,3 @@ class ReducedWindowedDStream[K: ClassManifest, V: ClassManifest](
     }
   }
 }
-
-

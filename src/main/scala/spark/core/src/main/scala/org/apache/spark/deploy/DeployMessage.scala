@@ -20,13 +20,15 @@ package org.apache.spark.deploy
 import scala.collection.immutable.List
 
 import org.apache.spark.deploy.ExecutorState.ExecutorState
-import org.apache.spark.deploy.master.{WorkerInfo, ApplicationInfo}
-import org.apache.spark.deploy.worker.ExecutorRunner
+import org.apache.spark.deploy.master.{ApplicationInfo, DriverInfo, WorkerInfo}
+import org.apache.spark.deploy.master.DriverState.DriverState
+import org.apache.spark.deploy.master.RecoveryState.MasterState
+import org.apache.spark.deploy.worker.{DriverRunner, ExecutorRunner}
 import org.apache.spark.util.Utils
-
 
 private[deploy] sealed trait DeployMessage extends Serializable
 
+/** Contains messages sent between Scheduler actor nodes. */
 private[deploy] object DeployMessages {
 
   // Worker to Master
@@ -52,33 +54,52 @@ private[deploy] object DeployMessages {
       exitStatus: Option[Int])
     extends DeployMessage
 
+  case class DriverStateChanged(
+      driverId: String,
+      state: DriverState,
+      exception: Option[Exception])
+    extends DeployMessage
+
+  case class WorkerSchedulerStateResponse(id: String, executors: List[ExecutorDescription],
+     driverIds: Seq[String])
+
   case class Heartbeat(workerId: String) extends DeployMessage
 
   // Master to Worker
 
-  case class RegisteredWorker(masterWebUiUrl: String) extends DeployMessage
+  case class RegisteredWorker(masterUrl: String, masterWebUiUrl: String) extends DeployMessage
 
   case class RegisterWorkerFailed(message: String) extends DeployMessage
 
-  case class KillExecutor(appId: String, execId: Int) extends DeployMessage
+  case class KillExecutor(masterUrl: String, appId: String, execId: Int) extends DeployMessage
 
   case class LaunchExecutor(
+      masterUrl: String,
       appId: String,
       execId: Int,
       appDesc: ApplicationDescription,
       cores: Int,
-      memory: Int,
-      sparkHome: String)
+      memory: Int)
     extends DeployMessage
 
-  // Client to Master
+  case class LaunchDriver(driverId: String, driverDesc: DriverDescription) extends DeployMessage
+
+  case class KillDriver(driverId: String) extends DeployMessage
+
+  // Worker internal
+
+  case object WorkDirCleanup      // Sent to Worker actor periodically for cleaning up app folders
+
+  // AppClient to Master
 
   case class RegisterApplication(appDescription: ApplicationDescription)
     extends DeployMessage
 
-  // Master to Client
+  case class MasterChangeAcknowledged(appId: String)
 
-  case class RegisteredApplication(appId: String) extends DeployMessage
+  // Master to AppClient
+
+  case class RegisteredApplication(appId: String, masterUrl: String) extends DeployMessage
 
   // TODO(matei): replace hostPort with host
   case class ExecutorAdded(id: Int, workerId: String, hostPort: String, cores: Int, memory: Int) {
@@ -90,9 +111,30 @@ private[deploy] object DeployMessages {
 
   case class ApplicationRemoved(message: String)
 
-  // Internal message in Client
+  // DriverClient <-> Master
 
-  case object StopClient
+  case class RequestSubmitDriver(driverDescription: DriverDescription) extends DeployMessage
+
+  case class SubmitDriverResponse(success: Boolean, driverId: Option[String], message: String)
+    extends DeployMessage
+
+  case class RequestKillDriver(driverId: String) extends DeployMessage
+
+  case class KillDriverResponse(driverId: String, success: Boolean, message: String)
+    extends DeployMessage
+
+  case class RequestDriverStatus(driverId: String) extends DeployMessage
+
+  case class DriverStatusResponse(found: Boolean, state: Option[DriverState],
+    workerId: Option[String], workerHostPort: Option[String], exception: Option[Exception])
+
+  // Internal message in AppClient
+
+  case object StopAppClient
+
+  // Master to Worker & AppClient
+
+  case class MasterChanged(masterUrl: String, masterWebUiUrl: String)
 
   // MasterWebUI To Master
 
@@ -101,7 +143,9 @@ private[deploy] object DeployMessages {
   // Master to MasterWebUI
 
   case class MasterStateResponse(host: String, port: Int, workers: Array[WorkerInfo],
-    activeApps: Array[ApplicationInfo], completedApps: Array[ApplicationInfo]) {
+    activeApps: Array[ApplicationInfo], completedApps: Array[ApplicationInfo],
+    activeDrivers: Array[DriverInfo], completedDrivers: Array[DriverInfo],
+    status: MasterState) {
 
     Utils.checkHost(host, "Required hostname")
     assert (port > 0)
@@ -116,19 +160,15 @@ private[deploy] object DeployMessages {
   // Worker to WorkerWebUI
 
   case class WorkerStateResponse(host: String, port: Int, workerId: String,
-    executors: List[ExecutorRunner], finishedExecutors: List[ExecutorRunner], masterUrl: String,
+    executors: List[ExecutorRunner], finishedExecutors: List[ExecutorRunner],
+    drivers: List[DriverRunner], finishedDrivers: List[DriverRunner], masterUrl: String,
     cores: Int, memory: Int, coresUsed: Int, memoryUsed: Int, masterWebUiUrl: String) {
 
     Utils.checkHost(host, "Required hostname")
     assert (port > 0)
   }
 
-  // Actor System to Master
+  // Liveness checks in various places
 
-  case object CheckForWorkerTimeOut
-
-  case object RequestWebUIPort
-
-  case class WebUIPortResponse(webUIBoundPort: Int)
-
+  case object SendHeartbeat
 }

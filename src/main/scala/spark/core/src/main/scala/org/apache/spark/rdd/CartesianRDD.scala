@@ -17,9 +17,11 @@
 
 package org.apache.spark.rdd
 
-import java.io.{ObjectOutputStream, IOException}
-import org.apache.spark._
+import java.io.{IOException, ObjectOutputStream}
 
+import scala.reflect.ClassTag
+
+import org.apache.spark._
 
 private[spark]
 class CartesianPartition(
@@ -43,7 +45,7 @@ class CartesianPartition(
 }
 
 private[spark]
-class CartesianRDD[T: ClassManifest, U:ClassManifest](
+class CartesianRDD[T: ClassTag, U: ClassTag](
     sc: SparkContext,
     var rdd1 : RDD[T],
     var rdd2 : RDD[U])
@@ -70,7 +72,7 @@ class CartesianRDD[T: ClassManifest, U:ClassManifest](
   override def compute(split: Partition, context: TaskContext) = {
     val currSplit = split.asInstanceOf[CartesianPartition]
     for (x <- rdd1.iterator(currSplit.s1, context);
-      y <- rdd2.iterator(currSplit.s2, context)) yield (x, y)
+         y <- rdd2.iterator(currSplit.s2, context)) yield (x, y)
   }
 
   override def getDependencies: Seq[Dependency[_]] = List(

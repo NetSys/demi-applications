@@ -25,20 +25,19 @@ import org.apache.spark._
 import org.apache.spark.network._
 
 private[spark]
-class BlockMessageArray(var blockMessages: Seq[BlockMessage]) extends Seq[BlockMessage] with Logging {
-  
+class BlockMessageArray(var blockMessages: Seq[BlockMessage])
+  extends Seq[BlockMessage] with Logging {
+
   def this(bm: BlockMessage) = this(Array(bm))
 
   def this() = this(null.asInstanceOf[Seq[BlockMessage]])
 
-  def apply(i: Int) = blockMessages(i) 
+  def apply(i: Int) = blockMessages(i)
 
   def iterator = blockMessages.iterator
 
-  def length = blockMessages.length 
+  def length = blockMessages.length
 
-  initLogging()
-  
   def set(bufferMessage: BufferMessage) {
     val startTime = System.currentTimeMillis
     val newBlockMessages = new ArrayBuffer[BlockMessage]()
@@ -63,14 +62,15 @@ class BlockMessageArray(var blockMessages: Seq[BlockMessage]) extends Seq[BlockM
       logDebug("Trying to convert buffer " + newBuffer + " to block message")
       val newBlockMessage = BlockMessage.fromByteBuffer(newBuffer)
       logDebug("Created " + newBlockMessage)
-      newBlockMessages += newBlockMessage 
+      newBlockMessages += newBlockMessage
       buffer.position(buffer.position() + size)
     }
     val finishTime = System.currentTimeMillis
-    logDebug("Converted block message array from buffer message in " + (finishTime - startTime) / 1000.0  + " s")
-    this.blockMessages = newBlockMessages 
+    logDebug("Converted block message array from buffer message in " +
+      (finishTime - startTime) / 1000.0  + " s")
+    this.blockMessages = newBlockMessages
   }
-  
+
   def toBufferMessage: BufferMessage = {
     val buffers = new ArrayBuffer[ByteBuffer]()
 
@@ -83,7 +83,7 @@ class BlockMessageArray(var blockMessages: Seq[BlockMessage]) extends Seq[BlockM
       buffers ++= bufferMessage.buffers
       logDebug("Added " + bufferMessage)
     })
-   
+
     logDebug("Buffer list:")
     buffers.foreach((x: ByteBuffer) => logDebug("" + x))
     /*
@@ -98,35 +98,36 @@ class BlockMessageArray(var blockMessages: Seq[BlockMessage]) extends Seq[BlockM
     println()
     println()
     */
-    return Message.createBufferMessage(buffers)
+    Message.createBufferMessage(buffers)
   }
 }
 
 private[spark] object BlockMessageArray {
- 
+
   def fromBufferMessage(bufferMessage: BufferMessage): BlockMessageArray = {
     val newBlockMessageArray = new BlockMessageArray()
     newBlockMessageArray.set(bufferMessage)
     newBlockMessageArray
   }
-  
+
   def main(args: Array[String]) {
-    val blockMessages = 
+    val blockMessages =
       (0 until 10).map { i =>
         if (i % 2 == 0) {
           val buffer =  ByteBuffer.allocate(100)
           buffer.clear
-          BlockMessage.fromPutBlock(PutBlock(i.toString, buffer, StorageLevel.MEMORY_ONLY_SER))
+          BlockMessage.fromPutBlock(PutBlock(TestBlockId(i.toString), buffer,
+            StorageLevel.MEMORY_ONLY_SER))
         } else {
-          BlockMessage.fromGetBlock(GetBlock(i.toString))
+          BlockMessage.fromGetBlock(GetBlock(TestBlockId(i.toString)))
         }
       }
     val blockMessageArray = new BlockMessageArray(blockMessages)
     println("Block message array created")
-    
+
     val bufferMessage = blockMessageArray.toBufferMessage
     println("Converted to buffer message")
-    
+
     val totalSize = bufferMessage.size
     val newBuffer = ByteBuffer.allocate(totalSize)
     newBuffer.clear()
@@ -136,7 +137,7 @@ private[spark] object BlockMessageArray {
       buffer.rewind()
     })
     newBuffer.flip
-    val newBufferMessage = Message.createBufferMessage(newBuffer) 
+    val newBufferMessage = Message.createBufferMessage(newBuffer)
     println("Copied to new buffer message, size = " + newBufferMessage.size)
 
     val newBlockMessageArray = BlockMessageArray.fromBufferMessage(newBufferMessage)
@@ -146,7 +147,7 @@ private[spark] object BlockMessageArray {
         case BlockMessage.TYPE_PUT_BLOCK => {
           val pB = PutBlock(blockMessage.getId, blockMessage.getData, blockMessage.getLevel)
           println(pB)
-        } 
+        }
         case BlockMessage.TYPE_GET_BLOCK => {
           val gB = new GetBlock(blockMessage.getId)
           println(gB)

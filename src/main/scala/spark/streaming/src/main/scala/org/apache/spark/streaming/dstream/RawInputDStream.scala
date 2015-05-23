@@ -17,15 +17,18 @@
 
 package org.apache.spark.streaming.dstream
 
-import org.apache.spark.Logging
-import org.apache.spark.storage.StorageLevel
+import org.apache.spark.{Logging, SparkEnv}
+import org.apache.spark.storage.{StorageLevel, StreamBlockId}
 import org.apache.spark.streaming.StreamingContext
+
+import scala.reflect.ClassTag
 
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.{ReadableByteChannel, SocketChannel}
 import java.io.EOFException
 import java.util.concurrent.ArrayBlockingQueue
+import org.apache.spark.streaming.receiver.Receiver
 
 
 /**
@@ -35,25 +38,23 @@ import java.util.concurrent.ArrayBlockingQueue
  * in the format that the system is configured with.
  */
 private[streaming]
-class RawInputDStream[T: ClassManifest](
+class RawInputDStream[T: ClassTag](
     @transient ssc_ : StreamingContext,
     host: String,
     port: Int,
     storageLevel: StorageLevel
-  ) extends NetworkInputDStream[T](ssc_ ) with Logging {
+  ) extends ReceiverInputDStream[T](ssc_ ) with Logging {
 
-  def getReceiver(): NetworkReceiver[T] = {
-    new RawNetworkReceiver(host, port, storageLevel).asInstanceOf[NetworkReceiver[T]]
+  def getReceiver(): Receiver[T] = {
+    new RawNetworkReceiver(host, port, storageLevel).asInstanceOf[Receiver[T]]
   }
 }
 
 private[streaming]
 class RawNetworkReceiver(host: String, port: Int, storageLevel: StorageLevel)
-  extends NetworkReceiver[Any] {
+  extends Receiver[Any](storageLevel) with Logging {
 
   var blockPushingThread: Thread = null
-
-  override def getLocationPreference = None
 
   def onStart() {
     // Open a socket to the target address and keep reading from it
@@ -71,9 +72,8 @@ class RawNetworkReceiver(host: String, port: Int, storageLevel: StorageLevel)
         var nextBlockNumber = 0
         while (true) {
           val buffer = queue.take()
-          val blockId = "input-" + streamId + "-" + nextBlockNumber
           nextBlockNumber += 1
-          pushBlock(blockId, buffer, null, storageLevel)
+          store(buffer)
         }
       }
     }

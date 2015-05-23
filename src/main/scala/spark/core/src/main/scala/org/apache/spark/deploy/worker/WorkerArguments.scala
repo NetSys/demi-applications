@@ -17,11 +17,12 @@
 
 package org.apache.spark.deploy.worker
 
-import org.apache.spark.util.{Utils, IntParam, MemoryParam}
 import java.lang.management.ManagementFactory
 
+import org.apache.spark.util.{IntParam, MemoryParam, Utils}
+
 /**
- * Command-line parser for the master.
+ * Command-line parser for the worker.
  */
 private[spark] class WorkerArguments(args: Array[String]) {
   var host = Utils.localHostName()
@@ -29,10 +30,10 @@ private[spark] class WorkerArguments(args: Array[String]) {
   var webUiPort = 8081
   var cores = inferDefaultCores()
   var memory = inferDefaultMemory()
-  var master: String = null
+  var masters: Array[String] = null
   var workDir: String = null
-  
-  // Check for settings in environment variables 
+
+  // Check for settings in environment variables
   if (System.getenv("SPARK_WORKER_PORT") != null) {
     port = System.getenv("SPARK_WORKER_PORT").toInt
   }
@@ -48,7 +49,7 @@ private[spark] class WorkerArguments(args: Array[String]) {
   if (System.getenv("SPARK_WORKER_DIR") != null) {
     workDir = System.getenv("SPARK_WORKER_DIR")
   }
-  
+
   parse(args.toList)
 
   def parse(args: List[String]): Unit = args match {
@@ -77,7 +78,7 @@ private[spark] class WorkerArguments(args: Array[String]) {
     case ("--work-dir" | "-d") :: value :: tail =>
       workDir = value
       parse(tail)
-      
+
     case "--webui-port" :: IntParam(value) :: tail =>
       webUiPort = value
       parse(tail)
@@ -86,14 +87,14 @@ private[spark] class WorkerArguments(args: Array[String]) {
       printUsageAndExit(0)
 
     case value :: tail =>
-      if (master != null) {  // Two positional arguments were given
+      if (masters != null) {  // Two positional arguments were given
         printUsageAndExit(1)
       }
-      master = value
+      masters = value.stripPrefix("spark://").split(",").map("spark://" + _)
       parse(tail)
 
     case Nil =>
-      if (master == null) {  // No positional argument was given
+      if (masters == null) {  // No positional argument was given
         printUsageAndExit(1)
       }
 

@@ -18,50 +18,83 @@
 package org.apache.spark.repl
 
 import java.io.{ByteArrayOutputStream, InputStream}
-import java.net.{URI, URL, URLClassLoader, URLEncoder}
+import java.net.{URI, URL, URLEncoder}
 import java.util.concurrent.{Executors, ExecutorService}
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 
-import org.objectweb.asm._
-import org.objectweb.asm.Opcodes._
+import org.apache.spark.SparkEnv
+import org.apache.spark.util.Utils
+import org.apache.spark.util.ParentClassLoader
 
+import com.esotericsoftware.reflectasm.shaded.org.objectweb.asm._
+import com.esotericsoftware.reflectasm.shaded.org.objectweb.asm.Opcodes._
 
 /**
  * A ClassLoader that reads classes from a Hadoop FileSystem or HTTP URI,
- * used to load classes defined by the interpreter when the REPL is used
+ * used to load classes defined by the interpreter when the REPL is used.
+ * Allows the user to specify if user class path should be first
  */
-class ExecutorClassLoader(classUri: String, parent: ClassLoader)
-extends ClassLoader(parent) {
+class ExecutorClassLoader(classUri: String, parent: ClassLoader,
+    userClassPathFirst: Boolean) extends ClassLoader {
   val uri = new URI(classUri)
   val directory = uri.getPath
 
+  val parentLoader = new ParentClassLoader(parent)
+
   // Hadoop FileSystem object for our URI, if it isn't using HTTP
   var fileSystem: FileSystem = {
-    if (uri.getScheme() == "http")
+    if (uri.getScheme() == "http") {
       null
-    else
+    } else {
       FileSystem.get(uri, new Configuration())
+    }
   }
-  
+
   override def findClass(name: String): Class[_] = {
+    userClassPathFirst match {
+      case true => findClassLocally(name).getOrElse(parentLoader.loadClass(name))
+      case false => {
+        try {
+          parentLoader.loadClass(name)
+        } catch {
+          case e: ClassNotFoundException => {
+            val classOption = findClassLocally(name)
+            classOption match {
+              case None => throw new ClassNotFoundException(name, e)
+              case Some(a) => a
+            }
+          }
+        }
+      }
+    }
+  }
+
+  def findClassLocally(name: String): Option[Class[_]] = {
     try {
       val pathInDirectory = name.replace('.', '/') + ".class"
       val inputStream = {
-        if (fileSystem != null)
+        if (fileSystem != null) {
           fileSystem.open(new Path(directory, pathInDirectory))
-        else
-          new URL(classUri + "/" + urlEncode(pathInDirectory)).openStream()
+        } else {
+          if (SparkEnv.get.securityManager.isAuthenticationEnabled()) {
+            val uri = new URI(classUri + "/" + urlEncode(pathInDirectory))
+            val newuri = Utils.constructURIForAuthentication(uri, SparkEnv.get.securityManager)
+            newuri.toURL().openStream()
+          } else {
+            new URL(classUri + "/" + urlEncode(pathInDirectory)).openStream()
+          }
+        }
       }
       val bytes = readAndTransformClass(name, inputStream)
       inputStream.close()
-      return defineClass(name, bytes, 0, bytes.length)
+      Some(defineClass(name, bytes, 0, bytes.length))
     } catch {
-      case e: Exception => throw new ClassNotFoundException(name, e)
+      case e: Exception => None
     }
   }
-  
+
   def readAndTransformClass(name: String, in: InputStream): Array[Byte] = {
     if (name.startsWith("line") && name.endsWith("$iw$")) {
       // Class seems to be an interpreter "wrapper" object storing a val or var.
@@ -81,10 +114,11 @@ extends ClassLoader(parent) {
       var done = false
       while (!done) {
         val num = in.read(bytes)
-        if (num >= 0)
+        if (num >= 0) {
           bos.write(bytes, 0, num)
-        else
+        } else {
           done = true
+        }
       }
       return bos.toByteArray
     }
@@ -111,8 +145,8 @@ extends ClassVisitor(ASM4, cv) {
       mv.visitVarInsn(ALOAD, 0) // load this
       mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V")
       mv.visitVarInsn(ALOAD, 0) // load this
-      //val classType = className.replace('.', '/')
-      //mv.visitFieldInsn(PUTSTATIC, classType, "MODULE$", "L" + classType + ";")
+      // val classType = className.replace('.', '/')
+      // mv.visitFieldInsn(PUTSTATIC, classType, "MODULE$", "L" + classType + ";")
       mv.visitInsn(RETURN)
       mv.visitMaxs(-1, -1) // stack size and local vars will be auto-computed
       mv.visitEnd()

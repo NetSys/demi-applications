@@ -17,33 +17,33 @@
 
 package org.apache.spark.network
 
-import org.apache.spark._
-
-import scala.collection.mutable.{HashMap, Queue, ArrayBuffer}
-
-import java.io._
+import java.net._
 import java.nio._
 import java.nio.channels._
-import java.nio.channels.spi._
-import java.net._
 
+import scala.collection.mutable.{ArrayBuffer, HashMap, Queue}
+
+import org.apache.spark._
 
 private[spark]
 abstract class Connection(val channel: SocketChannel, val selector: Selector,
-    val socketRemoteConnectionManagerId: ConnectionManagerId)
+    val socketRemoteConnectionManagerId: ConnectionManagerId, val connectionId: ConnectionId)
   extends Logging {
 
-  def this(channel_ : SocketChannel, selector_ : Selector) = {
+  var sparkSaslServer: SparkSaslServer = null
+  var sparkSaslClient: SparkSaslClient = null
+
+  def this(channel_ : SocketChannel, selector_ : Selector, id_ : ConnectionId) = {
     this(channel_, selector_,
       ConnectionManagerId.fromSocketAddress(
-        channel_.socket.getRemoteSocketAddress().asInstanceOf[InetSocketAddress]))
+        channel_.socket.getRemoteSocketAddress.asInstanceOf[InetSocketAddress]), id_)
   }
 
   channel.configureBlocking(false)
   channel.socket.setTcpNoDelay(true)
   channel.socket.setReuseAddress(true)
   channel.socket.setKeepAlive(true)
-  /*channel.socket.setReceiveBufferSize(32768) */
+  /* channel.socket.setReceiveBufferSize(32768) */
 
   @volatile private var closed = false
   var onCloseCallback: Connection => Unit = null
@@ -51,6 +51,16 @@ abstract class Connection(val channel: SocketChannel, val selector: Selector,
   var onKeyInterestChangeCallback: (Connection, Int) => Unit = null
 
   val remoteAddress = getRemoteAddress()
+
+  /**
+   * Used to synchronize client requests: client's work-related requests must
+   * wait until SASL authentication completes.
+   */
+  private val authenticated = new Object()
+
+  def getAuthenticated(): Object = authenticated
+
+  def isSaslComplete(): Boolean
 
   def resetForceReregister(): Boolean
 
@@ -71,6 +81,16 @@ abstract class Connection(val channel: SocketChannel, val selector: Selector,
   // On receiving a read event, should we change the interest for this channel or not ?
   // Will be true for ReceivingConnection, false for SendingConnection.
   def changeInterestForRead(): Boolean
+
+  private def disposeSasl() {
+    if (sparkSaslServer != null) {
+      sparkSaslServer.dispose()
+    }
+
+    if (sparkSaslClient != null) {
+      sparkSaslClient.dispose()
+    }
+  }
 
   // On receiving a write event, should we change the interest for this channel or not ?
   // Will be false for ReceivingConnection, true for SendingConnection.
@@ -104,6 +124,7 @@ abstract class Connection(val channel: SocketChannel, val selector: Selector,
       k.cancel()
     }
     channel.close()
+    disposeSasl()
     callOnCloseCallback()
   }
 
@@ -171,17 +192,21 @@ abstract class Connection(val channel: SocketChannel, val selector: Selector,
 
 private[spark]
 class SendingConnection(val address: InetSocketAddress, selector_ : Selector,
-    remoteId_ : ConnectionManagerId)
-  extends Connection(SocketChannel.open, selector_, remoteId_) {
+    remoteId_ : ConnectionManagerId, id_ : ConnectionId)
+  extends Connection(SocketChannel.open, selector_, remoteId_, id_) {
 
-  private class Outbox(fair: Int = 0) {
+  def isSaslComplete(): Boolean = {
+    if (sparkSaslClient != null) sparkSaslClient.isComplete() else false
+  }
+
+  private class Outbox {
     val messages = new Queue[Message]()
-    val defaultChunkSize = 65536  //32768 //16384
+    val defaultChunkSize = 65536
     var nextMessageToBeUsed = 0
 
     def addMessage(message: Message) {
-      messages.synchronized{
-        /*messages += message*/
+      messages.synchronized {
+        /* messages += message */
         messages.enqueue(message)
         logDebug("Added [" + message + "] to outbox for sending to " +
           "[" + getRemoteConnectionManagerId() + "]")
@@ -189,44 +214,11 @@ class SendingConnection(val address: InetSocketAddress, selector_ : Selector,
     }
 
     def getChunk(): Option[MessageChunk] = {
-      fair match {
-        case 0 => getChunkFIFO()
-        case 1 => getChunkRR()
-        case _ => throw new Exception("Unexpected fairness policy in outbox")
-      }
-    }
-
-    private def getChunkFIFO(): Option[MessageChunk] = {
-      /*logInfo("Using FIFO")*/
       messages.synchronized {
         while (!messages.isEmpty) {
-          val message = messages(0)
-          val chunk = message.getChunkForSending(defaultChunkSize)
-          if (chunk.isDefined) {
-            messages += message  // this is probably incorrect, it wont work as fifo
-            if (!message.started) {
-              logDebug("Starting to send [" + message + "]")
-              message.started = true
-              message.startTime = System.currentTimeMillis
-            }
-            return chunk
-          } else {
-            /*logInfo("Finished sending [" + message + "] to [" + getRemoteConnectionManagerId() + "]")*/
-            message.finishTime = System.currentTimeMillis
-            logDebug("Finished sending [" + message + "] to [" + getRemoteConnectionManagerId() +
-              "] in "  + message.timeTaken )
-          }
-        }
-      }
-      None
-    }
-
-    private def getChunkRR(): Option[MessageChunk] = {
-      messages.synchronized {
-        while (!messages.isEmpty) {
-          /*nextMessageToBeUsed = nextMessageToBeUsed % messages.size */
-          /*val message = messages(nextMessageToBeUsed)*/
-          val message = messages.dequeue
+          /* nextMessageToBeUsed = nextMessageToBeUsed % messages.size */
+          /* val message = messages(nextMessageToBeUsed) */
+          val message = messages.dequeue()
           val chunk = message.getChunkForSending(defaultChunkSize)
           if (chunk.isDefined) {
             messages.enqueue(message)
@@ -238,7 +230,7 @@ class SendingConnection(val address: InetSocketAddress, selector_ : Selector,
               message.startTime = System.currentTimeMillis
             }
             logTrace(
-              "Sending chunk from [" + message+ "] to [" + getRemoteConnectionManagerId() + "]")
+              "Sending chunk from [" + message + "] to [" + getRemoteConnectionManagerId() + "]")
             return chunk
           } else {
             message.finishTime = System.currentTimeMillis
@@ -251,20 +243,21 @@ class SendingConnection(val address: InetSocketAddress, selector_ : Selector,
     }
   }
 
-  // outbox is used as a lock - ensure that it is always used as a leaf (since methods which 
+  // outbox is used as a lock - ensure that it is always used as a leaf (since methods which
   // lock it are invoked in context of other locks)
-  private val outbox = new Outbox(1)
+  private val outbox = new Outbox()
   /*
-    This is orthogonal to whether we have pending bytes to write or not - and satisfies a slightly 
-    different purpose. This flag is to see if we need to force reregister for write even when we 
+    This is orthogonal to whether we have pending bytes to write or not - and satisfies a slightly
+    different purpose. This flag is to see if we need to force reregister for write even when we
     do not have any pending bytes to write to socket.
-    This can happen due to a race between adding pending buffers, and checking for existing of 
+    This can happen due to a race between adding pending buffers, and checking for existing of
     data as detailed in https://github.com/mesos/spark/pull/791
    */
   private var needForceReregister = false
+
   val currentBuffers = new ArrayBuffer[ByteBuffer]()
 
-  /*channel.socket.setSendBufferSize(256 * 1024)*/
+  /* channel.socket.setSendBufferSize(256 * 1024) */
 
   override def getRemoteAddress() = address
 
@@ -330,15 +323,13 @@ class SendingConnection(val address: InetSocketAddress, selector_ : Selector,
       // Is highly unlikely unless there was an unclean close of socket, etc
       registerInterest()
       logInfo("Connected to [" + address + "], " + outbox.messages.size + " messages pending")
-      return true
     } catch {
       case e: Exception => {
         logWarning("Error finishing connection to " + address, e)
         callOnExceptionCallback(e)
-        // ignore
-        return true
       }
     }
+    true
   }
 
   override def write(): Boolean = {
@@ -349,14 +340,15 @@ class SendingConnection(val address: InetSocketAddress, selector_ : Selector,
             outbox.getChunk() match {
               case Some(chunk) => {
                 val buffers = chunk.buffers
-                // If we have 'seen' pending messages, then reset flag - since we handle that as normal 
-                // registering of event (below)
+                // If we have 'seen' pending messages, then reset flag - since we handle that as
+                // normal registering of event (below)
                 if (needForceReregister && buffers.exists(_.remaining() > 0)) resetForceReregister()
+
                 currentBuffers ++= buffers
               }
               case None => {
                 // changeConnectionKeyInterest(0)
-                /*key.interestOps(0)*/
+                /* key.interestOps(0) */
                 return false
               }
             }
@@ -385,7 +377,7 @@ class SendingConnection(val address: InetSocketAddress, selector_ : Selector,
       }
     }
     // should not happen - to keep scala compiler happy
-    return true
+    true
   }
 
   // This is a hack to determine if remote socket was closed or not.
@@ -404,7 +396,8 @@ class SendingConnection(val address: InetSocketAddress, selector_ : Selector,
       }
     } catch {
       case e: Exception =>
-        logError("Exception while reading SendingConnection to " + getRemoteConnectionManagerId(), e)
+        logError("Exception while reading SendingConnection to " + getRemoteConnectionManagerId(),
+          e)
         callOnExceptionCallback(e)
         close()
     }
@@ -419,8 +412,15 @@ class SendingConnection(val address: InetSocketAddress, selector_ : Selector,
 
 
 // Must be created within selector loop - else deadlock
-private[spark] class ReceivingConnection(channel_ : SocketChannel, selector_ : Selector)
-  extends Connection(channel_, selector_) {
+private[spark] class ReceivingConnection(
+    channel_ : SocketChannel,
+    selector_ : Selector,
+    id_ : ConnectionId)
+    extends Connection(channel_, selector_, id_) {
+
+  def isSaslComplete(): Boolean = {
+    if (sparkSaslServer != null) sparkSaslServer.isComplete() else false
+  }
 
   class Inbox() {
     val messages = new HashMap[Int, BufferMessage]()
@@ -431,6 +431,7 @@ private[spark] class ReceivingConnection(channel_ : SocketChannel, selector_ : S
         val newMessage = Message.create(header).asInstanceOf[BufferMessage]
         newMessage.started = true
         newMessage.startTime = System.currentTimeMillis
+        newMessage.isSecurityNeg = header.securityNeg == 1
         logDebug(
           "Starting to receive [" + newMessage + "] from [" + getRemoteConnectionManagerId() + "]")
         messages += ((newMessage.id, newMessage))
@@ -476,7 +477,7 @@ private[spark] class ReceivingConnection(channel_ : SocketChannel, selector_ : S
 
   val inbox = new Inbox()
   val headerBuffer: ByteBuffer = ByteBuffer.allocate(MessageChunkHeader.HEADER_SIZE)
-  var onReceiveCallback: (Connection , Message) => Unit = null
+  var onReceiveCallback: (Connection, Message) => Unit = null
   var currentChunk: MessageChunk = null
 
   channel.register(selector, SelectionKey.OP_READ)
@@ -532,13 +533,13 @@ private[spark] class ReceivingConnection(channel_ : SocketChannel, selector_ : S
           return false
         }
 
-        /*logDebug("Read " + bytesRead + " bytes for the buffer")*/
+        /* logDebug("Read " + bytesRead + " bytes for the buffer") */
 
         if (currentChunk.buffer.remaining == 0) {
-          /*println("Filled buffer at " + System.currentTimeMillis)*/
+          /* println("Filled buffer at " + System.currentTimeMillis) */
           val bufferMessage = inbox.getMessageForChunk(currentChunk).get
           if (bufferMessage.isCompletelyReceived) {
-            bufferMessage.flip
+            bufferMessage.flip()
             bufferMessage.finishTime = System.currentTimeMillis
             logDebug("Finished receiving [" + bufferMessage + "] from " +
               "[" + getRemoteConnectionManagerId() + "] in " + bufferMessage.timeTaken)
@@ -551,7 +552,7 @@ private[spark] class ReceivingConnection(channel_ : SocketChannel, selector_ : S
         }
       }
     } catch {
-      case e: Exception  => {
+      case e: Exception => {
         logWarning("Error reading from connection to " + getRemoteConnectionManagerId(), e)
         callOnExceptionCallback(e)
         close()
@@ -559,7 +560,7 @@ private[spark] class ReceivingConnection(channel_ : SocketChannel, selector_ : S
       }
     }
     // should not happen - to keep scala compiler happy
-    return true
+    true
   }
 
   def onReceive(callback: (Connection, Message) => Unit) {onReceiveCallback = callback}

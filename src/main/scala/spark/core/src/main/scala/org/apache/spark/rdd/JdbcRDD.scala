@@ -19,13 +19,15 @@ package org.apache.spark.rdd
 
 import java.sql.{Connection, ResultSet}
 
+import scala.reflect.ClassTag
+
 import org.apache.spark.{Logging, Partition, SparkContext, TaskContext}
 import org.apache.spark.util.NextIterator
 
 private[spark] class JdbcPartition(idx: Int, val lower: Long, val upper: Long) extends Partition {
   override def index = idx
 }
-
+// TODO: Expose a jdbcRDD function in SparkContext and mark this as semi-private
 /**
  * An RDD that executes an SQL query on a JDBC connection and reads results.
  * For usage example, see test case JdbcRDDSuite.
@@ -45,7 +47,7 @@ private[spark] class JdbcPartition(idx: Int, val lower: Long, val upper: Long) e
  *   This should only call getInt, getString, etc; the RDD takes care of calling next.
  *   The default maps a ResultSet to an array of Object.
  */
-class JdbcRDD[T: ClassManifest](
+class JdbcRDD[T: ClassTag](
     sc: SparkContext,
     getConnection: () => Connection,
     sql: String,
@@ -114,7 +116,7 @@ class JdbcRDD[T: ClassManifest](
 }
 
 object JdbcRDD {
-  def resultSetToObjectArray(rs: ResultSet) = {
+  def resultSetToObjectArray(rs: ResultSet): Array[Object] = {
     Array.tabulate[Object](rs.getMetaData.getColumnCount)(i => rs.getObject(i + 1))
   }
 }

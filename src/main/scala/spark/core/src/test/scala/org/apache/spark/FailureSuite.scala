@@ -19,8 +19,10 @@ package org.apache.spark
 
 import org.scalatest.FunSuite
 
-import SparkContext._
+import org.apache.spark.SparkContext._
 import org.apache.spark.util.NonSerializable
+
+import java.io.NotSerializableException
 
 // Common state shared by FailureSuite-launched tasks. We use a global object
 // for this because any local variables used in the task closures will rightfully
@@ -42,7 +44,7 @@ class FailureSuite extends FunSuite with LocalSparkContext {
   // Run a 3-task map job in which task 1 deterministically fails once, and check
   // whether the job completes successfully and we ran 4 tasks in total.
   test("failure in a single-stage job") {
-    sc = new SparkContext("local[1,1]", "test")
+    sc = new SparkContext("local[1,2]", "test")
     val results = sc.makeRDD(1 to 3, 3).map { x =>
       FailureSuiteState.synchronized {
         FailureSuiteState.tasksRun += 1
@@ -62,7 +64,7 @@ class FailureSuite extends FunSuite with LocalSparkContext {
 
   // Run a map-reduce job in which a reduce task deterministically fails once.
   test("failure in a two-stage job") {
-    sc = new SparkContext("local[1,1]", "test")
+    sc = new SparkContext("local[1,2]", "test")
     val results = sc.makeRDD(1 to 3).map(x => (x, x)).groupByKey(3).map {
       case (k, v) =>
         FailureSuiteState.synchronized {
@@ -72,13 +74,26 @@ class FailureSuite extends FunSuite with LocalSparkContext {
             throw new Exception("Intentional task failure")
           }
         }
-        (k, v(0) * v(0))
+        (k, v.head * v.head)
       }.collect()
     FailureSuiteState.synchronized {
       assert(FailureSuiteState.tasksRun === 4)
     }
     assert(results.toSet === Set((1, 1), (2, 4), (3, 9)))
     FailureSuiteState.clear()
+  }
+
+  // Run a map-reduce job in which the map stage always fails.
+  test("failure in a map stage") {
+    sc = new SparkContext("local", "test")
+    val data = sc.makeRDD(1 to 3).map(x => { throw new Exception; (x, x) }).groupByKey(3)
+    intercept[SparkException] {
+      data.collect()
+    }
+    // Make sure that running new jobs with the same map stage also fails
+    intercept[SparkException] {
+      data.collect()
+    }
   }
 
   test("failure because task results are not serializable") {
@@ -89,7 +104,8 @@ class FailureSuite extends FunSuite with LocalSparkContext {
       results.collect()
     }
     assert(thrown.getClass === classOf[SparkException])
-    assert(thrown.getMessage.contains("NotSerializableException"))
+    assert(thrown.getMessage.contains("NotSerializableException") || 
+      thrown.getCause.getClass === classOf[NotSerializableException])
 
     FailureSuiteState.clear()
   }
@@ -103,26 +119,27 @@ class FailureSuite extends FunSuite with LocalSparkContext {
       sc.parallelize(1 to 10, 2).map(x => a).count()
     }
     assert(thrown.getClass === classOf[SparkException])
-    assert(thrown.getMessage.contains("NotSerializableException"))
+    assert(thrown.getMessage.contains("NotSerializableException") || 
+      thrown.getCause.getClass === classOf[NotSerializableException])
 
     // Non-serializable closure in an earlier stage
     val thrown1 = intercept[SparkException] {
       sc.parallelize(1 to 10, 2).map(x => (x, a)).partitionBy(new HashPartitioner(3)).count()
     }
     assert(thrown1.getClass === classOf[SparkException])
-    assert(thrown1.getMessage.contains("NotSerializableException"))
+    assert(thrown1.getMessage.contains("NotSerializableException") || 
+      thrown1.getCause.getClass === classOf[NotSerializableException])
 
     // Non-serializable closure in foreach function
     val thrown2 = intercept[SparkException] {
       sc.parallelize(1 to 10, 2).foreach(x => println(a))
     }
     assert(thrown2.getClass === classOf[SparkException])
-    assert(thrown2.getMessage.contains("NotSerializableException"))
+    assert(thrown2.getMessage.contains("NotSerializableException") || 
+      thrown2.getCause.getClass === classOf[NotSerializableException])
 
     FailureSuiteState.clear()
   }
 
   // TODO: Need to add tests with shuffle fetch failures.
 }
-
-

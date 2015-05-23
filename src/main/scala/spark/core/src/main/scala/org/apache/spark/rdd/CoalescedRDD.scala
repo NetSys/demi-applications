@@ -17,11 +17,14 @@
 
 package org.apache.spark.rdd
 
-import org.apache.spark._
-import java.io.{ObjectOutputStream, IOException}
+import java.io.{IOException, ObjectOutputStream}
+
 import scala.collection.mutable
-import scala.Some
 import scala.collection.mutable.ArrayBuffer
+import scala.language.existentials
+import scala.reflect.ClassTag
+
+import org.apache.spark._
 
 /**
  * Class that captures a coalesced RDD by essentially keeping track of parent partitions
@@ -30,7 +33,7 @@ import scala.collection.mutable.ArrayBuffer
  * @param parentsIndices list of indices in the parent that have been coalesced into this partition
  * @param preferredLocation the preferred location for this partition
  */
-case class CoalescedRDDPartition(
+private[spark] case class CoalescedRDDPartition(
                                   index: Int,
                                   @transient rdd: RDD[_],
                                   parentsIndices: Array[Int],
@@ -68,7 +71,7 @@ case class CoalescedRDDPartition(
  * @param maxPartitions number of desired partitions in the coalesced RDD
  * @param balanceSlack used to trade-off balance and locality. 1.0 is all locality, 0 is all balance
  */
-class CoalescedRDD[T: ClassManifest](
+private[spark] class CoalescedRDD[T: ClassTag](
                                       @transient var prev: RDD[T],
                                       maxPartitions: Int,
                                       balanceSlack: Double = 0.10)
@@ -196,9 +199,9 @@ private[spark] class PartitionCoalescer(maxPartitions: Int, prev: RDD[_], balanc
 
     // return the next preferredLocation of some partition of the RDD
     def next(): (String, Partition) = {
-      if (it.hasNext)
+      if (it.hasNext) {
         it.next()
-      else {
+      } else {
         it = resetIterator() // ran out of preferred locations, reset and rotate to the beginning
         it.next()
       }
@@ -289,15 +292,17 @@ private[spark] class PartitionCoalescer(maxPartitions: Int, prev: RDD[_], balanc
     val r1 = rnd.nextInt(groupArr.size)
     val r2 = rnd.nextInt(groupArr.size)
     val minPowerOfTwo = if (groupArr(r1).size < groupArr(r2).size) groupArr(r1) else groupArr(r2)
-    if (prefPart== None) // if no preferred locations, just use basic power of two
+    if (prefPart.isEmpty) {
+      // if no preferred locations, just use basic power of two
       return minPowerOfTwo
+    }
 
     val prefPartActual = prefPart.get
 
-    if (minPowerOfTwo.size + slack <= prefPartActual.size)  // more imbalance than the slack allows
-      return minPowerOfTwo  // prefer balance over locality
-    else {
-      return prefPartActual // prefer locality over balance
+    if (minPowerOfTwo.size + slack <= prefPartActual.size) { // more imbalance than the slack allows
+      minPowerOfTwo  // prefer balance over locality
+    } else {
+      prefPartActual // prefer locality over balance
     }
   }
 
@@ -330,7 +335,7 @@ private[spark] class PartitionCoalescer(maxPartitions: Int, prev: RDD[_], balanc
    */
   def run(): Array[PartitionGroup] = {
     setupGroups(math.min(prev.partitions.length, maxPartitions))   // setup the groups (bins)
-    throwBalls()             // assign partitions (balls) to each group (bins)
+    throwBalls() // assign partitions (balls) to each group (bins)
     getPartitions
   }
 }

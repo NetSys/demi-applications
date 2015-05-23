@@ -17,23 +17,21 @@
 
 package org.apache.spark.util
 
+import java.lang.management.ManagementFactory
+import java.lang.reflect.{Array => JArray}
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
-import java.lang.reflect.{Array => JArray}
 import java.util.IdentityHashMap
-import java.util.concurrent.ConcurrentHashMap
 import java.util.Random
-
-import javax.management.MBeanServer
-import java.lang.management.ManagementFactory
+import java.util.concurrent.ConcurrentHashMap
 
 import scala.collection.mutable.ArrayBuffer
 
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.apache.spark.Logging
+import org.apache.spark.util.collection.OpenHashSet
 
 /**
- * Estimates the sizes of Java objects (number of bytes of memory they occupy), for use in 
+ * Estimates the sizes of Java objects (number of bytes of memory they occupy), for use in
  * memory-aware caches.
  *
  * Based on the following JavaWorld article:
@@ -89,9 +87,11 @@ private[spark] object SizeEstimator extends Logging {
     classInfos.put(classOf[Object], new ClassInfo(objectSize, Nil))
   }
 
-  private def getIsCompressedOops : Boolean = {
+  private def getIsCompressedOops: Boolean = {
+    // This is only used by tests to override the detection of compressed oops. The test
+    // actually uses a system property instead of a SparkConf, so we'll stick with that.
     if (System.getProperty("spark.test.useCompressedOops") != null) {
-      return System.getProperty("spark.test.useCompressedOops").toBoolean 
+      return System.getProperty("spark.test.useCompressedOops").toBoolean
     }
 
     try {
@@ -103,10 +103,10 @@ private[spark] object SizeEstimator extends Logging {
       val getVMMethod = hotSpotMBeanClass.getDeclaredMethod("getVMOption",
           Class.forName("java.lang.String"))
 
-      val bean = ManagementFactory.newPlatformMXBeanProxy(server, 
+      val bean = ManagementFactory.newPlatformMXBeanProxy(server,
         hotSpotMBeanName, hotSpotMBeanClass)
       // TODO: We could use reflection on the VMOption returned ?
-      return getVMMethod.invoke(bean, "UseCompressedOops").toString.contains("true")
+      getVMMethod.invoke(bean, "UseCompressedOops").toString.contains("true")
     } catch {
       case e: Exception => {
         // Guess whether they've enabled UseCompressedOops based on whether maxMemory < 32 GB
@@ -139,7 +139,7 @@ private[spark] object SizeEstimator extends Logging {
     def dequeue(): AnyRef = {
       val elem = stack.last
       stack.trimEnd(1)
-      return elem
+      elem
     }
   }
 
@@ -160,7 +160,7 @@ private[spark] object SizeEstimator extends Logging {
     while (!state.isFinished) {
       visitSingleObject(state.dequeue(), state)
     }
-    return state.size
+    state.size
   }
 
   private def visitSingleObject(obj: AnyRef, state: SearchState) {
@@ -206,7 +206,7 @@ private[spark] object SizeEstimator extends Logging {
         // Estimate the size of a large array by sampling elements without replacement.
         var size = 0.0
         val rand = new Random(42)
-        val drawn = new IntOpenHashSet(ARRAY_SAMPLE_SIZE)
+        val drawn = new OpenHashSet[Int](ARRAY_SAMPLE_SIZE)
         for (i <- 0 until ARRAY_SAMPLE_SIZE) {
           var index = 0
           do {
@@ -222,24 +222,26 @@ private[spark] object SizeEstimator extends Logging {
   }
 
   private def primitiveSize(cls: Class[_]): Long = {
-    if (cls == classOf[Byte])
+    if (cls == classOf[Byte]) {
       BYTE_SIZE
-    else if (cls == classOf[Boolean])
+    } else if (cls == classOf[Boolean]) {
       BOOLEAN_SIZE
-    else if (cls == classOf[Char])
+    } else if (cls == classOf[Char]) {
       CHAR_SIZE
-    else if (cls == classOf[Short])
+    } else if (cls == classOf[Short]) {
       SHORT_SIZE
-    else if (cls == classOf[Int])
+    } else if (cls == classOf[Int]) {
       INT_SIZE
-    else if (cls == classOf[Long])
+    } else if (cls == classOf[Long]) {
       LONG_SIZE
-    else if (cls == classOf[Float])
+    } else if (cls == classOf[Float]) {
       FLOAT_SIZE
-    else if (cls == classOf[Double])
+    } else if (cls == classOf[Double]) {
       DOUBLE_SIZE
-    else throw new IllegalArgumentException(
+    } else {
+      throw new IllegalArgumentException(
       "Non-primitive class " + cls + " passed to primitiveSize()")
+    }
   }
 
   /**
@@ -251,7 +253,7 @@ private[spark] object SizeEstimator extends Logging {
     if (info != null) {
       return info
     }
-    
+
     val parent = getClassInfo(cls.getSuperclass)
     var shellSize = parent.shellSize
     var pointerFields = parent.pointerFields
@@ -274,11 +276,11 @@ private[spark] object SizeEstimator extends Logging {
     // Create and cache a new ClassInfo
     val newInfo = new ClassInfo(shellSize, pointerFields)
     classInfos.put(cls, newInfo)
-    return newInfo
+    newInfo
   }
 
   private def alignSize(size: Long): Long = {
     val rem = size % ALIGN_SIZE
-    return if (rem == 0) size else (size + ALIGN_SIZE - rem)
+    if (rem == 0) size else (size + ALIGN_SIZE - rem)
   }
 }

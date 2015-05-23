@@ -67,7 +67,7 @@
 #   period    10         Poll period
 #   unit      seconds    Units of poll period
 #   ttl       1          TTL of messages sent by Ganglia
-#   mode      multicast  Ganglia network mode ('unicast' or 'mulitcast')
+#   mode      multicast  Ganglia network mode ('unicast' or 'multicast')
 
 # org.apache.spark.metrics.sink.JmxSink
 
@@ -79,6 +79,14 @@
 # * Default path is /metrics/json for all instances except the master. The master has two paths:
 #     /metrics/aplications/json # App information
 #     /metrics/master/json      # Master information
+
+# org.apache.spark.metrics.sink.GraphiteSink
+#   Name:     Default:      Description:
+#   host      NONE          Hostname of Graphite server
+#   port      NONE          Port of Graphite server
+#   period    10            Poll period
+#   unit      seconds       Units of poll period
+#   prefix    EMPTY STRING  Prefix to prepend to metric name
 
 ## Examples
 # Enable JmxSink for all instances by class name

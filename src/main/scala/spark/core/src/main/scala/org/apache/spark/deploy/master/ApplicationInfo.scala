@@ -17,10 +17,14 @@
 
 package org.apache.spark.deploy.master
 
-import org.apache.spark.deploy.ApplicationDescription
 import java.util.Date
-import akka.actor.ActorRef
+
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
+
+import akka.actor.ActorRef
+
+import org.apache.spark.deploy.ApplicationDescription
 
 private[spark] class ApplicationInfo(
     val startTime: Long,
@@ -28,24 +32,44 @@ private[spark] class ApplicationInfo(
     val desc: ApplicationDescription,
     val submitDate: Date,
     val driver: ActorRef,
-    val appUiUrl: String)
-{
-  var state = ApplicationState.WAITING
-  var executors = new mutable.HashMap[Int, ExecutorInfo]
-  var coresGranted = 0
-  var endTime = -1L
-  val appSource = new ApplicationSource(this)
+    defaultCores: Int)
+  extends Serializable {
 
-  private var nextExecutorId = 0
+  @transient var state: ApplicationState.Value = _
+  @transient var executors: mutable.HashMap[Int, ExecutorInfo] = _
+  @transient var removedExecutors: ArrayBuffer[ExecutorInfo] = _
+  @transient var coresGranted: Int = _
+  @transient var endTime: Long = _
+  @transient var appSource: ApplicationSource = _
 
-  def newExecutorId(): Int = {
-    val id = nextExecutorId
-    nextExecutorId += 1
-    id
+  @transient private var nextExecutorId: Int = _
+
+  init()
+
+  private def init() {
+    state = ApplicationState.WAITING
+    executors = new mutable.HashMap[Int, ExecutorInfo]
+    coresGranted = 0
+    endTime = -1L
+    appSource = new ApplicationSource(this)
+    nextExecutorId = 0
+    removedExecutors = new ArrayBuffer[ExecutorInfo]
   }
 
-  def addExecutor(worker: WorkerInfo, cores: Int): ExecutorInfo = {
-    val exec = new ExecutorInfo(newExecutorId(), this, worker, cores, desc.memoryPerSlave)
+  private def newExecutorId(useID: Option[Int] = None): Int = {
+    useID match {
+      case Some(id) =>
+        nextExecutorId = math.max(nextExecutorId, id + 1)
+        id
+      case None =>
+        val id = nextExecutorId
+        nextExecutorId += 1
+        id
+    }
+  }
+
+  def addExecutor(worker: WorkerInfo, cores: Int, useID: Option[Int] = None): ExecutorInfo = {
+    val exec = new ExecutorInfo(newExecutorId(useID), this, worker, cores, desc.memoryPerSlave)
     executors(exec.id) = exec
     coresGranted += cores
     exec
@@ -53,12 +77,15 @@ private[spark] class ApplicationInfo(
 
   def removeExecutor(exec: ExecutorInfo) {
     if (executors.contains(exec.id)) {
+      removedExecutors += executors(exec.id)
       executors -= exec.id
       coresGranted -= exec.cores
     }
   }
 
-  def coresLeft: Int = desc.maxCores - coresGranted
+  private val myMaxCores = desc.maxCores.getOrElse(defaultCores)
+
+  def coresLeft: Int = myMaxCores - coresGranted
 
   private var _retryCount = 0
 

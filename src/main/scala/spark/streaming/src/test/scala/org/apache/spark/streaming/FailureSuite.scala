@@ -19,31 +19,31 @@ package org.apache.spark.streaming
 
 import org.apache.spark.Logging
 import org.apache.spark.streaming.util.MasterFailureTest
-import StreamingContext._
+import org.apache.spark.util.Utils
 
-import org.scalatest.{FunSuite, BeforeAndAfter}
-import com.google.common.io.Files
 import java.io.File
-import org.apache.commons.io.FileUtils
-import collection.mutable.ArrayBuffer
-
 
 /**
  * This testsuite tests master failures at random times while the stream is running using
  * the real clock.
  */
-class FailureSuite extends FunSuite with BeforeAndAfter with Logging {
+class FailureSuite extends TestSuiteBase with Logging {
 
   var directory = "FailureSuite"
   val numBatches = 30
-  val batchDuration = Milliseconds(1000)
 
-  before {
-    FileUtils.deleteDirectory(new File(directory))
+  override def batchDuration = Milliseconds(1000)
+
+  override def useManualClock = false
+
+  override def beforeFunction() {
+    super.beforeFunction()
+    Utils.deleteRecursively(new File(directory))
   }
 
-  after {
-    FileUtils.deleteDirectory(new File(directory))
+  override def afterFunction() {
+    super.afterFunction()
+    Utils.deleteRecursively(new File(directory))
   }
 
   test("multiple failures with map") {

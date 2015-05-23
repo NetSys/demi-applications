@@ -17,18 +17,25 @@
 
 package org.apache.spark.util
 
-import java.util.concurrent.{TimeUnit, ScheduledFuture, Executors}
-import java.util.{TimerTask, Timer}
-import org.apache.spark.Logging
+import java.util.{Timer, TimerTask}
 
+import org.apache.spark.{Logging, SparkConf}
 
 /**
  * Runs a timer task to periodically clean up metadata (e.g. old files or hashtable entries)
  */
-class MetadataCleaner(name: String, cleanupFunc: (Long) => Unit) extends Logging {
-  private val delaySeconds = MetadataCleaner.getDelaySeconds
+private[spark] class MetadataCleaner(
+    cleanerType: MetadataCleanerType.MetadataCleanerType,
+    cleanupFunc: (Long) => Unit,
+    conf: SparkConf)
+  extends Logging
+{
+  val name = cleanerType.toString
+
+  private val delaySeconds = MetadataCleaner.getDelaySeconds(conf, cleanerType)
   private val periodSeconds = math.max(10, delaySeconds / 10)
   private val timer = new Timer(name + " cleanup timer", true)
+
 
   private val task = new TimerTask {
     override def run() {
@@ -53,9 +60,50 @@ class MetadataCleaner(name: String, cleanupFunc: (Long) => Unit) extends Logging
   }
 }
 
+private[spark] object MetadataCleanerType extends Enumeration {
 
-object MetadataCleaner {
-  def getDelaySeconds = System.getProperty("spark.cleaner.ttl", "-1").toInt
-  def setDelaySeconds(delay: Int) { System.setProperty("spark.cleaner.ttl", delay.toString) }
+  val MAP_OUTPUT_TRACKER, SPARK_CONTEXT, HTTP_BROADCAST, BLOCK_MANAGER,
+  SHUFFLE_BLOCK_MANAGER, BROADCAST_VARS = Value
+
+  type MetadataCleanerType = Value
+
+  def systemProperty(which: MetadataCleanerType.MetadataCleanerType) =
+      "spark.cleaner.ttl." + which.toString
+}
+
+// TODO: This mutates a Conf to set properties right now, which is kind of ugly when used in the
+// initialization of StreamingContext. It's okay for users trying to configure stuff themselves.
+private[spark] object MetadataCleaner {
+  def getDelaySeconds(conf: SparkConf) = {
+    conf.getInt("spark.cleaner.ttl", -1)
+  }
+
+  def getDelaySeconds(
+      conf: SparkConf,
+      cleanerType: MetadataCleanerType.MetadataCleanerType): Int = {
+    conf.get(MetadataCleanerType.systemProperty(cleanerType), getDelaySeconds(conf).toString).toInt
+  }
+
+  def setDelaySeconds(
+      conf: SparkConf,
+      cleanerType: MetadataCleanerType.MetadataCleanerType,
+      delay: Int) {
+    conf.set(MetadataCleanerType.systemProperty(cleanerType),  delay.toString)
+  }
+
+  /**
+   * Set the default delay time (in seconds).
+   * @param conf SparkConf instance
+   * @param delay default delay time to set
+   * @param resetAll whether to reset all to default
+   */
+  def setDelaySeconds(conf: SparkConf, delay: Int, resetAll: Boolean = true) {
+    conf.set("spark.cleaner.ttl", delay.toString)
+    if (resetAll) {
+      for (cleanerType <- MetadataCleanerType.values) {
+        System.clearProperty(MetadataCleanerType.systemProperty(cleanerType))
+      }
+    }
+  }
 }
 

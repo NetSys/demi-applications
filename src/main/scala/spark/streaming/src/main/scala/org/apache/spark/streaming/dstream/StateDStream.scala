@@ -21,10 +21,12 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.Partitioner
 import org.apache.spark.SparkContext._
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.streaming.{Duration, Time, DStream}
+import org.apache.spark.streaming.{Duration, Time}
+
+import scala.reflect.ClassTag
 
 private[streaming]
-class StateDStream[K: ClassManifest, V: ClassManifest, S: ClassManifest](
+class StateDStream[K: ClassTag, V: ClassTag, S: ClassTag](
     parent: DStream[(K, V)],
     updateFunc: (Iterator[(K, Seq[V], Option[S])]) => Iterator[(K, S)],
     partitioner: Partitioner,
@@ -54,16 +56,20 @@ class StateDStream[K: ClassManifest, V: ClassManifest, S: ClassManifest](
             // first map the cogrouped tuple to tuples of required type,
             // and then apply the update function
             val updateFuncLocal = updateFunc
-            val finalFunc = (iterator: Iterator[(K, (Seq[V], Seq[S]))]) => {
+            val finalFunc = (iterator: Iterator[(K, (Iterable[V], Iterable[S]))]) => {
               val i = iterator.map(t => {
-                (t._1, t._2._1, t._2._2.headOption)
+                val itr = t._2._2.iterator
+                val headOption = itr.hasNext match {
+                  case true => Some(itr.next())
+                  case false => None
+                }
+                (t._1, t._2._1.toSeq, headOption)
               })
               updateFuncLocal(i)
             }
             val cogroupedRDD = parentRDD.cogroup(prevStateRDD, partitioner)
             val stateRDD = cogroupedRDD.mapPartitions(finalFunc, preservePartitioning)
-            //logDebug("Generating state RDD for time " + validTime)
-            return Some(stateRDD)
+            Some(stateRDD)
           }
           case None => {    // If parent RDD does not exist
 
@@ -74,7 +80,7 @@ class StateDStream[K: ClassManifest, V: ClassManifest, S: ClassManifest](
               updateFuncLocal(i)
             }
             val stateRDD = prevStateRDD.mapPartitions(finalFunc, preservePartitioning)
-            return Some(stateRDD)
+            Some(stateRDD)
           }
         }
       }
@@ -89,18 +95,18 @@ class StateDStream[K: ClassManifest, V: ClassManifest, S: ClassManifest](
             // first map the grouped tuple to tuples of required type,
             // and then apply the update function
             val updateFuncLocal = updateFunc
-            val finalFunc = (iterator: Iterator[(K, Seq[V])]) => {
-              updateFuncLocal(iterator.map(tuple => (tuple._1, tuple._2, None)))
+            val finalFunc = (iterator: Iterator[(K, Iterable[V])]) => {
+              updateFuncLocal(iterator.map(tuple => (tuple._1, tuple._2.toSeq, None)))
             }
 
             val groupedRDD = parentRDD.groupByKey(partitioner)
             val sessionRDD = groupedRDD.mapPartitions(finalFunc, preservePartitioning)
-            //logDebug("Generating state RDD for time " + validTime + " (first)")
-            return Some(sessionRDD)
+            // logDebug("Generating state RDD for time " + validTime + " (first)")
+            Some(sessionRDD)
           }
           case None => { // If parent RDD does not exist, then nothing to do!
-            //logDebug("Not generating state RDD (no previous state, no parent)")
-            return None
+            // logDebug("Not generating state RDD (no previous state, no parent)")
+            None
           }
         }
       }

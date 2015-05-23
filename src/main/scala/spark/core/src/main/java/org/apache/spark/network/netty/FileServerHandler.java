@@ -21,54 +21,55 @@ import java.io.File;
 import java.io.FileInputStream;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundMessageHandlerAdapter;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.DefaultFileRegion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import org.apache.spark.storage.BlockId;
+import org.apache.spark.storage.FileSegment;
 
-class FileServerHandler extends ChannelInboundMessageHandlerAdapter<String> {
+class FileServerHandler extends SimpleChannelInboundHandler<String> {
 
-  PathResolver pResolver;
+  private static final Logger LOG = LoggerFactory.getLogger(FileServerHandler.class.getName());
 
-  public FileServerHandler(PathResolver pResolver){
+  private final PathResolver pResolver;
+
+  FileServerHandler(PathResolver pResolver){
     this.pResolver = pResolver;
   }
 
   @Override
-  public void messageReceived(ChannelHandlerContext ctx, String blockId) {
-    String path = pResolver.getAbsolutePath(blockId);
-    // if getFilePath returns null, close the channel
-    if (path == null) {
+  public void channelRead0(ChannelHandlerContext ctx, String blockIdString) {
+    BlockId blockId = BlockId.apply(blockIdString);
+    FileSegment fileSegment = pResolver.getBlockLocation(blockId);
+    // if getBlockLocation returns null, close the channel
+    if (fileSegment == null) {
       //ctx.close();
       return;
     }
-    File file = new File(path);
+    File file = fileSegment.file();
     if (file.exists()) {
       if (!file.isFile()) {
-        //logger.info("Not a file : " + file.getAbsolutePath());
         ctx.write(new FileHeader(0, blockId).buffer());
         ctx.flush();
         return;
       }
-      long length = file.length();
+      long length = fileSegment.length();
       if (length > Integer.MAX_VALUE || length <= 0) {
-        //logger.info("too large file : " + file.getAbsolutePath() + " of size "+ length);
         ctx.write(new FileHeader(0, blockId).buffer());
         ctx.flush();
         return;
       }
-      int len = new Long(length).intValue();
-      //logger.info("Sending block "+blockId+" filelen = "+len);
-      //logger.info("header = "+ (new FileHeader(len, blockId)).buffer());
+      int len = (int) length;
       ctx.write((new FileHeader(len, blockId)).buffer());
       try {
-        ctx.sendFile(new DefaultFileRegion(new FileInputStream(file)
-          .getChannel(), 0, file.length()));
+        ctx.write(new DefaultFileRegion(new FileInputStream(file)
+          .getChannel(), fileSegment.offset(), fileSegment.length()));
       } catch (Exception e) {
-        //logger.warning("Exception when sending file : " + file.getAbsolutePath());
-        e.printStackTrace();
+          LOG.error("Exception: ", e);
       }
     } else {
-      //logger.warning("File not found: " + file.getAbsolutePath());
       ctx.write(new FileHeader(0, blockId).buffer());
     }
     ctx.flush();
@@ -76,7 +77,7 @@ class FileServerHandler extends ChannelInboundMessageHandlerAdapter<String> {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-    cause.printStackTrace();
+    LOG.error("Exception: ", cause);
     ctx.close();
   }
 }

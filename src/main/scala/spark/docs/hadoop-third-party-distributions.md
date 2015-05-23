@@ -1,6 +1,6 @@
 ---
 layout: global
-title: Running with Cloudera and HortonWorks
+title: Third-Party Hadoop Distributions
 ---
 
 Spark can run against all versions of Cloudera's Distribution Including Apache Hadoop (CDH) and
@@ -9,12 +9,14 @@ with these distributions:
 
 # Compile-time Hadoop Version
 
-When compiling Spark, you'll need to 
-[set the SPARK_HADOOP_VERSION flag](http://localhost:4000/index.html#a-note-about-hadoop-versions):
+When compiling Spark, you'll need to specify the Hadoop version by defining the `hadoop.version`
+property. For certain versions, you will need to specify additional profiles. For more detail,
+see the guide on [building with maven](building-with-maven.html#specifying-the-hadoop-version):
 
-    SPARK_HADOOP_VERSION=1.0.4 sbt/sbt assembly
+    mvn -Dhadoop.version=1.0.4 -DskipTests clean package
+    mvn -Phadoop-2.2 -Dhadoop.version=2.2.0 -DskipTests clean package
 
-The table below lists the corresponding `SPARK_HADOOP_VERSION` code for each CDH/HDP release. Note that
+The table below lists the corresponding `hadoop.version` code for each CDH/HDP release. Note that
 some Hadoop releases are binary compatible across client versions. This means the pre-built Spark
 distribution may "just work" without you needing to compile. That said, we recommend compiling with 
 the _exact_ Hadoop version you are running to avoid any compatibility errors.
@@ -25,8 +27,8 @@ the _exact_ Hadoop version you are running to avoid any compatibility errors.
       <h3>CDH Releases</h3>
       <table class="table" style="width:350px; margin-right: 20px;">
         <tr><th>Release</th><th>Version code</th></tr>
-        <tr><td>CDH 4.X.X (YARN mode)</td><td>2.0.0-chd4.X.X</td></tr>
-        <tr><td>CDH 4.X.X</td><td>2.0.0-mr1-chd4.X.X</td></tr>
+        <tr><td>CDH 4.X.X (YARN mode)</td><td>2.0.0-cdh4.X.X</td></tr>
+        <tr><td>CDH 4.X.X</td><td>2.0.0-mr1-cdh4.X.X</td></tr>
         <tr><td>CDH 3u6</td><td>0.20.2-cdh3u6</td></tr>
         <tr><td>CDH 3u5</td><td>0.20.2-cdh3u5</td></tr>
         <tr><td>CDH 3u4</td><td>0.20.2-cdh3u4</td></tr>
@@ -40,10 +42,15 @@ the _exact_ Hadoop version you are running to avoid any compatibility errors.
         <tr><td>HDP 1.2</td><td>1.1.2</td></tr>
         <tr><td>HDP 1.1</td><td>1.0.3</td></tr>
         <tr><td>HDP 1.0</td><td>1.0.3</td></tr>
+        <tr><td>HDP 2.0</td><td>2.2.0</td></tr>
       </table>
     </td>
   </tr>
 </table>
+
+In SBT, the equivalent can be achieved by setting the SPARK_HADOOP_VERSION flag:
+
+    SPARK_HADOOP_VERSION=1.0.4 sbt/sbt assembly
 
 # Linking Applications to the Hadoop Version
 
@@ -109,10 +116,5 @@ The location of these configuration files varies across CDH and HDP versions, bu
 a common location is inside of `/etc/hadoop/conf`. Some tools, such as Cloudera Manager, create
 configurations on-the-fly, but offer a mechanisms to download copies of them.
 
-There are a few ways to make these files visible to Spark:
-
-* You can copy these files into `$SPARK_HOME/conf` and they will be included in Spark's
-classpath automatically.
-* If you are running Spark on the same nodes as Hadoop _and_ your distribution includes both
-`hdfs-site.xml` and `core-site.xml` in the same directory, you can set `HADOOP_CONF_DIR` 
-in `$SPARK_HOME/spark-env.sh` to that directory.
+To make these files visible to Spark, set `HADOOP_CONF_DIR` in `$SPARK_HOME/spark-env.sh` 
+to a location containing the configuration files.

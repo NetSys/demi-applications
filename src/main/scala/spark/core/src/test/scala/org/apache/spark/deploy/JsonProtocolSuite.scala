@@ -20,73 +20,187 @@ package org.apache.spark.deploy
 import java.io.File
 import java.util.Date
 
-import net.liftweb.json.{JsonAST, JsonParser}
-import net.liftweb.json.JsonAST.JValue
+import com.fasterxml.jackson.core.JsonParseException
+import org.json4s._
+import org.json4s.jackson.JsonMethods
 import org.scalatest.FunSuite
 
 import org.apache.spark.deploy.DeployMessages.{MasterStateResponse, WorkerStateResponse}
-import org.apache.spark.deploy.master.{ApplicationInfo, WorkerInfo}
-import org.apache.spark.deploy.worker.ExecutorRunner
+import org.apache.spark.deploy.master.{ApplicationInfo, DriverInfo, RecoveryState, WorkerInfo}
+import org.apache.spark.deploy.worker.{DriverRunner, ExecutorRunner}
+import org.apache.spark.SparkConf
 
 class JsonProtocolSuite extends FunSuite {
+
   test("writeApplicationInfo") {
     val output = JsonProtocol.writeApplicationInfo(createAppInfo())
     assertValidJson(output)
+    assertValidDataInJson(output, JsonMethods.parse(JsonConstants.appInfoJsonStr))
   }
 
   test("writeWorkerInfo") {
     val output = JsonProtocol.writeWorkerInfo(createWorkerInfo())
     assertValidJson(output)
+    assertValidDataInJson(output, JsonMethods.parse(JsonConstants.workerInfoJsonStr))
   }
 
   test("writeApplicationDescription") {
     val output = JsonProtocol.writeApplicationDescription(createAppDesc())
     assertValidJson(output)
+    assertValidDataInJson(output, JsonMethods.parse(JsonConstants.appDescJsonStr))
   }
 
   test("writeExecutorRunner") {
     val output = JsonProtocol.writeExecutorRunner(createExecutorRunner())
     assertValidJson(output)
+    assertValidDataInJson(output, JsonMethods.parse(JsonConstants.executorRunnerJsonStr))
+  }
+
+  test("writeDriverInfo") {
+    val output = JsonProtocol.writeDriverInfo(createDriverInfo())
+    assertValidJson(output)
+    assertValidDataInJson(output, JsonMethods.parse(JsonConstants.driverInfoJsonStr))
   }
 
   test("writeMasterState") {
-    val workers = Array[WorkerInfo](createWorkerInfo(), createWorkerInfo())
-    val activeApps = Array[ApplicationInfo](createAppInfo())
+    val workers = Array(createWorkerInfo(), createWorkerInfo())
+    val activeApps = Array(createAppInfo())
     val completedApps = Array[ApplicationInfo]()
-    val stateResponse = new MasterStateResponse("host", 8080, workers, activeApps, completedApps)
+    val activeDrivers = Array(createDriverInfo())
+    val completedDrivers = Array(createDriverInfo())
+    val stateResponse = new MasterStateResponse("host", 8080, workers, activeApps, completedApps,
+      activeDrivers, completedDrivers, RecoveryState.ALIVE)
     val output = JsonProtocol.writeMasterState(stateResponse)
     assertValidJson(output)
+    assertValidDataInJson(output, JsonMethods.parse(JsonConstants.masterStateJsonStr))
   }
 
   test("writeWorkerState") {
     val executors = List[ExecutorRunner]()
     val finishedExecutors = List[ExecutorRunner](createExecutorRunner(), createExecutorRunner())
+    val drivers = List(createDriverRunner())
+    val finishedDrivers = List(createDriverRunner(), createDriverRunner())
     val stateResponse = new WorkerStateResponse("host", 8080, "workerId", executors,
-      finishedExecutors, "masterUrl", 4, 1234, 4, 1234, "masterWebUiUrl")
+      finishedExecutors, drivers, finishedDrivers, "masterUrl", 4, 1234, 4, 1234, "masterWebUiUrl")
     val output = JsonProtocol.writeWorkerState(stateResponse)
     assertValidJson(output)
+    assertValidDataInJson(output, JsonMethods.parse(JsonConstants.workerStateJsonStr))
   }
 
-  def createAppDesc() : ApplicationDescription = {
-    val cmd = new Command("mainClass", List("arg1", "arg2"), Map())
-    new ApplicationDescription("name", 4, 1234, cmd, "sparkHome", "appUiUrl")
+  def createAppDesc(): ApplicationDescription = {
+    val cmd = new Command("mainClass", List("arg1", "arg2"), Map(), Seq(), Seq())
+    new ApplicationDescription("name", Some(4), 1234, cmd, Some("sparkHome"), "appUiUrl")
   }
+
   def createAppInfo() : ApplicationInfo = {
-    new ApplicationInfo(3, "id", createAppDesc(), new Date(123456789), null, "appUriStr")
+    val appInfo = new ApplicationInfo(JsonConstants.appInfoStartTime,
+      "id", createAppDesc(), JsonConstants.submitDate, null, Int.MaxValue)
+    appInfo.endTime = JsonConstants.currTimeInMillis
+    appInfo
   }
-  def createWorkerInfo() : WorkerInfo = {
-    new WorkerInfo("id", "host", 8080, 4, 1234, null, 80, "publicAddress")
+
+  def createDriverCommand() = new Command(
+    "org.apache.spark.FakeClass", Seq("some arg --and-some options -g foo"),
+    Map(("K1", "V1"), ("K2", "V2")), Seq("cp1", "cp2"), Seq("lp1", "lp2"), Some("-Dfoo")
+  )
+
+  def createDriverDesc() = new DriverDescription("hdfs://some-dir/some.jar", 100, 3,
+    false, createDriverCommand())
+
+  def createDriverInfo(): DriverInfo = new DriverInfo(3, "driver-3",
+    createDriverDesc(), new Date())
+
+  def createWorkerInfo(): WorkerInfo = {
+    val workerInfo = new WorkerInfo("id", "host", 8080, 4, 1234, null, 80, "publicAddress")
+    workerInfo.lastHeartbeat = JsonConstants.currTimeInMillis
+    workerInfo
   }
-  def createExecutorRunner() : ExecutorRunner = {
+  def createExecutorRunner(): ExecutorRunner = {
     new ExecutorRunner("appId", 123, createAppDesc(), 4, 1234, null, "workerId", "host",
-      new File("sparkHome"), new File("workDir"))
+      new File("sparkHome"), new File("workDir"), "akka://worker",
+      new SparkConf, ExecutorState.RUNNING)
+  }
+  def createDriverRunner(): DriverRunner = {
+    new DriverRunner("driverId", new File("workDir"), new File("sparkHome"), createDriverDesc(),
+      null, "akka://worker")
   }
 
   def assertValidJson(json: JValue) {
     try {
-      JsonParser.parse(JsonAST.compactRender(json))
+      JsonMethods.parse(JsonMethods.compact(json))
     } catch {
-      case e: JsonParser.ParseException => fail("Invalid Json detected", e)
+      case e: JsonParseException => fail("Invalid Json detected", e)
     }
   }
+
+  def assertValidDataInJson(validateJson: JValue, expectedJson: JValue) {
+    val Diff(c, a, d) = validateJson diff expectedJson
+    val validatePretty = JsonMethods.pretty(validateJson)
+    val expectedPretty = JsonMethods.pretty(expectedJson)
+    val errorMessage = s"Expected:\n$expectedPretty\nFound:\n$validatePretty"
+    assert(c === JNothing, s"$errorMessage\nChanged:\n${JsonMethods.pretty(c)}")
+    assert(a === JNothing, s"$errorMessage\nAdded:\n${JsonMethods.pretty(a)}")
+    assert(d === JNothing, s"$errorMessage\nDelected:\n${JsonMethods.pretty(d)}")
+  }
+}
+
+object JsonConstants {
+  val currTimeInMillis = System.currentTimeMillis()
+  val appInfoStartTime = 3
+  val submitDate = new Date(123456789)
+  val appInfoJsonStr =
+    """
+      |{"starttime":3,"id":"id","name":"name",
+      |"cores":4,"user":"%s",
+      |"memoryperslave":1234,"submitdate":"%s",
+      |"state":"WAITING","duration":%d}
+    """.format(System.getProperty("user.name", "<unknown>"),
+        submitDate.toString, currTimeInMillis - appInfoStartTime).stripMargin
+
+  val workerInfoJsonStr =
+    """
+      |{"id":"id","host":"host","port":8080,
+      |"webuiaddress":"http://publicAddress:80",
+      |"cores":4,"coresused":0,"coresfree":4,
+      |"memory":1234,"memoryused":0,"memoryfree":1234,
+      |"state":"ALIVE","lastheartbeat":%d}
+    """.format(currTimeInMillis).stripMargin
+
+  val appDescJsonStr =
+    """
+      |{"name":"name","cores":4,"memoryperslave":1234,
+      |"user":"%s","sparkhome":"sparkHome",
+      |"command":"Command(mainClass,List(arg1, arg2),Map(),List(),List(),None)"}
+    """.format(System.getProperty("user.name", "<unknown>")).stripMargin
+
+  val executorRunnerJsonStr =
+    """
+      |{"id":123,"memory":1234,"appid":"appId",
+      |"appdesc":%s}
+    """.format(appDescJsonStr).stripMargin
+
+  val driverInfoJsonStr =
+    """
+      |{"id":"driver-3","starttime":"3","state":"SUBMITTED","cores":3,"memory":100}
+    """.stripMargin
+
+  val masterStateJsonStr =
+    """
+      |{"url":"spark://host:8080",
+      |"workers":[%s,%s],
+      |"cores":8,"coresused":0,"memory":2468,"memoryused":0,
+      |"activeapps":[%s],"completedapps":[],
+      |"activedrivers":[%s],
+      |"status":"ALIVE"}
+    """.format(workerInfoJsonStr, workerInfoJsonStr,
+        appInfoJsonStr, driverInfoJsonStr).stripMargin
+
+  val workerStateJsonStr =
+    """
+      |{"id":"workerId","masterurl":"masterUrl",
+      |"masterwebuiurl":"masterWebUiUrl",
+      |"cores":4,"coresused":4,"memory":1234,"memoryused":1234,
+      |"executors":[],
+      |"finishedexecutors":[%s,%s]}
+    """.format(executorRunnerJsonStr, executorRunnerJsonStr).stripMargin
 }

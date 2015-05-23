@@ -17,12 +17,10 @@
 
 package org.apache.spark.mllib.regression
 
-import org.apache.spark.{Logging, SparkContext}
+import org.apache.spark.annotation.Experimental
 import org.apache.spark.rdd.RDD
 import org.apache.spark.mllib.optimization._
-import org.apache.spark.mllib.util.MLUtils
-
-import org.jblas.DoubleMatrix
+import org.apache.spark.mllib.linalg.Vector
 
 /**
  * Regression model trained using RidgeRegression.
@@ -30,79 +28,52 @@ import org.jblas.DoubleMatrix
  * @param weights Weights computed for every feature.
  * @param intercept Intercept computed for this model.
  */
-class RidgeRegressionModel(
-    override val weights: Array[Double],
+class RidgeRegressionModel private[mllib] (
+    override val weights: Vector,
     override val intercept: Double)
   extends GeneralizedLinearModel(weights, intercept)
   with RegressionModel with Serializable {
 
-  override def predictPoint(dataMatrix: DoubleMatrix, weightMatrix: DoubleMatrix,
-                            intercept: Double) = {
-    dataMatrix.dot(weightMatrix) + intercept
+  override protected def predictPoint(
+      dataMatrix: Vector,
+      weightMatrix: Vector,
+      intercept: Double): Double = {
+    weightMatrix.toBreeze.dot(dataMatrix.toBreeze) + intercept
   }
 }
 
 /**
  * Train a regression model with L2-regularization using Stochastic Gradient Descent.
+ * This solves the l1-regularized least squares regression formulation
+ *          f(weights) = 1/n ||A weights-y||^2  + regParam/2 ||weights||^2
+ * Here the data matrix has n rows, and the input RDD holds the set of rows of A, each with
+ * its corresponding right hand side label y.
+ * See also the documentation for the precise formulation.
  */
 class RidgeRegressionWithSGD private (
-    var stepSize: Double,
-    var numIterations: Int,
-    var regParam: Double,
-    var miniBatchFraction: Double)
-    extends GeneralizedLinearAlgorithm[RidgeRegressionModel]
-  with Serializable {
+    private var stepSize: Double,
+    private var numIterations: Int,
+    private var regParam: Double,
+    private var miniBatchFraction: Double)
+  extends GeneralizedLinearAlgorithm[RidgeRegressionModel] with Serializable {
 
-  val gradient = new SquaredGradient()
-  val updater = new SquaredL2Updater()
+  private val gradient = new LeastSquaresGradient()
+  private val updater = new SquaredL2Updater()
 
-  @transient val optimizer = new GradientDescent(gradient, updater).setStepSize(stepSize)
+  override val optimizer = new GradientDescent(gradient, updater)
+    .setStepSize(stepSize)
     .setNumIterations(numIterations)
     .setRegParam(regParam)
     .setMiniBatchFraction(miniBatchFraction)
 
-  // We don't want to penalize the intercept in RidgeRegression, so set this to false.
-  setIntercept(false)
-
-  var yMean = 0.0
-  var xColMean: DoubleMatrix = _
-  var xColSd: DoubleMatrix = _
-
   /**
-   * Construct a RidgeRegression object with default parameters
+   * Construct a RidgeRegression object with default parameters: {stepSize: 1.0, numIterations: 100,
+   * regParam: 1.0, miniBatchFraction: 1.0}.
    */
   def this() = this(1.0, 100, 1.0, 1.0)
 
-  def createModel(weights: Array[Double], intercept: Double) = {
-    val weightsMat = new DoubleMatrix(weights.length + 1, 1, (Array(intercept) ++ weights):_*)
-    val weightsScaled = weightsMat.div(xColSd)
-    val interceptScaled = yMean - (weightsMat.transpose().mmul(xColMean.div(xColSd)).get(0))
-
-    new RidgeRegressionModel(weightsScaled.data, interceptScaled)
-  }
-
-  override def run(
-      input: RDD[LabeledPoint],
-      initialWeights: Array[Double])
-    : RidgeRegressionModel =
-  {
-    val nfeatures: Int = input.first.features.length
-    val nexamples: Long = input.count()
-
-    // To avoid penalizing the intercept, we center and scale the data.
-    val stats = MLUtils.computeStats(input, nfeatures, nexamples)
-    yMean = stats._1
-    xColMean = stats._2
-    xColSd = stats._3
-
-    val normalizedData = input.map { point =>
-      val yNormalized = point.label - yMean
-      val featuresMat = new DoubleMatrix(nfeatures, 1, point.features:_*)
-      val featuresNormalized = featuresMat.sub(xColMean).divi(xColSd)
-      LabeledPoint(yNormalized, featuresNormalized.toArray)
-    }
-
-    super.run(normalizedData, initialWeights)
+  override protected def createModel(weights: Vector, intercept: Double) = {
+    new RidgeRegressionModel(weights, intercept)
   }
 }
 
@@ -114,15 +85,15 @@ object RidgeRegressionWithSGD {
   /**
    * Train a RidgeRegression model given an RDD of (label, features) pairs. We run a fixed number
    * of iterations of gradient descent using the specified step size. Each iteration uses
-   * `miniBatchFraction` fraction of the data to calculate the gradient. The weights used in
-   * gradient descent are initialized using the initial weights provided.
+   * `miniBatchFraction` fraction of the data to calculate a stochastic gradient. The weights used
+   * in gradient descent are initialized using the initial weights provided.
    *
    * @param input RDD of (label, array of features) pairs.
    * @param numIterations Number of iterations of gradient descent to run.
    * @param stepSize Step size to be used for each iteration of gradient descent.
    * @param regParam Regularization parameter.
    * @param miniBatchFraction Fraction of data to be used per iteration.
-   * @param initialWeights Initial set of weights to be used. Array should be equal in size to 
+   * @param initialWeights Initial set of weights to be used. Array should be equal in size to
    *        the number of features in the data.
    */
   def train(
@@ -131,9 +102,7 @@ object RidgeRegressionWithSGD {
       stepSize: Double,
       regParam: Double,
       miniBatchFraction: Double,
-      initialWeights: Array[Double])
-    : RidgeRegressionModel =
-  {
+      initialWeights: Vector): RidgeRegressionModel = {
     new RidgeRegressionWithSGD(stepSize, numIterations, regParam, miniBatchFraction).run(
       input, initialWeights)
   }
@@ -141,7 +110,7 @@ object RidgeRegressionWithSGD {
   /**
    * Train a RidgeRegression model given an RDD of (label, features) pairs. We run a fixed number
    * of iterations of gradient descent using the specified step size. Each iteration uses
-   * `miniBatchFraction` fraction of the data to calculate the gradient.
+   * `miniBatchFraction` fraction of the data to calculate a stochastic gradient.
    *
    * @param input RDD of (label, array of features) pairs.
    * @param numIterations Number of iterations of gradient descent to run.
@@ -154,16 +123,14 @@ object RidgeRegressionWithSGD {
       numIterations: Int,
       stepSize: Double,
       regParam: Double,
-      miniBatchFraction: Double)
-    : RidgeRegressionModel =
-  {
+      miniBatchFraction: Double): RidgeRegressionModel = {
     new RidgeRegressionWithSGD(stepSize, numIterations, regParam, miniBatchFraction).run(input)
   }
 
   /**
    * Train a RidgeRegression model given an RDD of (label, features) pairs. We run a fixed number
    * of iterations of gradient descent using the specified step size. We use the entire data set to
-   * update the gradient in each iteration.
+   * compute the true gradient in each iteration.
    *
    * @param input RDD of (label, array of features) pairs.
    * @param stepSize Step size to be used for each iteration of Gradient Descent.
@@ -175,16 +142,14 @@ object RidgeRegressionWithSGD {
       input: RDD[LabeledPoint],
       numIterations: Int,
       stepSize: Double,
-      regParam: Double)
-    : RidgeRegressionModel =
-  {
+      regParam: Double): RidgeRegressionModel = {
     train(input, numIterations, stepSize, regParam, 1.0)
   }
 
   /**
    * Train a RidgeRegression model given an RDD of (label, features) pairs. We run a fixed number
    * of iterations of gradient descent using a step size of 1.0. We use the entire data set to
-   * update the gradient in each iteration.
+   * compute the true gradient in each iteration.
    *
    * @param input RDD of (label, array of features) pairs.
    * @param numIterations Number of iterations of gradient descent to run.
@@ -192,23 +157,7 @@ object RidgeRegressionWithSGD {
    */
   def train(
       input: RDD[LabeledPoint],
-      numIterations: Int)
-    : RidgeRegressionModel =
-  {
+      numIterations: Int): RidgeRegressionModel = {
     train(input, numIterations, 1.0, 1.0, 1.0)
-  }
-
-  def main(args: Array[String]) {
-    if (args.length != 5) {
-      println("Usage: RidgeRegression <master> <input_dir> <step_size> <regularization_parameter>" +
-        " <niters>")
-      System.exit(1)
-    }
-    val sc = new SparkContext(args(0), "RidgeRegression")
-    val data = MLUtils.loadLabeledData(sc, args(1))
-    val model = RidgeRegressionWithSGD.train(data, args(4).toInt, args(2).toDouble,
-        args(3).toDouble)
-
-    sc.stop()
   }
 }

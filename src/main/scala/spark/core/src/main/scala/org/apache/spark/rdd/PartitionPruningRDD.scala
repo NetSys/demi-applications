@@ -17,10 +17,13 @@
 
 package org.apache.spark.rdd
 
-import org.apache.spark.{NarrowDependency, SparkEnv, Partition, TaskContext}
+import scala.reflect.ClassTag
 
+import org.apache.spark.{NarrowDependency, Partition, TaskContext}
+import org.apache.spark.annotation.DeveloperApi
 
-class PartitionPruningRDDPartition(idx: Int, val parentSplit: Partition) extends Partition {
+private[spark] class PartitionPruningRDDPartition(idx: Int, val parentSplit: Partition)
+  extends Partition {
   override val index = idx
 }
 
@@ -29,25 +32,29 @@ class PartitionPruningRDDPartition(idx: Int, val parentSplit: Partition) extends
  * Represents a dependency between the PartitionPruningRDD and its parent. In this
  * case, the child RDD contains a subset of partitions of the parents'.
  */
-class PruneDependency[T](rdd: RDD[T], @transient partitionFilterFunc: Int => Boolean)
+private[spark] class PruneDependency[T](rdd: RDD[T], @transient partitionFilterFunc: Int => Boolean)
   extends NarrowDependency[T](rdd) {
 
   @transient
-  val partitions: Array[Partition] = rdd.partitions.zipWithIndex
-    .filter(s => partitionFilterFunc(s._2))
+  val partitions: Array[Partition] = rdd.partitions
+    .filter(s => partitionFilterFunc(s.index)).zipWithIndex
     .map { case(split, idx) => new PartitionPruningRDDPartition(idx, split) : Partition }
 
-  override def getParents(partitionId: Int) = List(partitions(partitionId).index)
+  override def getParents(partitionId: Int) = {
+    List(partitions(partitionId).asInstanceOf[PartitionPruningRDDPartition].parentSplit.index)
+  }
 }
 
 
 /**
+ * :: DeveloperApi ::
  * A RDD used to prune RDD partitions/partitions so we can avoid launching tasks on
  * all partitions. An example use case: If we know the RDD is partitioned by range,
  * and the execution DAG has a filter on the key, we can avoid launching tasks
  * on partitions that don't have the range covering the key.
  */
-class PartitionPruningRDD[T: ClassManifest](
+@DeveloperApi
+class PartitionPruningRDD[T: ClassTag](
     @transient prev: RDD[T],
     @transient partitionFilterFunc: Int => Boolean)
   extends RDD[T](prev.context, List(new PruneDependency(prev, partitionFilterFunc))) {
@@ -60,6 +67,7 @@ class PartitionPruningRDD[T: ClassManifest](
 }
 
 
+@DeveloperApi
 object PartitionPruningRDD {
 
   /**
@@ -67,6 +75,6 @@ object PartitionPruningRDD {
    * when its type T is not known at compile time.
    */
   def create[T](rdd: RDD[T], partitionFilterFunc: Int => Boolean) = {
-    new PartitionPruningRDD[T](rdd, partitionFilterFunc)(rdd.elementClassManifest)
+    new PartitionPruningRDD[T](rdd, partitionFilterFunc)(rdd.elementClassTag)
   }
 }

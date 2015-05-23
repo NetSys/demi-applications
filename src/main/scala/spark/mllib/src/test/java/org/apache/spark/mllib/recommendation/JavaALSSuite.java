@@ -20,8 +20,6 @@ package org.apache.spark.mllib.recommendation;
 import java.io.Serializable;
 import java.util.List;
 
-import scala.Tuple2;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,11 +42,10 @@ public class JavaALSSuite implements Serializable {
   public void tearDown() {
     sc.stop();
     sc = null;
-    System.clearProperty("spark.driver.port");
   }
 
-  void validatePrediction(MatrixFactorizationModel model, int users, int products, int features, 
-      DoubleMatrix trueRatings, double matchThreshold) {
+  static void validatePrediction(MatrixFactorizationModel model, int users, int products, int features,
+      DoubleMatrix trueRatings, double matchThreshold, boolean implicitPrefs, DoubleMatrix truePrefs) {
     DoubleMatrix predictedU = new DoubleMatrix(users, features);
     List<scala.Tuple2<Object, double[]>> userFeatures = model.userFeatures().toJavaRDD().collect();
     for (int i = 0; i < features; ++i) {
@@ -68,12 +65,32 @@ public class JavaALSSuite implements Serializable {
 
     DoubleMatrix predictedRatings = predictedU.mmul(predictedP.transpose());
 
-    for (int u = 0; u < users; ++u) {
-      for (int p = 0; p < products; ++p) {
-        double prediction = predictedRatings.get(u, p);
-        double correct = trueRatings.get(u, p);
-        Assert.assertTrue(Math.abs(prediction - correct) < matchThreshold);
+    if (!implicitPrefs) {
+      for (int u = 0; u < users; ++u) {
+        for (int p = 0; p < products; ++p) {
+          double prediction = predictedRatings.get(u, p);
+          double correct = trueRatings.get(u, p);
+          Assert.assertTrue(String.format("Prediction=%2.4f not below match threshold of %2.2f",
+                  prediction, matchThreshold), Math.abs(prediction - correct) < matchThreshold);
+        }
       }
+    } else {
+      // For implicit prefs we use the confidence-weighted RMSE to test (ref Mahout's implicit ALS tests)
+      double sqErr = 0.0;
+      double denom = 0.0;
+      for (int u = 0; u < users; ++u) {
+        for (int p = 0; p < products; ++p) {
+          double prediction = predictedRatings.get(u, p);
+          double truePref = truePrefs.get(u, p);
+          double confidence = 1.0 + /* alpha = */ 1.0 * Math.abs(trueRatings.get(u, p));
+          double err = confidence * (truePref - prediction) * (truePref - prediction);
+          sqErr += err;
+          denom += confidence;
+        }
+      }
+      double rmse = Math.sqrt(sqErr / denom);
+      Assert.assertTrue(String.format("Confidence-weighted RMSE=%2.4f above threshold of %2.2f",
+              rmse, matchThreshold), rmse < matchThreshold);
     }
   }
 
@@ -81,30 +98,77 @@ public class JavaALSSuite implements Serializable {
   public void runALSUsingStaticMethods() {
     int features = 1;
     int iterations = 15;
-    int users = 10;
-    int products = 10;
-    scala.Tuple2<List<Rating>, DoubleMatrix> testData = ALSSuite.generateRatingsAsJavaList(
-        users, products, features, 0.7);
+    int users = 50;
+    int products = 100;
+    scala.Tuple3<List<Rating>, DoubleMatrix, DoubleMatrix> testData = ALSSuite.generateRatingsAsJavaList(
+        users, products, features, 0.7, false, false);
 
     JavaRDD<Rating> data = sc.parallelize(testData._1());
     MatrixFactorizationModel model = ALS.train(data.rdd(), features, iterations);
-    validatePrediction(model, users, products, features, testData._2(), 0.3);
+    validatePrediction(model, users, products, features, testData._2(), 0.3, false, testData._3());
   }
 
   @Test
   public void runALSUsingConstructor() {
     int features = 2;
     int iterations = 15;
-    int users = 20;
-    int products = 30;
-    scala.Tuple2<List<Rating>, DoubleMatrix> testData = ALSSuite.generateRatingsAsJavaList(
-        users, products, features, 0.7);
+    int users = 100;
+    int products = 200;
+    scala.Tuple3<List<Rating>, DoubleMatrix, DoubleMatrix> testData = ALSSuite.generateRatingsAsJavaList(
+        users, products, features, 0.7, false, false);
 
     JavaRDD<Rating> data = sc.parallelize(testData._1());
 
     MatrixFactorizationModel model = new ALS().setRank(features)
                                               .setIterations(iterations)
                                               .run(data.rdd());
-    validatePrediction(model, users, products, features, testData._2(), 0.3);
+    validatePrediction(model, users, products, features, testData._2(), 0.3, false, testData._3());
   }
+
+  @Test
+  public void runImplicitALSUsingStaticMethods() {
+    int features = 1;
+    int iterations = 15;
+    int users = 80;
+    int products = 160;
+    scala.Tuple3<List<Rating>, DoubleMatrix, DoubleMatrix> testData = ALSSuite.generateRatingsAsJavaList(
+        users, products, features, 0.7, true, false);
+
+    JavaRDD<Rating> data = sc.parallelize(testData._1());
+    MatrixFactorizationModel model = ALS.trainImplicit(data.rdd(), features, iterations);
+    validatePrediction(model, users, products, features, testData._2(), 0.4, true, testData._3());
+  }
+
+  @Test
+  public void runImplicitALSUsingConstructor() {
+    int features = 2;
+    int iterations = 15;
+    int users = 100;
+    int products = 200;
+    scala.Tuple3<List<Rating>, DoubleMatrix, DoubleMatrix> testData = ALSSuite.generateRatingsAsJavaList(
+        users, products, features, 0.7, true, false);
+
+    JavaRDD<Rating> data = sc.parallelize(testData._1());
+
+    MatrixFactorizationModel model = new ALS().setRank(features)
+      .setIterations(iterations)
+      .setImplicitPrefs(true)
+      .run(data.rdd());
+    validatePrediction(model, users, products, features, testData._2(), 0.4, true, testData._3());
+  }
+
+  @Test
+  public void runImplicitALSWithNegativeWeight() {
+    int features = 2;
+    int iterations = 15;
+    int users = 80;
+    int products = 160;
+    scala.Tuple3<List<Rating>, DoubleMatrix, DoubleMatrix> testData = ALSSuite.generateRatingsAsJavaList(
+        users, products, features, 0.7, true, true);
+
+    JavaRDD<Rating> data = sc.parallelize(testData._1());
+    MatrixFactorizationModel model = ALS.trainImplicit(data.rdd(), features, iterations);
+    validatePrediction(model, users, products, features, testData._2(), 0.4, true, testData._3());
+  }
+
 }

@@ -17,26 +17,49 @@
 
 package org.apache.spark
 
-import executor.TaskMetrics
 import scala.collection.mutable.ArrayBuffer
 
+import org.apache.spark.annotation.DeveloperApi
+import org.apache.spark.executor.TaskMetrics
+
+/**
+ * :: DeveloperApi ::
+ * Contextual information about a task which can be read or mutated during execution.
+ */
+@DeveloperApi
 class TaskContext(
-  val stageId: Int,
-  val splitId: Int,
-  val attemptId: Long,
-  val runningLocally: Boolean = false,
-  val taskMetrics: TaskMetrics = TaskMetrics.empty()
-) extends Serializable {
+    val stageId: Int,
+    val partitionId: Int,
+    val attemptId: Long,
+    val runningLocally: Boolean = false,
+    private[spark] val taskMetrics: TaskMetrics = TaskMetrics.empty)
+  extends Serializable {
 
-  @transient val onCompleteCallbacks = new ArrayBuffer[() => Unit]
+  @deprecated("use partitionId", "0.8.1")
+  def splitId = partitionId
 
-  // Add a callback function to be executed on task completion. An example use
-  // is for HadoopRDD to register a callback to close the input stream.
+  // List of callback functions to execute when the task completes.
+  @transient private val onCompleteCallbacks = new ArrayBuffer[() => Unit]
+
+  // Whether the corresponding task has been killed.
+  @volatile var interrupted: Boolean = false
+
+  // Whether the task has completed, before the onCompleteCallbacks are executed.
+  @volatile var completed: Boolean = false
+
+  /**
+   * Add a callback function to be executed on task completion. An example use
+   * is for HadoopRDD to register a callback to close the input stream.
+   * Will be called in any situation - success, failure, or cancellation.
+   * @param f Callback function.
+   */
   def addOnCompleteCallback(f: () => Unit) {
     onCompleteCallbacks += f
   }
 
   def executeOnCompleteCallbacks() {
-    onCompleteCallbacks.foreach{_()}
+    completed = true
+    // Process complete callbacks in the reverse order of registration
+    onCompleteCallbacks.reverse.foreach { _() }
   }
 }

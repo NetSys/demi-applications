@@ -17,10 +17,13 @@
 
 package org.apache.spark.storage
 
-import akka.actor._
-
 import java.util.concurrent.ArrayBlockingQueue
+
+import akka.actor._
 import util.Random
+
+import org.apache.spark.{MapOutputTrackerMaster, SecurityManager, SparkConf}
+import org.apache.spark.scheduler.LiveListenerBus
 import org.apache.spark.serializer.KryoSerializer
 
 /**
@@ -36,16 +39,16 @@ private[spark] object ThreadingTest {
   val numBlocksPerProducer = 20000
 
   private[spark] class ProducerThread(manager: BlockManager, id: Int) extends Thread {
-    val queue = new ArrayBlockingQueue[(String, Seq[Int])](100)
+    val queue = new ArrayBlockingQueue[(BlockId, Seq[Int])](100)
 
     override def run() {
       for (i <- 1 to numBlocksPerProducer) {
-        val blockId = "b-" + id + "-" + i
+        val blockId = TestBlockId("b-" + id + "-" + i)
         val blockSize = Random.nextInt(1000)
         val block = (1 to blockSize).map(_ => Random.nextInt())
         val level = randomLevel()
         val startTime = System.currentTimeMillis()
-        manager.put(blockId, block.iterator, level, true)
+        manager.put(blockId, block.iterator, level, tellMaster = true)
         println("Pushed block " + blockId + " in " + (System.currentTimeMillis - startTime) + " ms")
         queue.add((blockId, block))
       }
@@ -64,7 +67,7 @@ private[spark] object ThreadingTest {
 
   private[spark] class ConsumerThread(
       manager: BlockManager,
-      queue: ArrayBlockingQueue[(String, Seq[Int])]
+      queue: ArrayBlockingQueue[(BlockId, Seq[Int])]
     ) extends Thread {
     var numBlockConsumed = 0
 
@@ -75,7 +78,7 @@ private[spark] object ThreadingTest {
         val startTime = System.currentTimeMillis()
         manager.get(blockId) match {
           case Some(retrievedBlock) =>
-            assert(retrievedBlock.toList.asInstanceOf[List[Int]] == block.toList,
+            assert(retrievedBlock.data.toList.asInstanceOf[List[Int]] == block.toList,
               "Block " + blockId + " did not match")
             println("Got block " + blockId + " in " +
               (System.currentTimeMillis - startTime) + " ms")
@@ -91,11 +94,14 @@ private[spark] object ThreadingTest {
   def main(args: Array[String]) {
     System.setProperty("spark.kryoserializer.buffer.mb", "1")
     val actorSystem = ActorSystem("test")
-    val serializer = new KryoSerializer
+    val conf = new SparkConf()
+    val serializer = new KryoSerializer(conf)
     val blockManagerMaster = new BlockManagerMaster(
-      actorSystem.actorOf(Props(new BlockManagerMasterActor(true))))
+      actorSystem.actorOf(Props(new BlockManagerMasterActor(true, conf, new LiveListenerBus))),
+      conf)
     val blockManager = new BlockManager(
-      "<driver>", actorSystem, blockManagerMaster, serializer, 1024 * 1024)
+      "<driver>", actorSystem, blockManagerMaster, serializer, 1024 * 1024, conf,
+      new SecurityManager(conf), new MapOutputTrackerMaster(conf))
     val producers = (1 to numProducers).map(i => new ProducerThread(blockManager, i))
     val consumers = producers.map(p => new ConsumerThread(blockManager, p.queue))
     producers.foreach(_.start)

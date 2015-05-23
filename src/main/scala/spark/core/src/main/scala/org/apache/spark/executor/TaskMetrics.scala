@@ -17,21 +17,29 @@
 
 package org.apache.spark.executor
 
+import org.apache.spark.annotation.DeveloperApi
+import org.apache.spark.storage.{BlockId, BlockStatus}
+
+/**
+ * :: DeveloperApi ::
+ * Metrics tracked during the execution of a task.
+ */
+@DeveloperApi
 class TaskMetrics extends Serializable {
   /**
-   * Host's name the task runs on 
+   * Host's name the task runs on
    */
   var hostname: String = _
 
   /**
    * Time taken on the executor to deserialize this task
    */
-  var executorDeserializeTime: Int = _
+  var executorDeserializeTime: Long = _
 
   /**
    * Time the executor spends actually running the task (including fetching shuffle data)
    */
-  var executorRunTime: Int = _
+  var executorRunTime: Long = _
 
   /**
    * The number of bytes this task transmitted back to the driver as the TaskResult
@@ -44,62 +52,123 @@ class TaskMetrics extends Serializable {
   var jvmGCTime: Long = _
 
   /**
+   * Amount of time spent serializing the task result
+   */
+  var resultSerializationTime: Long = _
+
+  /**
+   * The number of in-memory bytes spilled by this task
+   */
+  var memoryBytesSpilled: Long = _
+
+  /**
+   * The number of on-disk bytes spilled by this task
+   */
+  var diskBytesSpilled: Long = _
+
+  /**
+   * If this task reads from a HadoopRDD or from persisted data, metrics on how much data was read
+   * are stored here.
+   */
+  var inputMetrics: Option[InputMetrics] = None
+
+  /**
    * If this task reads from shuffle output, metrics on getting shuffle data will be collected here
    */
   var shuffleReadMetrics: Option[ShuffleReadMetrics] = None
 
   /**
-   * If this task writes to shuffle output, metrics on the written shuffle data will be collected here
+   * If this task writes to shuffle output, metrics on the written shuffle data will be collected
+   * here
    */
   var shuffleWriteMetrics: Option[ShuffleWriteMetrics] = None
+
+  /**
+   * Storage statuses of any blocks that have been updated as a result of this task.
+   */
+  var updatedBlocks: Option[Seq[(BlockId, BlockStatus)]] = None
 }
 
-object TaskMetrics {
-  private[spark] def empty(): TaskMetrics = new TaskMetrics
+private[spark] object TaskMetrics {
+  def empty: TaskMetrics = new TaskMetrics
+}
+
+/**
+ * :: DeveloperApi ::
+ * Method by which input data was read.  Network means that the data was read over the network
+ * from a remote block manager (which may have stored the data on-disk or in-memory).
+ */
+@DeveloperApi
+object DataReadMethod extends Enumeration with Serializable {
+  type DataReadMethod = Value
+  val Memory, Disk, Hadoop, Network = Value
+}
+
+/**
+ * :: DeveloperApi ::
+ * Metrics about reading input data.
+ */
+@DeveloperApi
+case class InputMetrics(readMethod: DataReadMethod.Value) {
+  /**
+   * Total bytes read.
+   */
+  var bytesRead: Long = 0L
 }
 
 
+/**
+ * :: DeveloperApi ::
+ * Metrics pertaining to shuffle data read in a given task.
+ */
+@DeveloperApi
 class ShuffleReadMetrics extends Serializable {
   /**
-   * Time when shuffle finishs
+   * Absolute time when this task finished reading shuffle data
    */
   var shuffleFinishTime: Long = _
 
   /**
-   * Total number of blocks fetched in a shuffle (remote or local)
+   * Number of blocks fetched in this shuffle by this task (remote or local)
    */
   var totalBlocksFetched: Int = _
 
   /**
-   * Number of remote blocks fetched in a shuffle
+   * Number of remote blocks fetched in this shuffle by this task
    */
   var remoteBlocksFetched: Int = _
 
   /**
-   * Local blocks fetched in a shuffle
+   * Number of local blocks fetched in this shuffle by this task
    */
   var localBlocksFetched: Int = _
 
   /**
-   * Total time that is spent blocked waiting for shuffle to fetch data
+   * Time the task spent waiting for remote shuffle blocks. This only includes the time
+   * blocking on shuffle input data. For instance if block B is being fetched while the task is
+   * still not finished processing block A, it is not considered to be blocking on block B.
    */
   var fetchWaitTime: Long = _
 
   /**
-   * The total amount of time for all the shuffle fetches.  This adds up time from overlapping
-   *     shuffles, so can be longer than task time
-   */
-  var remoteFetchTime: Long = _
-
-  /**
-   * Total number of remote bytes read from a shuffle
+   * Total number of remote bytes read from the shuffle by this task
    */
   var remoteBytesRead: Long = _
 }
 
+/**
+ * :: DeveloperApi ::
+ * Metrics pertaining to shuffle data written in a given task.
+ */
+@DeveloperApi
 class ShuffleWriteMetrics extends Serializable {
   /**
-   * Number of bytes written for a shuffle
+   * Number of bytes written for the shuffle by this task
    */
   var shuffleBytesWritten: Long = _
+
+  /**
+   * Time the task spent blocking on writes to disk or buffer cache, in nanoseconds
+   */
+  var shuffleWriteTime: Long = _
 }

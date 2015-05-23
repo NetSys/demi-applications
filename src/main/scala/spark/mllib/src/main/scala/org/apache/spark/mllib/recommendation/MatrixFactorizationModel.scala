@@ -17,10 +17,13 @@
 
 package org.apache.spark.mllib.recommendation
 
+import org.jblas.DoubleMatrix
+
+import org.apache.spark.annotation.DeveloperApi
+import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
-
-import org.jblas._
+import org.apache.spark.mllib.api.python.PythonMLLibAPI
 
 /**
  * Model representing the result of matrix factorization.
@@ -31,12 +34,10 @@ import org.jblas._
  * @param productFeatures RDD of tuples where each tuple represents the productId
  *                        and the features computed for this product.
  */
-class MatrixFactorizationModel(
+class MatrixFactorizationModel private[mllib] (
     val rank: Int,
     val userFeatures: RDD[(Int, Array[Double])],
-    val productFeatures: RDD[(Int, Array[Double])])
-  extends Serializable
-{
+    val productFeatures: RDD[(Int, Array[Double])]) extends Serializable {
   /** Predict the rating of one user for one product. */
   def predict(user: Int, product: Int): Double = {
     val userVector = new DoubleMatrix(userFeatures.lookup(user).head)
@@ -44,6 +45,41 @@ class MatrixFactorizationModel(
     userVector.dot(productVector)
   }
 
-  // TODO: Figure out what good bulk prediction methods would look like.
+  /**
+    * Predict the rating of many users for many products.
+    * The output RDD has an element per each element in the input RDD (including all duplicates)
+    * unless a user or product is missing in the training set.
+    *
+    * @param usersProducts  RDD of (user, product) pairs.
+    * @return RDD of Ratings.
+    */
+  def predict(usersProducts: RDD[(Int, Int)]): RDD[Rating] = {
+    val users = userFeatures.join(usersProducts).map{
+      case (user, (uFeatures, product)) => (product, (user, uFeatures))
+    }
+    users.join(productFeatures).map {
+      case (product, ((user, uFeatures), pFeatures)) =>
+        val userVector = new DoubleMatrix(uFeatures)
+        val productVector = new DoubleMatrix(pFeatures)
+        Rating(user, product, userVector.dot(productVector))
+    }
+  }
+
+  /**
+   * :: DeveloperApi ::
+   * Predict the rating of many users for many products.
+   * This is a Java stub for python predictAll()
+   *
+   * @param usersProductsJRDD A JavaRDD with serialized tuples (user, product)
+   * @return JavaRDD of serialized Rating objects.
+   */
+  @DeveloperApi
+  def predict(usersProductsJRDD: JavaRDD[Array[Byte]]): JavaRDD[Array[Byte]] = {
+    val pythonAPI = new PythonMLLibAPI()
+    val usersProducts = usersProductsJRDD.rdd.map(xBytes => pythonAPI.unpackTuple(xBytes))
+    predict(usersProducts).map(rate => pythonAPI.serializeRating(rate))
+  }
+
+  // TODO: Figure out what other good bulk prediction methods would look like.
   // Probably want a way to get the top users for a product or vice-versa.
 }

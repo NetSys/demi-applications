@@ -17,7 +17,7 @@
 
 package org.apache.spark.deploy.master
 
-import org.apache.spark.deploy.ExecutorState
+import org.apache.spark.deploy.{ExecutorDescription, ExecutorState}
 
 private[spark] class ExecutorInfo(
     val id: Int,
@@ -28,5 +28,25 @@ private[spark] class ExecutorInfo(
 
   var state = ExecutorState.LAUNCHING
 
+  /** Copy all state (non-val) variables from the given on-the-wire ExecutorDescription. */
+  def copyState(execDesc: ExecutorDescription) {
+    state = execDesc.state
+  }
+
   def fullId: String = application.id + "/" + id
+
+  override def equals(other: Any): Boolean = {
+    other match {
+      case info: ExecutorInfo =>
+        fullId == info.fullId &&
+        worker.id == info.worker.id &&
+        cores == info.cores &&
+        memory == info.memory
+      case _ => false
+    }
+  }
+
+  override def toString: String = fullId
+
+  override def hashCode: Int = toString.hashCode()
 }

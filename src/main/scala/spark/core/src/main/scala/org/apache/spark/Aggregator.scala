@@ -17,45 +17,81 @@
 
 package org.apache.spark
 
-import java.util.{HashMap => JHashMap}
+import org.apache.spark.annotation.DeveloperApi
+import org.apache.spark.util.collection.{AppendOnlyMap, ExternalAppendOnlyMap}
 
-import scala.collection.JavaConversions._
-
-/** A set of functions used to aggregate data.
-  * 
-  * @param createCombiner function to create the initial value of the aggregation.
-  * @param mergeValue function to merge a new value into the aggregation result.
-  * @param mergeCombiners function to merge outputs from multiple mergeValue function.
-  */
+/**
+ * :: DeveloperApi ::
+ * A set of functions used to aggregate data.
+ *
+ * @param createCombiner function to create the initial value of the aggregation.
+ * @param mergeValue function to merge a new value into the aggregation result.
+ * @param mergeCombiners function to merge outputs from multiple mergeValue function.
+ */
+@DeveloperApi
 case class Aggregator[K, V, C] (
     createCombiner: V => C,
     mergeValue: (C, V) => C,
     mergeCombiners: (C, C) => C) {
 
-  def combineValuesByKey(iter: Iterator[_ <: Product2[K, V]]) : Iterator[(K, C)] = {
-    val combiners = new JHashMap[K, C]
-    for (kv <- iter) {
-      val oldC = combiners.get(kv._1)
-      if (oldC == null) {
-        combiners.put(kv._1, createCombiner(kv._2))
-      } else {
-        combiners.put(kv._1, mergeValue(oldC, kv._2))
+  private val externalSorting = SparkEnv.get.conf.getBoolean("spark.shuffle.spill", true)
+
+  @deprecated("use combineValuesByKey with TaskContext argument", "0.9.0")
+  def combineValuesByKey(iter: Iterator[_ <: Product2[K, V]]): Iterator[(K, C)] =
+    combineValuesByKey(iter, null)
+
+  def combineValuesByKey(iter: Iterator[_ <: Product2[K, V]],
+                         context: TaskContext): Iterator[(K, C)] = {
+    if (!externalSorting) {
+      val combiners = new AppendOnlyMap[K,C]
+      var kv: Product2[K, V] = null
+      val update = (hadValue: Boolean, oldValue: C) => {
+        if (hadValue) mergeValue(oldValue, kv._2) else createCombiner(kv._2)
       }
+      while (iter.hasNext) {
+        kv = iter.next()
+        combiners.changeValue(kv._1, update)
+      }
+      combiners.iterator
+    } else {
+      val combiners = new ExternalAppendOnlyMap[K, V, C](createCombiner, mergeValue, mergeCombiners)
+      while (iter.hasNext) {
+        val (k, v) = iter.next()
+        combiners.insert(k, v)
+      }
+      // TODO: Make this non optional in a future release
+      Option(context).foreach(c => c.taskMetrics.memoryBytesSpilled = combiners.memoryBytesSpilled)
+      Option(context).foreach(c => c.taskMetrics.diskBytesSpilled = combiners.diskBytesSpilled)
+      combiners.iterator
     }
-    combiners.iterator
   }
 
-  def combineCombinersByKey(iter: Iterator[(K, C)]) : Iterator[(K, C)] = {
-    val combiners = new JHashMap[K, C]
-    iter.foreach { case(k, c) =>
-      val oldC = combiners.get(k)
-      if (oldC == null) {
-        combiners.put(k, c)
-      } else {
-        combiners.put(k, mergeCombiners(oldC, c))
+  @deprecated("use combineCombinersByKey with TaskContext argument", "0.9.0")
+  def combineCombinersByKey(iter: Iterator[(K, C)]) : Iterator[(K, C)] =
+    combineCombinersByKey(iter, null)
+
+  def combineCombinersByKey(iter: Iterator[(K, C)], context: TaskContext) : Iterator[(K, C)] = {
+    if (!externalSorting) {
+      val combiners = new AppendOnlyMap[K,C]
+      var kc: Product2[K, C] = null
+      val update = (hadValue: Boolean, oldValue: C) => {
+        if (hadValue) mergeCombiners(oldValue, kc._2) else kc._2
       }
+      while (iter.hasNext) {
+        kc = iter.next()
+        combiners.changeValue(kc._1, update)
+      }
+      combiners.iterator
+    } else {
+      val combiners = new ExternalAppendOnlyMap[K, C, C](identity, mergeCombiners, mergeCombiners)
+      while (iter.hasNext) {
+        val (k, c) = iter.next()
+        combiners.insert(k, c)
+      }
+      // TODO: Make this non optional in a future release
+      Option(context).foreach(c => c.taskMetrics.memoryBytesSpilled = combiners.memoryBytesSpilled)
+      Option(context).foreach(c => c.taskMetrics.diskBytesSpilled = combiners.diskBytesSpilled)
+      combiners.iterator
     }
-    combiners.iterator
   }
 }
-

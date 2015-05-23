@@ -17,32 +17,21 @@
 
 package org.apache.spark
 
-import network.ConnectionManagerId
-import org.scalatest.FunSuite
 import org.scalatest.BeforeAndAfter
+import org.scalatest.FunSuite
 import org.scalatest.concurrent.Timeouts._
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.prop.Checkers
-import org.scalatest.time.{Span, Millis}
-import org.scalacheck.Arbitrary._
-import org.scalacheck.Gen
-import org.scalacheck.Prop._
-import org.eclipse.jetty.server.{Server, Request, Handler}
+import org.scalatest.Matchers
+import org.scalatest.time.{Millis, Span}
 
-import com.google.common.io.Files
-
-import scala.collection.mutable.ArrayBuffer
-
-import SparkContext._
-import storage.{GetBlock, BlockManagerWorker, StorageLevel}
-import ui.JettyUtils
-
+import org.apache.spark.SparkContext._
+import org.apache.spark.network.ConnectionManagerId
+import org.apache.spark.storage.{BlockManagerWorker, GetBlock, RDDBlockId, StorageLevel}
 
 class NotSerializableClass
 class NotSerializableExn(val notSer: NotSerializableClass) extends Throwable() {}
 
 
-class DistributedSuite extends FunSuite with ShouldMatchers with BeforeAndAfter
+class DistributedSuite extends FunSuite with Matchers with BeforeAndAfter
   with LocalSparkContext {
 
   val clusterUrl = "local-cluster[2,1,512]"
@@ -132,7 +121,24 @@ class DistributedSuite extends FunSuite with ShouldMatchers with BeforeAndAfter
       sc.parallelize(1 to 10, 10).foreach(x => println(x / 0))
     }
     assert(thrown.getClass === classOf[SparkException])
-    assert(thrown.getMessage.contains("more than 4 times"))
+    assert(thrown.getMessage.contains("failed 4 times"))
+  }
+
+  test("repeatedly failing task that crashes JVM") {
+    // Ensures that if a task fails in a way that crashes the JVM, the job eventually fails rather
+    // than hanging due to retrying the failed task infinitely many times (eventually the
+    // standalone scheduler will remove the application, causing the job to hang waiting to
+    // reconnect to the master).
+    sc = new SparkContext(clusterUrl, "test")
+    failAfter(Span(100000, Millis)) {
+      val thrown = intercept[SparkException] {
+        // One of the tasks always fails.
+        sc.parallelize(1 to 10, 2).foreach { x => if (x == 1) System.exit(42) }
+      }
+      assert(thrown.getClass === classOf[SparkException])
+      System.out.println(thrown.getMessage)
+      assert(thrown.getMessage.contains("failed 4 times"))
+    }
   }
 
   test("caching") {
@@ -193,7 +199,7 @@ class DistributedSuite extends FunSuite with ShouldMatchers with BeforeAndAfter
 
     // Get all the locations of the first partition and try to fetch the partitions
     // from those locations.
-    val blockIds = data.partitions.indices.map(index => "rdd_%d_%d".format(data.id, index)).toArray
+    val blockIds = data.partitions.indices.map(index => RDDBlockId(data.id, index)).toArray
     val blockId = blockIds(0)
     val blockManager = SparkEnv.get.blockManager
     blockManager.master.getLocations(blockId).foreach(id => {
@@ -313,25 +319,13 @@ class DistributedSuite extends FunSuite with ShouldMatchers with BeforeAndAfter
           Thread.sleep(200)
         }
       } catch {
-        case _ => { Thread.sleep(10) }
+        case _: Throwable => { Thread.sleep(10) }
           // Do nothing. We might see exceptions because block manager
           // is racing this thread to remove entries from the driver.
       }
     }
   }
 
-  test("job should fail if TaskResult exceeds Akka frame size") {
-    // We must use local-cluster mode since results are returned differently
-    // when running under LocalScheduler:
-    sc = new SparkContext("local-cluster[1,1,512]", "test")
-    val akkaFrameSize =
-      sc.env.actorSystem.settings.config.getBytes("akka.remote.netty.message-frame-size").toInt
-    val rdd = sc.parallelize(Seq(1)).map{x => new Array[Byte](akkaFrameSize)}
-    val exception = intercept[SparkException] {
-      rdd.reduce((x, y) => x)
-    }
-    exception.getMessage should endWith("result exceeded Akka frame size")
-  }
 }
 
 object DistributedSuite {

@@ -17,277 +17,262 @@
 
 package org.apache.spark.scheduler
 
-import java.io.PrintWriter
-import java.io.File
-import java.io.FileNotFoundException
+import java.io.{File, FileNotFoundException, IOException, PrintWriter}
 import java.text.SimpleDateFormat
 import java.util.{Date, Properties}
 import java.util.concurrent.LinkedBlockingQueue
 
-import scala.collection.mutable.{Map, HashMap, ListBuffer}
-import scala.io.Source
+import scala.collection.mutable.HashMap
 
 import org.apache.spark._
+import org.apache.spark.annotation.DeveloperApi
+import org.apache.spark.executor.{DataReadMethod, TaskMetrics}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.executor.TaskMetrics
-import org.apache.spark.scheduler.cluster.TaskInfo
+import org.apache.spark.storage.StorageLevel
 
-// Used to record runtime information for each job, including RDD graph 
-// tasks' start/stop shuffle information and information from outside
+/**
+ * :: DeveloperApi ::
+ * A logger class to record runtime information for jobs in Spark. This class outputs one log file
+ * for each Spark job, containing tasks start/stop and shuffle information. JobLogger is a subclass
+ * of SparkListener, use addSparkListener to add JobLogger to a SparkContext after the SparkContext
+ * is created. Note that each JobLogger only works for one SparkContext
+ *
+ * NOTE: The functionality of this class is heavily stripped down to accommodate for a general
+ * refactor of the SparkListener interface. In its place, the EventLoggingListener is introduced
+ * to log application information as SparkListenerEvents. To enable this functionality, set
+ * spark.eventLog.enabled to true.
+ */
+@DeveloperApi
+@deprecated("Log application information by setting spark.eventLog.enabled.", "1.0.0")
+class JobLogger(val user: String, val logDirName: String) extends SparkListener with Logging {
 
-class JobLogger(val logDirName: String) extends SparkListener with Logging {
-  private val logDir =  
-    if (System.getenv("SPARK_LOG_DIR") != null)  
+  def this() = this(System.getProperty("user.name", "<unknown>"),
+    String.valueOf(System.currentTimeMillis()))
+
+  private val logDir =
+    if (System.getenv("SPARK_LOG_DIR") != null) {
       System.getenv("SPARK_LOG_DIR")
-    else 
-      "/tmp/spark"
-  private val jobIDToPrintWriter = new HashMap[Int, PrintWriter] 
-  private val stageIDToJobID = new HashMap[Int, Int]
-  private val jobIDToStages = new HashMap[Int, ListBuffer[Stage]]
-  private val DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
-  private val eventQueue = new LinkedBlockingQueue[SparkListenerEvents]
-  
+    } else {
+      "/tmp/spark-%s".format(user)
+    }
+
+  private val jobIdToPrintWriter = new HashMap[Int, PrintWriter]
+  private val stageIdToJobId = new HashMap[Int, Int]
+  private val jobIdToStageIds = new HashMap[Int, Seq[Int]]
+  private val dateFormat = new ThreadLocal[SimpleDateFormat]() {
+    override def initialValue() = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
+  }
+  private val eventQueue = new LinkedBlockingQueue[SparkListenerEvent]
+
   createLogDir()
-  def this() = this(String.valueOf(System.currentTimeMillis()))
-  
-  def getLogDir = logDir
-  def getJobIDtoPrintWriter = jobIDToPrintWriter
-  def getStageIDToJobID = stageIDToJobID
-  def getJobIDToStages = jobIDToStages
-  def getEventQueue = eventQueue
-  
-  // Create a folder for log files, the folder's name is the creation time of the jobLogger
+
+  // The following 5 functions are used only in testing.
+  private[scheduler] def getLogDir = logDir
+  private[scheduler] def getJobIdToPrintWriter = jobIdToPrintWriter
+  private[scheduler] def getStageIdToJobId = stageIdToJobId
+  private[scheduler] def getJobIdToStageIds = jobIdToStageIds
+  private[scheduler] def getEventQueue = eventQueue
+
+  /** Create a folder for log files, the folder's name is the creation time of jobLogger */
   protected def createLogDir() {
     val dir = new File(logDir + "/" + logDirName + "/")
     if (dir.exists()) {
       return
     }
     if (dir.mkdirs() == false) {
-      logError("create log directory error:" + logDir + "/" + logDirName + "/")
+      // JobLogger should throw a exception rather than continue to construct this object.
+      throw new IOException("create log directory error:" + logDir + "/" + logDirName + "/")
     }
   }
-  
-  // Create a log file for one job, the file name is the jobID
-  protected def createLogWriter(jobID: Int) {
-    try{
-      val fileWriter = new PrintWriter(logDir + "/" + logDirName + "/" + jobID)
-      jobIDToPrintWriter += (jobID -> fileWriter)
-      } catch {
-        case e: FileNotFoundException => e.printStackTrace()
-      }
+
+  /**
+   * Create a log file for one job
+   * @param jobId ID of the job
+   * @throws FileNotFoundException Fail to create log file
+   */
+  protected def createLogWriter(jobId: Int) {
+    try {
+      val fileWriter = new PrintWriter(logDir + "/" + logDirName + "/" + jobId)
+      jobIdToPrintWriter += (jobId -> fileWriter)
+    } catch {
+      case e: FileNotFoundException => e.printStackTrace()
+    }
   }
-  
-  // Close log file, and clean the stage relationship in stageIDToJobID 
-  protected def closeLogWriter(jobID: Int) = 
-    jobIDToPrintWriter.get(jobID).foreach { fileWriter => 
+
+  /**
+   * Close log file, and clean the stage relationship in stageIdToJobId
+   * @param jobId ID of the job
+   */
+  protected def closeLogWriter(jobId: Int) {
+    jobIdToPrintWriter.get(jobId).foreach { fileWriter =>
       fileWriter.close()
-      jobIDToStages.get(jobID).foreach(_.foreach{ stage => 
-        stageIDToJobID -= stage.id
+      jobIdToStageIds.get(jobId).foreach(_.foreach { stageId =>
+        stageIdToJobId -= stageId
       })
-      jobIDToPrintWriter -= jobID
-      jobIDToStages -= jobID
+      jobIdToPrintWriter -= jobId
+      jobIdToStageIds -= jobId
     }
-  
-  // Write log information to log file, withTime parameter controls whether to recored 
-  // time stamp for the information
-  protected def jobLogInfo(jobID: Int, info: String, withTime: Boolean = true) {
+  }
+
+  /**
+   * Build up the maps that represent stage-job relationships
+   * @param jobId ID of the job
+   * @param stageIds IDs of the associated stages
+   */
+  protected def buildJobStageDependencies(jobId: Int, stageIds: Seq[Int]) = {
+    jobIdToStageIds(jobId) = stageIds
+    stageIds.foreach { stageId => stageIdToJobId(stageId) = jobId }
+  }
+
+  /**
+   * Write info into log file
+   * @param jobId ID of the job
+   * @param info Info to be recorded
+   * @param withTime Controls whether to record time stamp before the info, default is true
+   */
+  protected def jobLogInfo(jobId: Int, info: String, withTime: Boolean = true) {
     var writeInfo = info
     if (withTime) {
       val date = new Date(System.currentTimeMillis())
-      writeInfo = DATE_FORMAT.format(date) + ": " +info
+      writeInfo = dateFormat.get.format(date) + ": " + info
     }
-    jobIDToPrintWriter.get(jobID).foreach(_.println(writeInfo))
-  }
-  
-  protected def stageLogInfo(stageID: Int, info: String, withTime: Boolean = true) = 
-    stageIDToJobID.get(stageID).foreach(jobID => jobLogInfo(jobID, info, withTime))
-
-  protected def buildJobDep(jobID: Int, stage: Stage) {
-    if (stage.jobId == jobID) {
-      jobIDToStages.get(jobID) match {
-        case Some(stageList) => stageList += stage
-        case None => val stageList = new  ListBuffer[Stage]
-                     stageList += stage
-                     jobIDToStages += (jobID -> stageList)
-      }
-      stageIDToJobID += (stage.id -> jobID)
-      stage.parents.foreach(buildJobDep(jobID, _))
-    }
+    jobIdToPrintWriter.get(jobId).foreach(_.println(writeInfo))
   }
 
-  protected def recordStageDep(jobID: Int) {
-    def getRddsInStage(rdd: RDD[_]): ListBuffer[RDD[_]] = {
-      var rddList = new ListBuffer[RDD[_]]
-      rddList += rdd
-      rdd.dependencies.foreach{ dep => dep match {
-          case shufDep: ShuffleDependency[_,_] =>
-          case _ => rddList ++= getRddsInStage(dep.rdd)
-        }
-      }
-      rddList
-    }
-    jobIDToStages.get(jobID).foreach {_.foreach { stage => 
-        var depRddDesc: String = ""
-        getRddsInStage(stage.rdd).foreach { rdd => 
-          depRddDesc += rdd.id + ","
-        }
-        var depStageDesc: String = ""
-        stage.parents.foreach { stage => 
-          depStageDesc += "(" + stage.id + "," + stage.shuffleDep.get.shuffleId + ")"
-        }
-        jobLogInfo(jobID, "STAGE_ID=" + stage.id + " RDD_DEP=(" + 
-                   depRddDesc.substring(0, depRddDesc.length - 1) + ")" + 
-                   " STAGE_DEP=" + depStageDesc, false)
-      }
-    }
+  /**
+   * Write info into log file
+   * @param stageId ID of the stage
+   * @param info Info to be recorded
+   * @param withTime Controls whether to record time stamp before the info, default is true
+   */
+  protected def stageLogInfo(stageId: Int, info: String, withTime: Boolean = true) {
+    stageIdToJobId.get(stageId).foreach(jobId => jobLogInfo(jobId, info, withTime))
   }
-  
-  // Generate indents and convert to String
-  protected def indentString(indent: Int) = {
-    val sb = new StringBuilder()
-    for (i <- 1 to indent) {
-      sb.append(" ")
-    }
-    sb.toString()
-  }
-  
-  protected def getRddName(rdd: RDD[_]) = {
-    var rddName = rdd.getClass.getName
-    if (rdd.name != null) {
-      rddName = rdd.name 
-    }
-    rddName
-  }
-  
-  protected def recordRddInStageGraph(jobID: Int, rdd: RDD[_], indent: Int) {
-    val rddInfo = "RDD_ID=" + rdd.id + "(" + getRddName(rdd) + "," + rdd.generator + ")"
-    jobLogInfo(jobID, indentString(indent) + rddInfo, false)
-    rdd.dependencies.foreach{ dep => dep match {
-        case shufDep: ShuffleDependency[_,_] => 
-          val depInfo = "SHUFFLE_ID=" + shufDep.shuffleId
-          jobLogInfo(jobID, indentString(indent + 1) + depInfo, false)
-        case _ => recordRddInStageGraph(jobID, dep.rdd, indent + 1)
-      }
-    }
-  }
-  
-  protected def recordStageDepGraph(jobID: Int, stage: Stage, indent: Int = 0) {
-    var stageInfo: String = ""
-    if (stage.isShuffleMap) {
-      stageInfo = "STAGE_ID=" + stage.id + " MAP_STAGE SHUFFLE_ID=" + 
-                  stage.shuffleDep.get.shuffleId
-    }else{
-      stageInfo = "STAGE_ID=" + stage.id + " RESULT_STAGE"
-    }
-    if (stage.jobId == jobID) {
-      jobLogInfo(jobID, indentString(indent) + stageInfo, false)
-      recordRddInStageGraph(jobID, stage.rdd, indent)
-      stage.parents.foreach(recordStageDepGraph(jobID, _, indent + 2))
-    } else
-      jobLogInfo(jobID, indentString(indent) + stageInfo + " JOB_ID=" + stage.jobId, false)
-  }
-  
-  // Record task metrics into job log files
-  protected def recordTaskMetrics(stageID: Int, status: String, 
+
+  /**
+   * Record task metrics into job log files, including execution info and shuffle metrics
+   * @param stageId Stage ID of the task
+   * @param status Status info of the task
+   * @param taskInfo Task description info
+   * @param taskMetrics Task running metrics
+   */
+  protected def recordTaskMetrics(stageId: Int, status: String,
                                 taskInfo: TaskInfo, taskMetrics: TaskMetrics) {
-    val info = " TID=" + taskInfo.taskId + " STAGE_ID=" + stageID + 
-               " START_TIME=" + taskInfo.launchTime + " FINISH_TIME=" + taskInfo.finishTime + 
+    val info = " TID=" + taskInfo.taskId + " STAGE_ID=" + stageId +
+               " START_TIME=" + taskInfo.launchTime + " FINISH_TIME=" + taskInfo.finishTime +
                " EXECUTOR_ID=" + taskInfo.executorId +  " HOST=" + taskMetrics.hostname
     val executorRunTime = " EXECUTOR_RUN_TIME=" + taskMetrics.executorRunTime
-    val readMetrics = 
-      taskMetrics.shuffleReadMetrics match {
-        case Some(metrics) => 
-          " SHUFFLE_FINISH_TIME=" + metrics.shuffleFinishTime + 
-          " BLOCK_FETCHED_TOTAL=" + metrics.totalBlocksFetched + 
-          " BLOCK_FETCHED_LOCAL=" + metrics.localBlocksFetched + 
-          " BLOCK_FETCHED_REMOTE=" + metrics.remoteBlocksFetched + 
-          " REMOTE_FETCH_WAIT_TIME=" + metrics.fetchWaitTime + 
-          " REMOTE_FETCH_TIME=" + metrics.remoteFetchTime + 
-          " REMOTE_BYTES_READ=" + metrics.remoteBytesRead
-        case None => ""
-      }
-    val writeMetrics = 
-      taskMetrics.shuffleWriteMetrics match {
-        case Some(metrics) => 
-          " SHUFFLE_BYTES_WRITTEN=" + metrics.shuffleBytesWritten
-        case None => ""
-      }
-    stageLogInfo(stageID, status + info + executorRunTime + readMetrics + writeMetrics)
-  }
-  
-  override def onStageSubmitted(stageSubmitted: SparkListenerStageSubmitted) {
-    stageLogInfo(
-      stageSubmitted.stage.id,
-      "STAGE_ID=%d STATUS=SUBMITTED TASK_SIZE=%d".format(
-        stageSubmitted.stage.id, stageSubmitted.taskSize))
-  }
-  
-  override def onStageCompleted(stageCompleted: StageCompleted) {
-    stageLogInfo(
-      stageCompleted.stageInfo.stage.id,
-      "STAGE_ID=%d STATUS=COMPLETED".format(stageCompleted.stageInfo.stage.id))
-    
-  }
-
-  override def onTaskStart(taskStart: SparkListenerTaskStart) { }
-
-  override def onTaskEnd(taskEnd: SparkListenerTaskEnd) {
-    val task = taskEnd.task
-    val taskInfo = taskEnd.taskInfo
-    var taskStatus = ""
-    task match {
-      case resultTask: ResultTask[_, _] => taskStatus = "TASK_TYPE=RESULT_TASK"
-      case shuffleMapTask: ShuffleMapTask => taskStatus = "TASK_TYPE=SHUFFLE_MAP_TASK"
+    val inputMetrics = taskMetrics.inputMetrics match {
+      case Some(metrics) =>
+        " READ_METHOD=" + metrics.readMethod.toString +
+        " INPUT_BYTES=" + metrics.bytesRead
+      case None => ""
     }
+    val shuffleReadMetrics = taskMetrics.shuffleReadMetrics match {
+      case Some(metrics) =>
+        " SHUFFLE_FINISH_TIME=" + metrics.shuffleFinishTime +
+        " BLOCK_FETCHED_TOTAL=" + metrics.totalBlocksFetched +
+        " BLOCK_FETCHED_LOCAL=" + metrics.localBlocksFetched +
+        " BLOCK_FETCHED_REMOTE=" + metrics.remoteBlocksFetched +
+        " REMOTE_FETCH_WAIT_TIME=" + metrics.fetchWaitTime +
+        " REMOTE_BYTES_READ=" + metrics.remoteBytesRead
+      case None => ""
+    }
+    val writeMetrics = taskMetrics.shuffleWriteMetrics match {
+      case Some(metrics) => " SHUFFLE_BYTES_WRITTEN=" + metrics.shuffleBytesWritten
+      case None => ""
+    }
+    stageLogInfo(stageId, status + info + executorRunTime + inputMetrics + shuffleReadMetrics +
+      writeMetrics)
+  }
+
+  /**
+   * When stage is submitted, record stage submit info
+   * @param stageSubmitted Stage submitted event
+   */
+  override def onStageSubmitted(stageSubmitted: SparkListenerStageSubmitted) {
+    val stageInfo = stageSubmitted.stageInfo
+    stageLogInfo(stageInfo.stageId, "STAGE_ID=%d STATUS=SUBMITTED TASK_SIZE=%d".format(
+      stageInfo.stageId, stageInfo.numTasks))
+  }
+
+  /**
+   * When stage is completed, record stage completion status
+   * @param stageCompleted Stage completed event
+   */
+  override def onStageCompleted(stageCompleted: SparkListenerStageCompleted) {
+    val stageId = stageCompleted.stageInfo.stageId
+    if (stageCompleted.stageInfo.failureReason.isEmpty) {
+      stageLogInfo(stageId, s"STAGE_ID=$stageId STATUS=COMPLETED")
+    } else {
+      stageLogInfo(stageId, s"STAGE_ID=$stageId STATUS=FAILED")
+    }
+  }
+
+  /**
+   * When task ends, record task completion status and metrics
+   * @param taskEnd Task end event
+   */
+  override def onTaskEnd(taskEnd: SparkListenerTaskEnd) {
+    val taskInfo = taskEnd.taskInfo
+    var taskStatus = "TASK_TYPE=%s".format(taskEnd.taskType)
+    val taskMetrics = if (taskEnd.taskMetrics != null) taskEnd.taskMetrics else TaskMetrics.empty
     taskEnd.reason match {
       case Success => taskStatus += " STATUS=SUCCESS"
-        recordTaskMetrics(task.stageId, taskStatus, taskInfo, taskEnd.taskMetrics)
-      case Resubmitted => 
-        taskStatus += " STATUS=RESUBMITTED TID=" + taskInfo.taskId + 
-                      " STAGE_ID=" + task.stageId
-        stageLogInfo(task.stageId, taskStatus)
-      case FetchFailed(bmAddress, shuffleId, mapId, reduceId) => 
-        taskStatus += " STATUS=FETCHFAILED TID=" + taskInfo.taskId + " STAGE_ID=" + 
-                      task.stageId + " SHUFFLE_ID=" + shuffleId + " MAP_ID=" + 
+        recordTaskMetrics(taskEnd.stageId, taskStatus, taskInfo, taskMetrics)
+      case Resubmitted =>
+        taskStatus += " STATUS=RESUBMITTED TID=" + taskInfo.taskId +
+                      " STAGE_ID=" + taskEnd.stageId
+        stageLogInfo(taskEnd.stageId, taskStatus)
+      case FetchFailed(bmAddress, shuffleId, mapId, reduceId) =>
+        taskStatus += " STATUS=FETCHFAILED TID=" + taskInfo.taskId + " STAGE_ID=" +
+                      taskEnd.stageId + " SHUFFLE_ID=" + shuffleId + " MAP_ID=" +
                       mapId + " REDUCE_ID=" + reduceId
-        stageLogInfo(task.stageId, taskStatus)
-      case OtherFailure(message) => 
-        taskStatus += " STATUS=FAILURE TID=" + taskInfo.taskId + 
-                      " STAGE_ID=" + task.stageId + " INFO=" + message
-        stageLogInfo(task.stageId, taskStatus)
+        stageLogInfo(taskEnd.stageId, taskStatus)
       case _ =>
     }
   }
-  
+
+  /**
+   * When job ends, recording job completion status and close log file
+   * @param jobEnd Job end event
+   */
   override def onJobEnd(jobEnd: SparkListenerJobEnd) {
-    val job = jobEnd.job
-    var info = "JOB_ID=" + job.jobId
+    val jobId = jobEnd.jobId
+    var info = "JOB_ID=" + jobId
     jobEnd.jobResult match {
       case JobSucceeded => info += " STATUS=SUCCESS"
-      case JobFailed(exception, _) =>
+      case JobFailed(exception) =>
         info += " STATUS=FAILED REASON="
         exception.getMessage.split("\\s+").foreach(info += _ + "_")
       case _ =>
     }
-    jobLogInfo(job.jobId, info.substring(0, info.length - 1).toUpperCase)
-    closeLogWriter(job.jobId)
+    jobLogInfo(jobId, info.substring(0, info.length - 1).toUpperCase)
+    closeLogWriter(jobId)
   }
 
-  protected def recordJobProperties(jobID: Int, properties: Properties) {
-    if(properties != null) {
+  /**
+   * Record job properties into job log file
+   * @param jobId ID of the job
+   * @param properties Properties of the job
+   */
+  protected def recordJobProperties(jobId: Int, properties: Properties) {
+    if (properties != null) {
       val description = properties.getProperty(SparkContext.SPARK_JOB_DESCRIPTION, "")
-      jobLogInfo(jobID, description, false)
+      jobLogInfo(jobId, description, false)
     }
   }
 
+  /**
+   * When job starts, record job property and stage graph
+   * @param jobStart Job start event
+   */
   override def onJobStart(jobStart: SparkListenerJobStart) {
-    val job = jobStart.job
+    val jobId = jobStart.jobId
     val properties = jobStart.properties
-    createLogWriter(job.jobId)
-    recordJobProperties(job.jobId, properties)
-    buildJobDep(job.jobId, job.finalStage)
-    recordStageDep(job.jobId)
-    recordStageDepGraph(job.jobId, job.finalStage)
-    jobLogInfo(job.jobId, "JOB_ID=" + job.jobId + " STATUS=STARTED")
+    createLogWriter(jobId)
+    recordJobProperties(jobId, properties)
+    buildJobStageDependencies(jobId, jobStart.stageIds)
+    jobLogInfo(jobId, "JOB_ID=" + jobId + " STATUS=STARTED")
   }
 }

@@ -14,16 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.spark.rdd
 
+import scala.reflect.{ClassTag, classTag}
+
+import org.apache.hadoop.io.Writable
+import org.apache.hadoop.io.compress.CompressionCodec
 import org.apache.hadoop.mapred.JobConf
 import org.apache.hadoop.mapred.SequenceFileOutputFormat
-import org.apache.hadoop.io.compress.CompressionCodec
-import org.apache.hadoop.io.Writable
 
-import org.apache.spark.SparkContext._
 import org.apache.spark.Logging
+import org.apache.spark.SparkContext._
 
 /**
  * Extra functions available on RDDs of (key, value) pairs to create a Hadoop SequenceFile,
@@ -32,15 +33,15 @@ import org.apache.spark.Logging
  *
  * Import `org.apache.spark.SparkContext._` at the top of their program to use these functions.
  */
-class SequenceFileRDDFunctions[K <% Writable: ClassManifest, V <% Writable : ClassManifest](
+class SequenceFileRDDFunctions[K <% Writable: ClassTag, V <% Writable : ClassTag](
     self: RDD[(K, V)])
   extends Logging
   with Serializable {
 
-  private def getWritableClass[T <% Writable: ClassManifest](): Class[_ <: Writable] = {
+  private def getWritableClass[T <% Writable: ClassTag](): Class[_ <: Writable] = {
     val c = {
-      if (classOf[Writable].isAssignableFrom(classManifest[T].erasure)) {
-        classManifest[T].erasure
+      if (classOf[Writable].isAssignableFrom(classTag[T].runtimeClass)) {
+        classTag[T].runtimeClass
       } else {
         // We get the type of the Writable class by looking at the apply method which converts
         // from T to Writable. Since we have two apply methods we filter out the one which
@@ -67,10 +68,11 @@ class SequenceFileRDDFunctions[K <% Writable: ClassManifest, V <% Writable : Cla
 
     val keyClass = getWritableClass[K]
     val valueClass = getWritableClass[V]
-    val convertKey = !classOf[Writable].isAssignableFrom(self.getKeyClass)
-    val convertValue = !classOf[Writable].isAssignableFrom(self.getValueClass)
+    val convertKey = !classOf[Writable].isAssignableFrom(self.keyClass)
+    val convertValue = !classOf[Writable].isAssignableFrom(self.valueClass)
 
-    logInfo("Saving as sequence file of type (" + keyClass.getSimpleName + "," + valueClass.getSimpleName + ")" )
+    logInfo("Saving as sequence file of type (" + keyClass.getSimpleName + "," +
+      valueClass.getSimpleName + ")" )
     val format = classOf[SequenceFileOutputFormat[Writable, Writable]]
     val jobConf = new JobConf(self.context.hadoopConfiguration)
     if (!convertKey && !convertValue) {

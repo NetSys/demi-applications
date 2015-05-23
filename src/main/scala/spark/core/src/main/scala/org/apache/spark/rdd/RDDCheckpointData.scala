@@ -17,10 +17,11 @@
 
 package org.apache.spark.rdd
 
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.conf.Configuration
+import scala.reflect.ClassTag
 
-import org.apache.spark.{Partition, SparkException, Logging}
+import org.apache.hadoop.fs.Path
+
+import org.apache.spark.{Logging, Partition, SerializableWritable, SparkException}
 import org.apache.spark.scheduler.{ResultTask, ShuffleMapTask}
 
 /**
@@ -33,12 +34,12 @@ private[spark] object CheckpointState extends Enumeration {
 }
 
 /**
- * This class contains all the information related to RDD checkpointing. Each instance of this class
- * is associated with a RDD. It manages process of checkpointing of the associated RDD, as well as,
- * manages the post-checkpoint state by providing the updated partitions, iterator and preferred locations
- * of the checkpointed RDD.
+ * This class contains all the information related to RDD checkpointing. Each instance of this
+ * class is associated with a RDD. It manages process of checkpointing of the associated RDD,
+ * as well as, manages the post-checkpoint state by providing the updated partitions,
+ * iterator and preferred locations of the checkpointed RDD.
  */
-private[spark] class RDDCheckpointData[T: ClassManifest](rdd: RDD[T])
+private[spark] class RDDCheckpointData[T: ClassTag](@transient rdd: RDD[T])
   extends Logging with Serializable {
 
   import CheckpointState._
@@ -83,14 +84,21 @@ private[spark] class RDDCheckpointData[T: ClassManifest](rdd: RDD[T])
 
     // Create the output path for the checkpoint
     val path = new Path(rdd.context.checkpointDir.get, "rdd-" + rdd.id)
-    val fs = path.getFileSystem(new Configuration())
+    val fs = path.getFileSystem(rdd.context.hadoopConfiguration)
     if (!fs.mkdirs(path)) {
       throw new SparkException("Failed to create checkpoint path " + path)
     }
 
     // Save to file, and reload it as an RDD
-    rdd.context.runJob(rdd, CheckpointRDD.writeToFile(path.toString) _)
+    val broadcastedConf = rdd.context.broadcast(
+      new SerializableWritable(rdd.context.hadoopConfiguration))
+    rdd.context.runJob(rdd, CheckpointRDD.writeToFile[T](path.toString, broadcastedConf) _)
     val newRDD = new CheckpointRDD[T](rdd.context, path.toString)
+    if (newRDD.partitions.size != rdd.partitions.size) {
+      throw new SparkException(
+        "Checkpoint RDD " + newRDD + "(" + newRDD.partitions.size + ") has different " +
+          "number of partitions than original RDD " + rdd + "(" + rdd.partitions.size + ")")
+    }
 
     // Change the dependencies and partitions of the RDD
     RDDCheckpointData.synchronized {
@@ -99,8 +107,8 @@ private[spark] class RDDCheckpointData[T: ClassManifest](rdd: RDD[T])
       rdd.markCheckpointed(newRDD)   // Update the RDD's dependencies and partitions
       cpState = Checkpointed
       RDDCheckpointData.clearTaskCaches()
-      logInfo("Done checkpointing RDD " + rdd.id + ", new parent is RDD " + newRDD.id)
     }
+    logInfo("Done checkpointing RDD " + rdd.id + " to " + path + ", new parent is RDD " + newRDD.id)
   }
 
   // Get preferred location of a split after checkpointing

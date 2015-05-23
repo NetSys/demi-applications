@@ -18,17 +18,21 @@
 package org.apache.spark.serializer
 
 import scala.collection.mutable
+import scala.reflect.ClassTag
 
 import com.esotericsoftware.kryo.Kryo
-
 import org.scalatest.FunSuite
+
 import org.apache.spark.SharedSparkContext
 import org.apache.spark.serializer.KryoTest._
 
 class KryoSerializerSuite extends FunSuite with SharedSparkContext {
+  conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+  conf.set("spark.kryo.registrator", classOf[MyRegistrator].getName)
+
   test("basic types") {
-    val ser = (new KryoSerializer).newInstance()
-    def check[T](t: T) {
+    val ser = new KryoSerializer(conf).newInstance()
+    def check[T: ClassTag](t: T) {
       assert(ser.deserialize[T](ser.serialize(t)) === t)
     }
     check(1)
@@ -57,8 +61,8 @@ class KryoSerializerSuite extends FunSuite with SharedSparkContext {
   }
 
   test("pairs") {
-    val ser = (new KryoSerializer).newInstance()
-    def check[T](t: T) {
+    val ser = new KryoSerializer(conf).newInstance()
+    def check[T: ClassTag](t: T) {
       assert(ser.deserialize[T](ser.serialize(t)) === t)
     }
     check((1, 1))
@@ -81,8 +85,8 @@ class KryoSerializerSuite extends FunSuite with SharedSparkContext {
   }
 
   test("Scala data structures") {
-    val ser = (new KryoSerializer).newInstance()
-    def check[T](t: T) {
+    val ser = new KryoSerializer(conf).newInstance()
+    def check[T: ClassTag](t: T) {
       assert(ser.deserialize[T](ser.serialize(t)) === t)
     }
     check(List[Int]())
@@ -103,11 +107,45 @@ class KryoSerializerSuite extends FunSuite with SharedSparkContext {
     check(List(mutable.HashMap("one" -> 1, "two" -> 2),mutable.HashMap(1->"one",2->"two",3->"three")))
   }
 
-  test("custom registrator") {
-    System.setProperty("spark.kryo.registrator", classOf[MyRegistrator].getName)
+  test("ranges") {
+    val ser = new KryoSerializer(conf).newInstance()
+    def check[T: ClassTag](t: T) {
+      assert(ser.deserialize[T](ser.serialize(t)) === t)
+      // Check that very long ranges don't get written one element at a time
+      assert(ser.serialize(t).limit < 100)
+    }
+    check(1 to 1000000)
+    check(1 to 1000000 by 2)
+    check(1 until 1000000)
+    check(1 until 1000000 by 2)
+    check(1L to 1000000L)
+    check(1L to 1000000L by 2L)
+    check(1L until 1000000L)
+    check(1L until 1000000L by 2L)
+    check(1.0 to 1000000.0 by 1.0)
+    check(1.0 to 1000000.0 by 2.0)
+    check(1.0 until 1000000.0 by 1.0)
+    check(1.0 until 1000000.0 by 2.0)
+  }
 
-    val ser = (new KryoSerializer).newInstance()
-    def check[T](t: T) {
+  test("asJavaIterable") {
+    // Serialize a collection wrapped by asJavaIterable
+    val ser = new KryoSerializer(conf).newInstance()
+    val a = ser.serialize(scala.collection.convert.WrapAsJava.asJavaIterable(Seq(12345)))
+    val b = ser.deserialize[java.lang.Iterable[Int]](a)
+    assert(b.iterator().next() === 12345)
+
+    // Serialize a normal Java collection
+    val col = new java.util.ArrayList[Int]
+    col.add(54321)
+    val c = ser.serialize(col)
+    val d = ser.deserialize[java.lang.Iterable[Int]](c)
+    assert(b.iterator().next() === 12345)
+  }
+
+  test("custom registrator") {
+    val ser = new KryoSerializer(conf).newInstance()
+    def check[T: ClassTag](t: T) {
       assert(ser.deserialize[T](ser.serialize(t)) === t)
     }
 
@@ -151,6 +189,10 @@ class KryoSerializerSuite extends FunSuite with SharedSparkContext {
     assert (sc.parallelize( Array((1, 11), (2, 22), (3, 33)) ).collect().head === (1, 11))
   }
 
+  test("kryo with SerializableHyperLogLog") {
+    assert(sc.parallelize( Array(1, 2, 3, 2, 3, 3, 2, 3, 1) ).countApproxDistinct(0.01) === 3)
+  }
+
   test("kryo with reduce") {
     val control = 1 :: 2 :: Nil
     val result = sc.parallelize(control, 2).map(new ClassWithoutNoArgConstructor(_))
@@ -164,18 +206,6 @@ class KryoSerializerSuite extends FunSuite with SharedSparkContext {
     val result = sc.parallelize(control, 2).map(new ClassWithoutNoArgConstructor(_))
         .fold(new ClassWithoutNoArgConstructor(10))((t1, t2) => new ClassWithoutNoArgConstructor(t1.x + t2.x)).x
     assert(10 + control.sum === result)
-  }
-
-  override def beforeAll() {
-    System.setProperty("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-    System.setProperty("spark.kryo.registrator", classOf[MyRegistrator].getName)
-    super.beforeAll()
-  }
-
-  override def afterAll() {
-    super.afterAll()
-    System.clearProperty("spark.kryo.registrator")
-    System.clearProperty("spark.serializer")
   }
 }
 

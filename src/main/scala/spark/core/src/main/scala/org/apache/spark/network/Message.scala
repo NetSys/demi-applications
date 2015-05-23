@@ -17,17 +17,17 @@
 
 package org.apache.spark.network
 
-import java.nio.ByteBuffer
 import java.net.InetSocketAddress
+import java.nio.ByteBuffer
 
 import scala.collection.mutable.ArrayBuffer
-
 
 private[spark] abstract class Message(val typ: Long, val id: Int) {
   var senderAddress: InetSocketAddress = null
   var started = false
   var startTime = -1L
   var finishTime = -1L
+  var isSecurityNeg = false
 
   def size: Int
 
@@ -61,7 +61,7 @@ private[spark] object Message {
     if (dataBuffers.exists(_ == null)) {
       throw new Exception("Attempting to create buffer message with null buffer")
     }
-    return new BufferMessage(getNewId(), new ArrayBuffer[ByteBuffer] ++= dataBuffers, ackId)
+    new BufferMessage(getNewId(), new ArrayBuffer[ByteBuffer] ++= dataBuffers, ackId)
   }
 
   def createBufferMessage(dataBuffers: Seq[ByteBuffer]): BufferMessage =
@@ -69,9 +69,9 @@ private[spark] object Message {
 
   def createBufferMessage(dataBuffer: ByteBuffer, ackId: Int): BufferMessage = {
     if (dataBuffer == null) {
-      return createBufferMessage(Array(ByteBuffer.allocate(0)), ackId)
+      createBufferMessage(Array(ByteBuffer.allocate(0)), ackId)
     } else {
-      return createBufferMessage(Array(dataBuffer), ackId)
+      createBufferMessage(Array(dataBuffer), ackId)
     }
   }
 
