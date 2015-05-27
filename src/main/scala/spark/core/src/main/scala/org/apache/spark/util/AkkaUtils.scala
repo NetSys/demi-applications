@@ -19,6 +19,7 @@ package org.apache.spark.util
 
 import scala.collection.JavaConversions.mapAsJavaMap
 import scala.concurrent.duration.{Duration, FiniteDuration}
+import akka.dispatch.verification._
 
 import akka.actor.{ActorSystem, ExtendedActorSystem}
 import com.typesafe.config.ConfigFactory
@@ -101,7 +102,7 @@ private[spark] object AkkaUtils extends Logging {
       |akka.log-dead-letters-during-shutdown = $lifecycleEvents
       """.stripMargin))
 
-    val actorSystem = ActorSystem(name, akkaConf)
+    val actorSystem = Instrumenter().actorSystem(Some(akkaConf)) // ActorSystem(name, akkaConf)
     val provider = actorSystem.asInstanceOf[ExtendedActorSystem].provider
     val boundPort = provider.getDefaultAddress.port.get
     (actorSystem, boundPort)
