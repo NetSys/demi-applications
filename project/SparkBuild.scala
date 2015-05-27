@@ -370,7 +370,6 @@ object SparkBuild extends Build {
   def coreSettings = sharedSettings ++ aspectjSettings ++ Seq(
     name := "spark-core",
     libraryDependencies ++= Seq(
-
         "com.google.guava"           % "guava"            % "14.0.1",
         "org.apache.commons"         % "commons-lang3"    % "3.3.2",
         "org.apache.commons"         % "commons-math3"    % "3.3" % "test",
@@ -409,12 +408,10 @@ object SparkBuild extends Build {
     libraryDependencies ++= maybeAvro,
     assembleDeps,
     previousArtifact := sparkPreviousArtifact("spark-core"),
-    mainClass := Some("SparkSubmit"),
+    mainClass in (Compile, run) := Some("org.apache.spark.deploy.SparkSubmit"),
 
     // add akka-actor as an aspectj input (find it in the update report)
     inputs in Aspectj <++= update map { report =>
-      println("IMMA LORIS")
-      println(report)
       report.matching(moduleFilter(organization = "com.typesafe.akka", name = "akka-actor*"))
     },
 
@@ -478,7 +475,7 @@ object SparkBuild extends Build {
   def examplesSettings = sharedSettings ++ Seq(
     name := "spark-examples",
     jarName in assembly <<= version map {
-      v => "spark-examples-" + v + "-hadoop" + hadoopVersion + ".jar" }  //,
+      v => "spark-examples-" + v + "-hadoop" + hadoopVersion + ".jar" },
     //libraryDependencies ++= Seq(
     //  "com.twitter"          %% "algebird-core"   % "0.1.11",
     //  "org.apache.hbase" % "hbase" % HBASE_VERSION excludeAll(excludeIONetty, excludeJBossNetty, excludeAsm, excludeOldAsm, excludeCommonsLogging, excludeJruby),
@@ -704,7 +701,7 @@ object SparkBuild extends Build {
     name := "spark-streaming-zeromq",
     previousArtifact := sparkPreviousArtifact("spark-streaming-zeromq"),
     libraryDependencies ++= Seq(
-      "org.spark-project.akka" %% "akka-zeromq" % akkaVersion
+      "com.typesafe.akka" %% "akka-zeromq" % akkaVersion
     )
   )
 

@@ -1,11 +1,55 @@
-Read more about ThreadPoolService
+Gotchas:
 
-Relevant:
-  ExecutorExitCode.scala. Used to communicate failures to the master.
-  StandaloneExecutorBackend.scala: the actor (and actor system)
+Sometimes need to reboot, due to hostname issues
+
+More than one thread during initialization? Is it only LocalBackend's
+ThreadPoolService that creates new threads?
+
+Call stack:
+  - SparkContext.parallelize is the starting point.
+    -> taskScheduler = TaskSchedulerImpl.initialize(LocalBackend)
+    -> new DAGScheduler
+    -> taskScheduler.start()
+    -> dagScheduler.runJob
+
+Only one ActorSystem, luckily. Created here:
+[error]         at org.apache.spark.util.AkkaUtils$.createActorSystem(AkkaUtils.scala:48)
+[error]         at org.apache.spark.SparkEnv$.create(SparkEnv.scala:153)
+[error]         at org.apache.spark.SparkContext.<init>(SparkContext.scala:202)
+[error]         at org.apache.spark.examples.SparkPi$.main(SparkPi.scala:28)
+
+Actors observed in the system:
+  akkaprotocolmanager.tcp0
+  [info] WARNING! Unknown receiver remote-watcher
+  MapOutputTracker
+  BlockManagerMaster
+  BlockManagerActor1
+System has created a new actor: $a [DAGSchedulerEventProcessActor]
+System has created a new actor: $a
+System has created a new actor: LocalBackendActor
+
+// Should block out:
+//  - akkaprotocolmanager.tcp0
+//  - remote-watcher
+
+Actors in the system:
+ -  DAGSchedulerActorSupervisor?
+ -  DAGSchedulerEventProcessActor?
+ -  LocalActor (LocalBackend)
+ -  BlockManager(Master|Slave)Actor.scala?
+ -  Master
+ -  Worker?
 
 TODO(cs):
-  - SparkContext.parallelize is the starting point.
-    -> calls LocalScheduler.start()
-    later calls DAGScheduler.start()
+  - At what point do we kick off RandomScheduler.run?
   - Figure out how to set logging level
+  - Read more about ThreadPoolService (java library?)
+  - Difference between "executor" and "backend"?
+
+Relevant:
+  SparkEnv.get.actorSystem
+  ExecutorExitCode.scala. Used to communicate failures to the master.
+  scheduler/local/LocalBackend.scala: the actor (and actor system)
+
+Changes to Spark, for rollback:
+  - AkkaUtils.scala => use Instrumenter().actorSystem

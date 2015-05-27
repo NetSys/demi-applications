@@ -1,3 +1,14 @@
+--- TO RUN ---
+
+# First assemble examples
+/usr/bin/java -Xmx2500M -XX:MaxPermSize=256m -XX:+CMSClassUnloadingEnabled -jar /usr/local/Cellar/sbt/0.13.0/libexec/sbt-launch.jar "project examples" assembly
+
+# Then run
+sbt "project core" "run --master local[*] --class org.apache.spark.examples.SparkPi /Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark/examples/target/scala-2.10/spark-examples-1.1.0-SNAPSHOT-hadoop1.0.4.jar"
+
+
+-- Notes ---
+
 Spark: c2babc089bd97137d240ca119ec4fc4b5a1422c8
 
 Scala: 2.10.4
@@ -16,14 +27,3 @@ And need to get rid of scala-logging
 
 
 Akka: 2.2.3 (2.0.5??)
-
-
-Assembly:
-/usr/bin/java -Xmx2500M -XX:MaxPermSize=256m -XX:+CMSClassUnloadingEnabled -jar /usr/local/Cellar/sbt/0.13.0/libexec/sbt-launch.jar project examples assembly
-
-Invocation:
-
-org.apache.spark.deploy.SparkSubmit
-sbt "project core" "run-main org.apache.spark.deploy.SparkSubmit  --master local[*] --class org.apache.spark.examples.SparkPi /Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark/examples/target/scala-2.10/spark-examples-1.1.0-SNAPSHOT-hadoop1.0.4.jar"
-
-TODO(cs): how does sbt assembly work with aspectj??

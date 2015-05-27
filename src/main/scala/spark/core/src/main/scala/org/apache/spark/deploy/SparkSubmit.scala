@@ -49,11 +49,12 @@ object SparkSubmit {
 
   def main(args: Array[String]) {
     // STS!
-    val sched = new RandomScheduler(1,
-                        new FingerprintFactory,
-                        false,
-                        0,
-                        true)
+    // val sched = new RandomScheduler(1,
+    //                     new FingerprintFactory,
+    //                     false,
+    //                     0,
+    //                     true)
+    val sched = new FairScheduler
     Instrumenter().scheduler = sched
     // -- STS /
 
