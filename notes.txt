@@ -53,3 +53,4 @@ Relevant:
 
 Changes to Spark, for rollback:
   - AkkaUtils.scala => use Instrumenter().actorSystem
+  - Symlink to aspectj
