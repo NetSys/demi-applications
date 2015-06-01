@@ -6,10 +6,7 @@ import akka.dispatch.verification._
 
 object Main extends App {
   val prefix = Array[ExternalEvent](
-     Start(() => Props.create(classOf[Asker]), "receiver"),
-     Start(() => Props.create(classOf[Asker]), "asker"),
-     Send("asker", BasicMessageConstructor(GodSaysAsk)),
-     WaitQuiescence())
+     WaitCondition(() => false))
 
   val fingerprintFactory = new FingerprintFactory
 
@@ -21,5 +18,10 @@ object Main extends App {
   }
   sched.setInvariant(invariant)
   Instrumenter().scheduler = sched
-  sched.explore(prefix)
+  sched.nonBlockingExplore(prefix, (ret: Option[(EventTrace,ViolationFingerprint)]) => println("DONE!"))
+
+  val recvRef = Instrumenter().actorSystem.actorOf(Props.create(classOf[Asker]), "receiver")
+  val askRef = Instrumenter().actorSystem.actorOf(Props.create(classOf[Asker]), "asker")
+
+  askRef ! GodSaysAsk
 }

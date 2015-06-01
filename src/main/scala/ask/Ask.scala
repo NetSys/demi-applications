@@ -21,6 +21,7 @@ class Asker() extends Actor {
       println("asking question")
       implicit val timeout = Timeout(5 seconds)
       val fut = context.actorFor("../receiver") ? Question
+      // XXX
       Instrumenter().actorBlocked()
       val res = Await.result(fut, timeout.duration).asInstanceOf[String]
       println("answer: " + res)
