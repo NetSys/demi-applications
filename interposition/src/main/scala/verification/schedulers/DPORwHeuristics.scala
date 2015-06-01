@@ -1,6 +1,6 @@
 package akka.dispatch.verification
 
-import akka.actor.ActorCell,
+import akka.actor.Cell,
        akka.actor.ActorSystem,
        akka.actor.ActorRef,
        akka.actor.LocalActorRef,
@@ -239,7 +239,7 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
   var currentTime = 0
   var interleavingCounter = 0
   
-  val pendingEvents = new HashMap[String, Queue[(Unique, ActorCell, Envelope)]]  
+  val pendingEvents = new HashMap[String, Queue[(Unique, Cell, Envelope)]]  
   val actorNames = new HashSet[String]
  
   val depGraph = Graph[Unique, DiEdge]()
@@ -479,9 +479,11 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
     val checkpointRequests = checkpointer.prepareRequests(actorRefs)
     // Put our requests at the front of the queue, and any existing requests
     // at the end of the queue.
-    for ((actor, request) <- checkpointRequests) {
-      Instrumenter().actorMappings(actor) ! request
-    }
+    Instrumenter().sendKnownExternalMessages(() => {
+      for ((actor, request) <- checkpointRequests) {
+        Instrumenter().actorMappings(actor) ! request
+      }
+    })
     Instrumenter().await_enqueue
   }
 
@@ -510,7 +512,10 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
   
   
   // Figure out what is the next message to schedule.
-  def schedule_new_message() : Option[(ActorCell, Envelope)] = {
+  def schedule_new_message(blockedActors: Set[String]) : Option[(Cell, Envelope)] = {
+    // TODO(cs): marked any pending messages destined for blockedActors as
+    // (temporarily) not enabled.
+
     // Stop if we found the original invariant violation.
     if (foundLookingFor) {
       return None
@@ -531,7 +536,7 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
     
     
     // Find equivalent messages to the one we are currently looking for.
-    def equivalentTo(u1: Unique, other: (Unique, ActorCell, Envelope)) : 
+    def equivalentTo(u1: Unique, other: (Unique, Cell, Envelope)) : 
     Boolean = (u1, other._1) match {
       
       case (Unique(MsgEvent(_, rcv1, _), id1),
@@ -547,7 +552,7 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
 
 
     // Get from the current set of pending events.
-    def getPendingEvent(): Option[(Unique, ActorCell, Envelope)] = {
+    def getPendingEvent(): Option[(Unique, Cell, Envelope)] = {
       // Do we have some pending events
       Util.dequeueOne(pendingEvents) match {
         case Some( next @ (Unique(MsgEvent(snd, rcv, msg), id), _, _)) =>
@@ -576,7 +581,7 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
     }
     
     
-    def getMatchingMessage() : Option[(Unique, ActorCell, Envelope)] = {
+    def getMatchingMessage() : Option[(Unique, Cell, Envelope)] = {
       getNextTraceMessage() match {
         // The trace says there is a message event to run.
         case Some(u @ Unique(MsgEvent(snd, rcv, msg), id)) =>
@@ -619,8 +624,8 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
     // Keep looping until we find a pending message that matches.
     // Note that this mutates nextTrace; it pops from the head of the queue
     // until it finds a match or until the queue is empty.
-    def getNextMatchingMessage(): Option[(Unique, ActorCell, Envelope)] = {
-      var foundMatching : Option[(Unique, ActorCell, Envelope)] = None
+    def getNextMatchingMessage(): Option[(Unique, Cell, Envelope)] = {
+      var foundMatching : Option[(Unique, Cell, Envelope)] = None
       while (!nextTrace.isEmpty && foundMatching == None) {
         foundMatching = getMatchingMessage()
       }
@@ -711,14 +716,14 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
           if (snd == rcv) {
             throw new RuntimeException("self message without prior messages! " + snd)
           }
-          return schedule_new_message()
+          return schedule_new_message(blockedActors)
         }
         partitionMap.get(snd) match {
           case Some(set) =>
             if (set.contains(rcv)) {
               logger.trace(Console.RED + "Discarding event " + nextEvent +
                 " due to partition" + Console.RESET)
-              return schedule_new_message()
+              return schedule_new_message(blockedActors)
             }
           case _ =>
         }
@@ -751,7 +756,7 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
         instrumenter().tellEnqueue.await()
         
         currentTrace += nextEvent
-        return schedule_new_message()
+        return schedule_new_message(blockedActors)
 
       case Some((nextEvent @ Unique(par@ NetworkUnpartition(first, second), nID), _, _)) =>
         // FIXME: We cannot send NodesUnreachable messages to FSM: in response to an unexpected message,
@@ -776,11 +781,11 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
         instrumenter().tellEnqueue.await()
         
         currentTrace += nextEvent
-        return schedule_new_message()
+        return schedule_new_message(blockedActors)
 
       case Some((nextEvent @ Unique(WaitQuiescence(), nID), _, _)) =>
         awaitQuiescenceUpdate(nextEvent)
-        return schedule_new_message()
+        return schedule_new_message(blockedActors)
 
       case _ =>
         return None
@@ -799,7 +804,7 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
   }
   
   
-  def event_consumed(cell: ActorCell, envelope: Envelope) = {
+  def event_consumed(cell: Cell, envelope: Envelope) = {
   }
   
   
@@ -832,52 +837,54 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
   def runExternal() = {
     logger.trace(Console.RED + " RUN EXTERNAL CALLED initial IDX = " + externalEventIdx +Console.RESET) 
    
-    var await = false
-    while (externalEventIdx < externalEventList.length && !await) {
-      val event = externalEventList(externalEventIdx)
-      event match {
-    
-        case Start(propsCtor, name) => 
-          // If not already started: start it and unisolate it
-          if (!(instrumenter().actorMappings contains name)) {
-            instrumenter().actorSystem().actorOf(propsCtor(), name)
-          }
-          isolatedActors -= name
-    
-        case Send(rcv, msgCtor) =>
-          val ref = instrumenter().actorMappings(rcv)
-          logger.trace(Console.BLUE + " sending " + rcv + " messge " + msgCtor() + Console.RESET)
-          instrumenter().actorMappings(rcv) ! msgCtor()
+    def processExternal() {
+      var await = false
+      while (externalEventIdx < externalEventList.length && !await) {
+        val event = externalEventList(externalEventIdx)
+        event match {
+      
+          case Start(propsCtor, name) => 
+            // If not already started: start it and unisolate it
+            if (!(instrumenter().actorMappings contains name)) {
+              instrumenter().actorSystem().actorOf(propsCtor(), name)
+            }
+            isolatedActors -= name
+      
+          case Send(rcv, msgCtor) =>
+            val ref = instrumenter().actorMappings(rcv)
+            logger.trace(Console.BLUE + " sending " + rcv + " messge " + msgCtor() + Console.RESET)
+            instrumenter().actorMappings(rcv) ! msgCtor()
 
-        case uniq @ Unique(par : NetworkPartition, id) =>  
-          val msgs = pendingEvents.getOrElse(SCHEDULER, new Queue[(Unique, ActorCell, Envelope)])
-          pendingEvents(SCHEDULER) = msgs += ((uniq, null, null))
-          maybeAddGraphNode(uniq)
+          case uniq @ Unique(par : NetworkPartition, id) =>  
+            val msgs = pendingEvents.getOrElse(SCHEDULER, new Queue[(Unique, Cell, Envelope)])
+            pendingEvents(SCHEDULER) = msgs += ((uniq, null, null))
+            maybeAddGraphNode(uniq)
 
-        case uniq @ Unique(par : NetworkUnpartition, id) =>  
-          val msgs = pendingEvents.getOrElse(SCHEDULER, new Queue[(Unique, ActorCell, Envelope)])
-          pendingEvents(SCHEDULER) = msgs += ((uniq, null, null))
-          maybeAddGraphNode(uniq)
-       
-       
-        case event @ Unique(WaitQuiescence(), _) =>
-          val msgs = pendingEvents.getOrElse(SCHEDULER, new Queue[(Unique, ActorCell, Envelope)])
-          pendingEvents(SCHEDULER) = msgs += ((event, null, null))
-          maybeAddGraphNode(event)
-          await = true
+          case uniq @ Unique(par : NetworkUnpartition, id) =>  
+            val msgs = pendingEvents.getOrElse(SCHEDULER, new Queue[(Unique, Cell, Envelope)])
+            pendingEvents(SCHEDULER) = msgs += ((uniq, null, null))
+            maybeAddGraphNode(uniq)
+         
+         
+          case event @ Unique(WaitQuiescence(), _) =>
+            val msgs = pendingEvents.getOrElse(SCHEDULER, new Queue[(Unique, Cell, Envelope)])
+            pendingEvents(SCHEDULER) = msgs += ((event, null, null))
+            maybeAddGraphNode(event)
+            await = true
 
-        // A unique ID needs to be associated with all network events.
-        case par : NetworkPartition => throw new Exception("internal error")
-        case par : NetworkUnpartition => throw new Exception("internal error")
-        case _ => throw new Exception("unsuported external event " + event)
+          // A unique ID needs to be associated with all network events.
+          case par : NetworkPartition => throw new Exception("internal error")
+          case par : NetworkUnpartition => throw new Exception("internal error")
+          case _ => throw new Exception("unsuported external event " + event)
+        }
+        externalEventIdx += 1
       }
-      externalEventIdx += 1
+
+      logger.trace(Console.RED + " RUN EXTERNAL LOOP ENDED idx = " + externalEventIdx + Console.RESET) 
     }
-    
-    logger.trace(Console.RED + " RUN EXTERNAL LOOP ENDED idx = " + externalEventIdx + Console.RESET) 
-    
+
+    instrumenter().sendKnownExternalMessages(processExternal)
     instrumenter().tellEnqueue.await()
-    
     instrumenter().start_dispatch
   }
  
@@ -935,7 +942,7 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
    *
    * * @return A unique event.
    */
-  def getMessage(cell: ActorCell, envelope: Envelope) : Unique = {
+  def getMessage(cell: Cell, envelope: Envelope) : Unique = {
     val snd = envelope.sender.path.name
     val rcv = cell.self.path.name
     val msg = new MsgEvent(snd, rcv, messageFingerprinter.fingerprint(envelope.message))
@@ -963,7 +970,7 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
   
   
   
-  def event_produced(cell: ActorCell, envelope: Envelope) : Unit = {
+  def event_produced(cell: Cell, envelope: Envelope) : Unit = {
     val snd = envelope.sender.path.name
     val rcv = cell.self.path.name
     if (rcv == CheckpointSink.name) {
@@ -982,12 +989,12 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
       // CheckpointRequests and failure detector messeages are simply enqueued to the priority queued
       // and dispatched at the earliest convenience.
       case NodesReachable | NodesUnreachable | CheckpointRequest =>
-        val msgs = pendingEvents.getOrElse(PRIORITY, new Queue[(Unique, ActorCell, Envelope)])
+        val msgs = pendingEvents.getOrElse(PRIORITY, new Queue[(Unique, Cell, Envelope)])
         pendingEvents(PRIORITY) = msgs += ((null, cell, envelope))
       
       case _ =>
         val unique @ Unique(msg : MsgEvent, id) = getMessage(cell, envelope)
-        val msgs = pendingEvents.getOrElse(msg.receiver, new Queue[(Unique, ActorCell, Envelope)])
+        val msgs = pendingEvents.getOrElse(msg.receiver, new Queue[(Unique, Cell, Envelope)])
         // Do not enqueue if bound hit
         if (!should_bound || currentDepth < stop_at_depth) {
           logger.trace(Console.BLUE + "Enqueuing event " + cell + " " + envelope + " " + unique + 
@@ -1009,11 +1016,11 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
   
   
   // Called before we start processing a newly received event
-  def before_receive(cell: ActorCell) {
+  def before_receive(cell: Cell) {
   }
   
   // Called after receive is done being processed 
-  def after_receive(cell: ActorCell) {
+  def after_receive(cell: Cell) {
   }
 
   
@@ -1114,6 +1121,8 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
   }
   
   
+  // Assume: only used for timers (which implies that it's always an
+  // akka-dispatcher thread calling this method).
   def enqueue_message(receiver: String,msg: Any): Unit = {
     logger.trace(Console.BLUE + "Enqueuing timer to " + receiver + " with msg " + msg + Console.RESET)
     instrumenter().actorMappings(receiver) ! msg
@@ -1127,7 +1136,7 @@ class DPORwHeuristics(enableCheckpointing: Boolean,
 
   def notify_timer_cancel (receiver: ActorRef, msg: Any) = {
     logger.trace(Console.BLUE + " Trying to cancel timer for " + receiver.path.name + " " + msg + Console.BLUE)
-    def equivalentTo(u: (Unique, ActorCell, Envelope)): Boolean = {
+    def equivalentTo(u: (Unique, Cell, Envelope)): Boolean = {
       u._3 match {
         case null => false
         case e => e.message == msg && u._2.self.path.name == receiver.path.name
