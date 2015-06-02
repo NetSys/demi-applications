@@ -26,10 +26,54 @@ import akka.dispatch.MessageDispatcher;
 import scala.concurrent.impl.CallbackRunnable;
 import scala.concurrent.duration.FiniteDuration;
 import scala.concurrent.ExecutionContext;
+import scala.concurrent.Await;
+import scala.concurrent.Await$;
 import java.lang.Runnable;
+
+import scala.Option;
 
 privileged public aspect WeaveActor {
   Instrumenter inst = Instrumenter.apply();
+
+  before():
+  execution(* Option.get(..)) {
+    System.out.println("WOOOHOOO");
+  }
+
+/*
+  // Scala
+  before():
+  execution(* scala.concurrent.Await$.ready(..)) {
+    inst.actorBlocked();
+  }
+
+  before():
+  execution(* scala.concurrent.Await$.result(..)) {
+    inst.actorBlocked();
+  }
+
+  before():
+  execution(* scala.concurrent.Await.ready(..)) {
+    inst.actorBlocked();
+  }
+
+  before():
+  execution(* scala.concurrent.Await.result(..)) {
+    inst.actorBlocked();
+  }
+  */
+
+/*
+  before():
+  execution(* scala.concurrent.Await$$anonfun$ready$1(..)) {
+    inst.actorBlocked();
+  }
+
+  before():
+  execution(* scala.concurrent.Await$$anonfun$result$1(..)) {
+    inst.actorBlocked();
+  }
+  */
     
   /*
   pointcut enqueueOperation(MessageQueue me, ActorRef receiver, Envelope handle): 
@@ -44,6 +88,7 @@ privileged public aspect WeaveActor {
   
   
   
+  /*
   before(ActorCell me, Object msg):
   execution(* akka.actor.ActorCell.receiveMessage(Object)) &&
   args(msg, ..) && this(me) {
@@ -165,4 +210,5 @@ privileged public aspect WeaveActor {
     inst.registerCancellable(c, true, receiver, msg);
     return c;
   }
+  */
 }

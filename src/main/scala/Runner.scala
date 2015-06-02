@@ -5,6 +5,9 @@ import akka.actor.Props
 import akka.dispatch.verification._
 
 object Main extends App {
+  val o : Option[Int] = Some(1)
+  o.get
+
   val prefix = Array[ExternalEvent](
      WaitCondition(() => false))
 
