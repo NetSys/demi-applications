@@ -22,6 +22,8 @@ import java.util.concurrent.TimeoutException
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
+import akka.dispatch.verification.Instrumenter
+
 import akka.actor._
 import akka.pattern.ask
 import akka.remote.{AssociationErrorEvent, DisassociatedEvent, RemotingLifecycleEvent}
@@ -196,6 +198,7 @@ private[spark] class AppClient(
       try {
         val timeout = AkkaUtils.askTimeout(conf)
         val future = actor.ask(StopAppClient)(timeout)
+        Instrumenter().actorBlocked
         Await.result(future, timeout)
       } catch {
         case e: TimeoutException =>

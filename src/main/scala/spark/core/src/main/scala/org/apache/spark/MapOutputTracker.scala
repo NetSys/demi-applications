@@ -25,6 +25,7 @@ import scala.concurrent.Await
 
 import akka.actor._
 import akka.pattern.ask
+import akka.dispatch.verification.Instrumenter
 
 import org.apache.spark.scheduler.MapStatus
 import org.apache.spark.shuffle.MetadataFetchFailedException
@@ -104,6 +105,7 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
   protected def askTracker(message: Any): Any = {
     try {
       val future = trackerActor.ask(message)(timeout)
+      Instrumenter().actorBlocked
       Await.result(future, timeout)
     } catch {
       case e: Exception =>

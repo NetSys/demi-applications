@@ -9,6 +9,9 @@ sbt "project core" "run --master local[*] --class org.apache.spark.examples.Spar
 
 -- Notes ---
 
+# Github akka, close enough version:
+https://github.com/akka/akka/blob/release-2.2/akka-actor/src/main/scala/akka/actor/ActorCell.scala
+
 Spark: c2babc089bd97137d240ca119ec4fc4b5a1422c8
 
 Scala: 2.10.4

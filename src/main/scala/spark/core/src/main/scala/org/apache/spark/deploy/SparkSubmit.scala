@@ -27,6 +27,10 @@ import scala.collection.mutable.{ArrayBuffer, HashMap, Map}
 import org.apache.spark.executor.ExecutorURLClassLoader
 import org.apache.spark.util.Utils
 
+import org.slf4j.LoggerFactory
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+
 /**
  * Scala code behind the spark-submit script.  The script handles setting up the classpath with
  * relevant Spark dependencies and provides a layer over the different cluster managers and deploy
@@ -48,16 +52,37 @@ object SparkSubmit {
   private val PYSPARK_SHELL = "pyspark-shell"
 
   def main(args: Array[String]) {
-    // STS!
-    // val sched = new RandomScheduler(1,
-    //                     new FingerprintFactory,
-    //                     false,
-    //                     0,
-    //                     true)
-    val sched = new FairScheduler
-    Instrumenter().scheduler = sched
-    // -- STS /
+    // ---- STS ----
+    /*
+    def urlses(cl: ClassLoader): Array[java.net.URL] = cl match {
+      case null => Array()
+      case u: java.net.URLClassLoader => u.getURLs() ++ urlses(cl.getParent)
+      case _ => urlses(cl.getParent)
+    }
 
+    val  urls = urlses(getClass.getClassLoader)
+    println("CLASSPATH")
+    println(urls.filterNot(_.toString.contains("ivy")).mkString("\n"))
+    */
+
+    // Override configs: set level to trace
+    val root = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).asInstanceOf[ch.qos.logback.classic.Logger]
+    root.setLevel(Level.TRACE)
+
+    val sched = new RandomScheduler(1,
+                        new FingerprintFactory,
+                        false,
+                        0,
+                        true)
+    Instrumenter().waitForExecutionStart
+    Instrumenter().scheduler = sched
+    def invariant(s: Seq[akka.dispatch.verification.ExternalEvent],
+                  c: scala.collection.mutable.HashMap[String,Option[akka.dispatch.verification.CheckpointReply]])
+                : Option[akka.dispatch.verification.ViolationFingerprint] = {
+      return None
+    }
+    sched.setInvariant(invariant)
+    // ---- /STS ----
     val appArgs = new SparkSubmitArguments(args)
     if (appArgs.verbose) {
       printStream.println(appArgs)

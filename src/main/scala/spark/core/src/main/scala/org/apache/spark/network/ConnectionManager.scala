@@ -25,6 +25,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import java.util.concurrent.{LinkedBlockingDeque, TimeUnit, ThreadPoolExecutor}
 
+import akka.dispatch.verification.Instrumenter
+
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
@@ -826,6 +828,7 @@ private[spark] class ConnectionManager(port: Int, conf: SparkConf,
 
   def sendMessageReliablySync(connectionManagerId: ConnectionManagerId,
       message: Message): Option[Message] = {
+    Instrumenter().actorBlocked
     Await.result(sendMessageReliably(connectionManagerId, message), Duration.Inf)
   }
 
@@ -906,6 +909,7 @@ private[spark] object ConnectionManager {
       val bufferMessage = Message.createBufferMessage(buffer.duplicate)
       manager.sendMessageReliably(manager.id, bufferMessage)
     }).foreach(f => {
+      Instrumenter().actorBlocked
       val g = Await.result(f, 1 second)
       if (!g.isDefined) println("Failed")
     })
@@ -941,6 +945,7 @@ private[spark] object ConnectionManager {
       val bufferMessage = Message.createBufferMessage(buffers(count - 1 - i).duplicate)
       manager.sendMessageReliably(manager.id, bufferMessage)
     }).foreach(f => {
+      Instrumenter().actorBlocked
       val g = Await.result(f, 1 second)
       if (!g.isDefined) println("Failed")
     })
@@ -971,6 +976,7 @@ private[spark] object ConnectionManager {
           val bufferMessage = Message.createBufferMessage(buffer.duplicate)
           manager.sendMessageReliably(manager.id, bufferMessage)
         }).foreach(f => {
+          Instrumenter().actorBlocked
           val g = Await.result(f, 1 second)
           if (!g.isDefined) println("Failed")
         })

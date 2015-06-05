@@ -22,6 +22,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import akka.actor._
 import akka.pattern.ask
+import akka.dispatch.verification.Instrumenter
 
 import org.apache.spark.{Logging, SparkConf, SparkException}
 import org.apache.spark.storage.BlockManagerMessages._
@@ -114,6 +115,7 @@ class BlockManagerMaster(var driverActor: ActorRef, conf: SparkConf) extends Log
       case e: Throwable => logError("Failed to remove RDD " + rddId, e)
     }
     if (blocking) {
+      Instrumenter().actorBlocked
       Await.result(future, timeout)
     }
   }
@@ -125,6 +127,7 @@ class BlockManagerMaster(var driverActor: ActorRef, conf: SparkConf) extends Log
       case e: Throwable => logError("Failed to remove shuffle " + shuffleId, e)
     }
     if (blocking) {
+      Instrumenter().actorBlocked
       Await.result(future, timeout)
     }
   }
@@ -139,6 +142,7 @@ class BlockManagerMaster(var driverActor: ActorRef, conf: SparkConf) extends Log
           " with removeFromMaster = " + removeFromMaster, e)
     }
     if (blocking) {
+      Instrumenter().actorBlocked
       Await.result(future, timeout)
     }
   }
@@ -176,6 +180,7 @@ class BlockManagerMaster(var driverActor: ActorRef, conf: SparkConf) extends Log
      */
     val response = askDriverWithReply[Map[BlockManagerId, Future[Option[BlockStatus]]]](msg)
     val (blockManagerIds, futures) = response.unzip
+    Instrumenter().actorBlocked
     val result = Await.result(Future.sequence(futures), timeout)
     if (result == null) {
       throw new SparkException("BlockManager returned null for BlockStatus query: " + blockId)
@@ -199,6 +204,7 @@ class BlockManagerMaster(var driverActor: ActorRef, conf: SparkConf) extends Log
       askSlaves: Boolean): Seq[BlockId] = {
     val msg = GetMatchingBlockIds(filter, askSlaves)
     val future = askDriverWithReply[Future[Seq[BlockId]]](msg)
+    Instrumenter().actorBlocked
     Await.result(future, timeout)
   }
 
@@ -234,6 +240,7 @@ class BlockManagerMaster(var driverActor: ActorRef, conf: SparkConf) extends Log
       attempts += 1
       try {
         val future = driverActor.ask(message)(timeout)
+        Instrumenter().actorBlocked
         val result = Await.result(future, timeout)
         if (result == null) {
           throw new SparkException("BlockManagerMaster returned null")

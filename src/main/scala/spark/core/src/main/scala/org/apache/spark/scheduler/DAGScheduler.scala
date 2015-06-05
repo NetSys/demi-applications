@@ -28,6 +28,7 @@ import scala.language.postfixOps
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
+import akka.dispatch.verification.Instrumenter
 import akka.actor._
 import akka.actor.OneForOneStrategy
 import akka.actor.SupervisorStrategy.Stop
@@ -128,6 +129,7 @@ class DAGScheduler(
     implicit val timeout = Timeout(30 seconds)
     val initEventActorReply =
       dagSchedulerActorSupervisor ? Props(new DAGSchedulerEventProcessActor(this))
+    Instrumenter().actorBlocked
     eventProcessActor = Await.result(initEventActorReply, timeout.duration).
       asInstanceOf[ActorRef]
   }

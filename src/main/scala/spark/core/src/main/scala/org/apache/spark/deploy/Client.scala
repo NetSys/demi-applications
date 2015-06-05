@@ -20,6 +20,7 @@ package org.apache.spark.deploy
 import scala.collection.JavaConversions._
 import scala.collection.mutable.Map
 import scala.concurrent._
+import akka.dispatch.verification.Instrumenter
 
 import akka.actor._
 import akka.pattern.ask
@@ -92,6 +93,7 @@ private class ClientActor(driverArgs: ClientArguments, conf: SparkConf) extends 
     println("... polling master for driver state")
     val statusFuture = (masterActor ? RequestDriverStatus(driverId))(timeout)
       .mapTo[DriverStatusResponse]
+    Instrumenter().actorBlocked
     val statusResponse = Await.result(statusFuture, timeout)
 
     statusResponse.found match {

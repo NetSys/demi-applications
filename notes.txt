@@ -1,3 +1,5 @@
+Runner: deploy/SparkSubmit.scala
+
 Gotchas:
 
 Sometimes need to reboot, due to hostname issues
@@ -19,8 +21,6 @@ Only one ActorSystem, luckily. Created here:
 [error]         at org.apache.spark.examples.SparkPi$.main(SparkPi.scala:28)
 
 Actors observed in the system:
-  akkaprotocolmanager.tcp0
-  [info] WARNING! Unknown receiver remote-watcher
   MapOutputTracker
   BlockManagerMaster
   BlockManagerActor1

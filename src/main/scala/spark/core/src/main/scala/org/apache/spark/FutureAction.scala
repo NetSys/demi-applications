@@ -20,6 +20,7 @@ package org.apache.spark
 import scala.concurrent._
 import scala.concurrent.duration.Duration
 import scala.util.Try
+import akka.dispatch.verification.Instrumenter
 
 import org.apache.spark.annotation.Experimental
 import org.apache.spark.rdd.RDD
@@ -82,7 +83,10 @@ trait FutureAction[T] extends Future[T] {
    * Blocks and returns the result of this job.
    */
   @throws(classOf[Exception])
-  def get(): T = Await.result(this, Duration.Inf)
+  def get(): T = {
+    Instrumenter().actorBlocked()
+    Await.result(this, Duration.Inf)
+  }
 }
 
 
@@ -220,6 +224,7 @@ class ComplexFutureAction[T] extends FutureAction[T] {
     // cancel the job and stop the execution. This is not in a synchronized block because
     // Await.ready eventually waits on the monitor in FutureJob.jobWaiter.
     try {
+      Instrumenter().actorBlocked
       Await.ready(job, Duration.Inf)
     } catch {
       case e: InterruptedException =>

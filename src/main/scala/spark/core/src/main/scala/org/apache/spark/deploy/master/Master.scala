@@ -26,6 +26,8 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Random
 
+import akka.dispatch.verification.Instrumenter
+
 import akka.actor._
 import akka.pattern.ask
 import akka.remote.{DisassociatedEvent, RemotingLifecycleEvent}
@@ -790,6 +792,7 @@ private[spark] object Master extends Logging {
       securityMgr), actorName)
     val timeout = AkkaUtils.askTimeout(conf)
     val respFuture = actor.ask(RequestWebUIPort)(timeout)
+    Instrumenter().actorBlocked
     val resp = Await.result(respFuture, timeout).asInstanceOf[WebUIPortResponse]
     (actorSystem, boundPort, resp.webUIBoundPort)
   }

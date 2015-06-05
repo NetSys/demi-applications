@@ -25,6 +25,7 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.util.Random
 
+import akka.dispatch.verification.Instrumenter
 import akka.actor.{ActorSystem, Cancellable, Props}
 import sun.nio.ch.DirectBuffer
 
@@ -224,6 +225,7 @@ private[spark] class BlockManager(
   def waitForAsyncReregister(): Unit = {
     val task = asyncReregisterTask
     if (task != null) {
+      Instrumenter().actorBlocked
       Await.ready(task, Duration.Inf)
     }
   }
@@ -746,6 +748,7 @@ private[spark] class BlockManager(
       data match {
         case ByteBufferValues(bytes) =>
           if (replicationFuture != null) {
+            Instrumenter().actorBlocked
             Await.ready(replicationFuture, Duration.Inf)
           }
         case _ =>

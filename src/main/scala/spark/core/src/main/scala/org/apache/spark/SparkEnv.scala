@@ -24,6 +24,7 @@ import scala.collection.mutable
 import scala.concurrent.Await
 import scala.util.Properties
 
+import akka.dispatch.verification.Instrumenter
 import akka.actor._
 import com.google.common.collect.MapMaker
 
@@ -199,6 +200,7 @@ object SparkEnv extends Logging {
         val url = s"akka.tcp://spark@$driverHost:$driverPort/user/$name"
         val timeout = AkkaUtils.lookupTimeout(conf)
         logInfo(s"Connecting to $name: $url")
+        Instrumenter().actorBlocked
         Await.result(actorSystem.actorSelection(url).resolveOne(timeout), timeout)
       }
     }
