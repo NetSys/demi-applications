@@ -63,19 +63,19 @@ object SparkBuild extends Build {
 
   lazy val sts = Project("sts", file("./interposition"),
                          settings = sharedSettings ++ Seq(
-        // STS deps:
-        libraryDependencies += "com.assembla.scala-incubator" %% "graph-core" % "1.9.0",
-        libraryDependencies += "com.assembla.scala-incubator" %% "graph-dot" % "1.9.0",
-        //"com.typesafe.scala-logging" %% "scala-logging-api" % "2.1.2",
-        libraryDependencies +=  "ch.qos.logback" % "logback-classic" % "1.1.2",
-        // For 2.11.0:
-        //libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.2",
-        // For 2.10.*:
-        libraryDependencies += "org.scala-lang" % "scala-swing" % scalaVersion.value,
-        libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.2.3",
-        libraryDependencies += "com.typesafe.akka" %% "akka-cluster" % "2.2.3"
-        // -- /STS deps --
-                       ))
+    // STS deps:
+    libraryDependencies += "com.assembla.scala-incubator" %% "graph-core" % "1.9.0",
+    libraryDependencies += "com.assembla.scala-incubator" %% "graph-dot" % "1.9.0",
+    //"com.typesafe.scala-logging" %% "scala-logging-api" % "2.1.2",
+    libraryDependencies +=  "ch.qos.logback" % "logback-classic" % "1.1.2",
+    // For 2.11.0:
+    //libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.2",
+    // For 2.10.*:
+    libraryDependencies += "org.scala-lang" % "scala-swing" % scalaVersion.value,
+    libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.2.3",
+    libraryDependencies += "com.typesafe.akka" %% "akka-cluster" % "2.2.3"
+    // -- /STS deps --
+  ))
 
   lazy val core = Project("core", file("./src/main/scala/spark/core"),
                           settings = coreSettings).dependsOn(sts)

@@ -103,16 +103,10 @@ private[spark] object AkkaUtils extends Logging {
       """.stripMargin))
 
     val actorSystem = Instrumenter().actorSystem(Some(akkaConf))
-    // val actorSystem = ActorSystem(name, akkaConf) // XXX
+    Instrumenter().executionStarted
+    // val actorSystem = ActorSystem(name, akkaConf)
     val provider = actorSystem.asInstanceOf[ExtendedActorSystem].provider
     val boundPort = provider.getDefaultAddress.port.get
-
-    // ------ STS! -------
-    val prefix = Array[ExternalEvent](
-      WaitCondition(() => false))
-    println("scheduler.nonBlockingExplore")
-    Instrumenter().scheduler.asInstanceOf[RandomScheduler].nonBlockingExplore(prefix, (ret: Option[(EventTrace,ViolationFingerprint)]) => println("STS DONE!"))
-    // -- STS / --
 
     (actorSystem, boundPort)
   }

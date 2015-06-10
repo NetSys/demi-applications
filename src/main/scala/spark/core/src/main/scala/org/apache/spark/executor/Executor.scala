@@ -31,6 +31,8 @@ import org.apache.spark.shuffle.FetchFailedException
 import org.apache.spark.storage.{StorageLevel, TaskResultBlockId}
 import org.apache.spark.util.{AkkaUtils, Utils}
 
+import akka.dispatch.verification._
+
 /**
  * Spark executor used with Mesos, YARN, and the standalone scheduler.
  */
@@ -150,6 +152,12 @@ private[spark] class Executor(
     }
 
     override def run() {
+      // XXX STS
+      if (Instrumenter().scheduler.isInstanceOf[RandomScheduler]) {
+        val sched = Instrumenter().scheduler.asInstanceOf[RandomScheduler]
+        sched.beginExternalAtomicBlock(taskId)
+      }
+
       val startTime = System.currentTimeMillis()
       SparkEnv.set(env)
       Thread.currentThread.setContextClassLoader(replClassLoader)
@@ -265,6 +273,12 @@ private[spark] class Executor(
           shuffleMemoryMap.remove(Thread.currentThread().getId)
         }
         runningTasks.remove(taskId)
+
+        // XXX STS
+        if (Instrumenter().scheduler.isInstanceOf[RandomScheduler]) {
+          val sched = Instrumenter().scheduler.asInstanceOf[RandomScheduler]
+          sched.endExternalAtomicBlock(taskId)
+        }
       }
     }
   }

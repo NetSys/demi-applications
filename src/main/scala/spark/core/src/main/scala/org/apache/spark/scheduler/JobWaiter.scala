@@ -17,6 +17,8 @@
 
 package org.apache.spark.scheduler
 
+import akka.dispatch.verification._
+
 /**
  * An object that waits for a DAGScheduler job to complete. As tasks finish, it passes their
  * results to the given handler function.
@@ -69,6 +71,9 @@ private[spark] class JobWaiter[T](
   }
 
   def awaitResult(): JobResult = synchronized {
+    if (Instrumenter().scheduler.isInstanceOf[RandomScheduler]) {
+      Instrumenter().scheduler.asInstanceOf[RandomScheduler].endUnignorableEvents
+    }
     while (!_jobFinished) {
       this.wait()
     }

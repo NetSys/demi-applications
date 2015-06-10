@@ -1,4 +1,5 @@
 Runner: deploy/SparkSubmit.scala
+sched.start(): util/AkkaUtils.scala
 
 Gotchas:
 
@@ -25,7 +26,6 @@ Actors observed in the system:
   BlockManagerMaster
   BlockManagerActor1
 System has created a new actor: $a [DAGSchedulerEventProcessActor]
-System has created a new actor: $a
 System has created a new actor: LocalBackendActor
 
 // Should block out:
@@ -41,9 +41,7 @@ Actors in the system:
  -  Worker?
 
 TODO(cs):
-  - At what point do we kick off RandomScheduler.run?
-  - Figure out how to set logging level
-  - Read more about ThreadPoolService (java library?)
+  - Read more about ThreadPoolExecutor (java library?)
   - Difference between "executor" and "backend"?
 
 Relevant:
@@ -54,3 +52,6 @@ Relevant:
 Changes to Spark, for rollback:
   - AkkaUtils.scala => use Instrumenter().actorSystem
   - Symlink to aspectj
+  - actorBlocked() before each Await call
+  - schedulers/JobWaiter.scala -> endUnignorableEvents
+  - executor/Executor.scala

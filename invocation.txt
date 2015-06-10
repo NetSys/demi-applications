@@ -14,6 +14,10 @@ https://github.com/akka/akka/blob/release-2.2/akka-actor/src/main/scala/akka/act
 
 Spark: c2babc089bd97137d240ca119ec4fc4b5a1422c8
 
+For linking code:
+
+https://github.com/apache/spark/tree/c2babc089bd97137d240ca119ec4fc4b5a1422c8
+
 Scala: 2.10.4
 
 Need to change parser-combinators:
