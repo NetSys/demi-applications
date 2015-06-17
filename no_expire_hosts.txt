@@ -1,0 +1,675 @@
+[0m[[0minfo[0m] [0mIMMA PONY[0m
+[0m[[0minfo[0m] [0m13:18:22.223 [initializationRoutine] INFO  org.apache.spark.SecurityManager - Changing view acls to: cs[0m
+[0m[[0minfo[0m] [0m13:18:22.223 [initializationRoutine] INFO  org.apache.spark.SecurityManager - SecurityManager: authentication disabled; ui acls disabled; users with view permissions: Set(cs)[0m
+[0m[[0minfo[0m] [0m13:18:22.223 [initializationRoutine] DEBUG org.apache.spark.util.AkkaUtils - In createActorSystem, requireCookie is: off[0m
+[0m[[0minfo[0m] [0mReplaying 0/181 Quiescence[0m
+[0m[[0minfo[0m] [0mReplaying 1/181 BeginUnignorableEvents[0m
+[0m[[0minfo[0m] [0mReplaying 2/181 MsgSend(Timer,BlockManagerMaster,ExpireDeadHosts)[0m
+[0m[[0minfo[0m] [0mReplaying 3/181 MsgSend($c,BlockManagerMaster,RegisterBlockManager(BlockManagerId(<driver>, 10.0.0.6, 56618, 0),1718196633,Actor[akka://new-system-1/user/BlockManagerActor1#-31032347]))[0m
+[0m[[0minfo[0m] [0mReplaying 4/181 MsgEvent($c,BlockManagerMaster,RegisterBlockManager(BlockManagerId(<driver>, 10.0.0.6, 56618, 0),1718196633,Actor[akka://new-system-1/user/BlockManagerActor1#-31032347]))[0m
+[0m[[0minfo[0m] [0msend_external_messages[0m
+[0m[[0minfo[0m] [0mkey: ($c,BlockManagerMaster,BasicFingerprint(RegisterBlockManager))[0m
+[0m[[0minfo[0m] [0mpending keys:[0m
+[0m[[0minfo[0m] [0msend_external_messages[0m
+[0m[[0minfo[0m] [0mkey: ($c,BlockManagerMaster,BasicFingerprint(RegisterBlockManager))[0m
+[0m[[0minfo[0m] [0mpending keys:[0m
+[0m[[0minfo[0m] [0mBlocking until enqueue_message...[0m
+[0m[[0minfo[0m] [0m13:18:22.235 [new-system-7-akka.actor.default-dispatcher-4] INFO  akka.event.slf4j.Slf4jLogger - Slf4jLogger started[0m
+[0m[[0minfo[0m] [0m13:18:22.239 [new-system-7-akka.actor.default-dispatcher-4] INFO  Remoting - Starting remoting[0m
+[0m[[0minfo[0m] [0m13:18:22.247 [new-system-7-akka.actor.default-dispatcher-7] INFO  Remoting - Remoting started; listening on addresses :[akka.tcp://new-system-7@localhost:56630][0m
+[0m[[0minfo[0m] [0m13:18:22.247 [new-system-7-akka.actor.default-dispatcher-7] INFO  Remoting - Remoting now listens on addresses: [akka.tcp://new-system-7@localhost:56630][0m
+[0m[[0minfo[0m] [0mWARNING! Unknown timer receiver remote-watcher[0m
+[0m[[0minfo[0m] [0mWARNING! Unknown timer receiver remote-watcher[0m
+[0m[[0minfo[0m] [0m13:18:22.248 [initializationRoutine] DEBUG org.apache.spark.SparkEnv - Using serializer: class org.apache.spark.serializer.JavaSerializer[0m
+[0m[[0minfo[0m] [0m13:18:22.249 [initializationRoutine] INFO  org.apache.spark.SparkEnv - Registering MapOutputTracker[0m
+[0m[[0minfo[0m] [0mSched knows about actor MapOutputTracker[0m
+[0m[[0minfo[0m] [0mSystem has created a new actor: MapOutputTracker[0m
+[0m[[0minfo[0m] [0m13:18:22.249 [initializationRoutine] INFO  org.apache.spark.SparkEnv - Registering BlockManagerMaster[0m
+[0m[[0minfo[0m] [0mWARNING! Unknown timer receiver BlockManagerMaster[0m
+[0m[[0minfo[0m] [0mSched knows about actor BlockManagerMaster[0m
+[0m[[0minfo[0m] [0mSystem has created a new actor: BlockManagerMaster[0m
+[0m[[0minfo[0m] [0m13:18:22.251 [initializationRoutine] DEBUG o.a.spark.storage.DiskBlockManager - Creating local directories at root dirs '/var/folders/p1/0fb1zp654wl958h_td65c3v80000gn/T/'[0m
+[0m[[0minfo[0m] [0m13:18:22.252 [initializationRoutine] INFO  o.a.spark.storage.DiskBlockManager - Created local directory at /var/folders/p1/0fb1zp654wl958h_td65c3v80000gn/T/spark-local-20150616131822-6850[0m
+[0m[[0minfo[0m] [0m13:18:22.252 [initializationRoutine] INFO  o.a.spark.network.ConnectionManager - Bound socket to port 56631 with id = ConnectionManagerId(localhost,56631)[0m
+[0m[[0minfo[0m] [0m13:18:22.253 [initializationRoutine] INFO  org.apache.spark.storage.MemoryStore - MemoryStore started with capacity 1638.6 MB[0m
+[0m[[0minfo[0m] [0mSched knows about actor BlockManagerActor1[0m
+[0m[[0minfo[0m] [0mSystem has created a new actor: BlockManagerActor1[0m
+[0m[[0minfo[0m] [0m13:18:22.254 [initializationRoutine] INFO  o.a.spark.storage.BlockManagerMaster - Trying to register BlockManager[0m
+[0m[[0minfo[0m] [0menqueue_message: Actor[akka://new-system-7/user/BlockManagerMaster#-837409815] RegisterBlockManager(BlockManagerId(<driver>, localhost, 56631, 0),1718196633,Actor[akka://new-system-7/user/BlockManagerActor1#-762304621])[0m
+[0m[[0minfo[0m] [0mgiving out ticket[0m
+[0m[[0minfo[0m] [0msend_external_messages[0m
+[0m[[0minfo[0m] [0m13:18:22.254 [main] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-7/temp/$c] -> Actor[akka://new-system-7/user/BlockManagerMaster#-837409815] RegisterBlockManager(BlockManagerId(<driver>, localhost, 56631, 0),1718196633,Actor[akka://new-system-7/user/BlockManagerActor1#-762304621])[0m
+[0m[[0minfo[0m] [0m13:18:22.255 [main] TRACE STSScheduler - event_produced: $c -> BlockManagerMaster RegisterBlockManager(BlockManagerId(<driver>, localhost, 56631, 0),1718196633,Actor[akka://new-system-7/user/BlockManagerActor1#-762304621])[0m
+[0m[[0minfo[0m] [0m!isTimer?Actor[akka://new-system-7/user/BlockManagerMaster#-837409815] RegisterBlockManager(BlockManagerId(<driver>, localhost, 56631, 0),1718196633,Actor[akka://new-system-7/user/BlockManagerActor1#-762304621])[0m
+[0m[[0minfo[0m] [0mtaking back ticket[0m
+[0m[[0minfo[0m] [0mkey: ($c,BlockManagerMaster,BasicFingerprint(RegisterBlockManager))[0m
+[0m[[0minfo[0m] [0mpending keys:[0m
+[0m[[0minfo[0m] [0m($c,BlockManagerMaster,BasicFingerprint(RegisterBlockManager))[0m
+[0m[[0minfo[0m] [0msend_external_messages[0m
+[0m[[0minfo[0m] [0mReplaying 4/181 MsgEvent($c,BlockManagerMaster,RegisterBlockManager(BlockManagerId(<driver>, 10.0.0.6, 56618, 0),1718196633,Actor[akka://new-system-1/user/BlockManagerActor1#-31032347]))[0m
+[0m[[0minfo[0m] [0msend_external_messages[0m
+[0m[[0minfo[0m] [0mkey: ($c,BlockManagerMaster,BasicFingerprint(RegisterBlockManager))[0m
+[0m[[0minfo[0m] [0mpending keys:[0m
+[0m[[0minfo[0m] [0m($c,BlockManagerMaster,BasicFingerprint(RegisterBlockManager))[0m
+[0m[[0minfo[0m] [0msend_external_messages[0m
+[0m[[0minfo[0m] [0m13:18:22.257 [main] TRACE STSScheduler - schedule_new_message(): $c -> BlockManagerMaster RegisterBlockManager(BlockManagerId(<driver>, localhost, 56631, 0),1718196633,Actor[akka://new-system-7/user/BlockManagerActor1#-762304621])[0m
+[0m[[0minfo[0m] [0m13:18:22.257 [new-system-7-akka.actor.default-dispatcher-8] INFO  o.a.spark.storage.BlockManagerInfo - Registering block manager localhost:56631 with 1638.6 MB RAM[0m
+[0m[[0minfo[0m] [0m13:18:22.257 [initializationRoutine] INFO  o.a.spark.storage.BlockManagerMaster - Registered BlockManager[0m
+[0m[[0minfo[0m] [0m13:18:22.257 [new-system-7-akka.actor.default-dispatcher-8] TRACE Instrumenter - afterMessageReceive: just finished: $c -> BlockManagerMaster RegisterBlockManager(BlockManagerId(<driver>, localhost, 56631, 0),1718196633,Actor[akka://new-system-7/user/BlockManagerActor1#-762304621])[0m
+[0m[[0minfo[0m] [0m13:18:22.257 [new-system-7-akka.actor.default-dispatcher-8] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m13:18:22.257 [new-system-7-akka.actor.default-dispatcher-8] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0msend_external_messages[0m
+[0m[[0minfo[0m] [0mReplaying 5/181 ChangeContext(BlockManagerMaster)[0m
+[0m[[0minfo[0m] [0menqueue_message: Actor[akka://new-system-7/user/BlockManagerMaster#-837409815] HeartBeat(BlockManagerId(<driver>, localhost, 56631, 0))[0m
+[0m[[0minfo[0m] [0mReplaying 6/181 ChangeContext(BlockManagerMaster)[0m
+[0m[[0minfo[0m] [0mgiving out ticket[0m
+[0m[[0minfo[0m] [0mReplaying 7/181 ChangeContext(scheduler)[0m
+[0m[[0minfo[0m] [0mReplaying 8/181 MsgEvent(deadLetters,BlockManagerMaster,ExpireDeadHosts)[0m
+[0m[[0minfo[0m] [0msend_external_messages[0m
+[0m[[0minfo[0m] [0m13:18:22.258 [initializationRoutine] INFO  org.apache.spark.HttpServer - Starting HTTP Server[0m
+[0m[[0minfo[0m] [0m13:18:22.258 [new-system-7-akka.actor.default-dispatcher-8] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-7/temp/$d] -> Actor[akka://new-system-7/user/BlockManagerMaster#-837409815] HeartBeat(BlockManagerId(<driver>, localhost, 56631, 0))[0m
+[0m[[0minfo[0m] [0m13:18:22.258 [new-system-7-akka.actor.default-dispatcher-8] TRACE STSScheduler - event_produced: $d -> BlockManagerMaster HeartBeat(BlockManagerId(<driver>, localhost, 56631, 0))[0m
+[0m[[0minfo[0m] [0m13:18:22.258 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.Server@418713f0 + SocketConnector@0.0.0.0:0 as connector[0m
+[0m[[0minfo[0m] [0m!isTimer?Actor[akka://new-system-7/user/BlockManagerMaster#-837409815] HeartBeat(BlockManagerId(<driver>, localhost, 56631, 0))[0m
+[0m[[0minfo[0m] [0mtaking back ticket[0m
+[0m[[0minfo[0m] [0mkey: (deadLetters,BlockManagerMaster,BasicFingerprint(ExpireDeadHosts))[0m
+[0m[[0minfo[0m] [0mpending keys:[0m
+[0m[[0minfo[0m] [0m($d,BlockManagerMaster,BasicFingerprint(HeartBeat))[0m
+[0m[[0minfo[0m] [0msend_external_messages[0m
+[0m[[0minfo[0m] [0mkey: (deadLetters,BlockManagerMaster,BasicFingerprint(ExpireDeadHosts))[0m
+[0m[[0minfo[0m] [0mpending keys:[0m
+[0m[[0minfo[0m] [0m($d,BlockManagerMaster,BasicFingerprint(HeartBeat))[0m
+[0m[[0minfo[0m] [0mBlocking until enqueue_message...[0m
+[0m[[0minfo[0m] [0m13:18:22.258 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.Server@418713f0 + qtp1794831867{8<=0<=0/254,-1} as threadpool[0m
+[0m[[0minfo[0m] [0m13:18:22.259 [initializationRoutine] DEBUG org.apache.spark.HttpServer - HttpServer is not using security[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.HandlerList@42a5496c + org.eclipse.jetty.server.handler.ResourceHandler@7fcd29ee as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.HandlerList@42a5496c + org.eclipse.jetty.server.handler.DefaultHandler@22781c5f as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.Server@418713f0 + org.eclipse.jetty.server.handler.HandlerList@42a5496c as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.server.Server@418713f0[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] INFO  org.eclipse.jetty.server.Server - jetty-8.1.14.v20131031[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.server.handler.HandlerList@42a5496c[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.server.handler.ResourceHandler@7fcd29ee[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.server.handler.ResourceHandler@7fcd29ee[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.server.handler.ResourceHandler@7fcd29ee[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.server.handler.DefaultHandler@22781c5f[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.server.handler.DefaultHandler@22781c5f[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.server.handler.DefaultHandler@22781c5f[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.server.handler.HandlerList@42a5496c[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.server.handler.HandlerList@42a5496c[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.server.Server@418713f0[0m
+[0m[[0minfo[0m] [0m13:18:22.260 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting qtp1794831867{8<=0<=0/254,-1}[0m
+[0m[[0minfo[0m] [0m13:18:22.261 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED qtp1794831867{8<=7<=8/254,0}[0m
+[0m[[0minfo[0m] [0m13:18:22.261 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting SocketConnector@0.0.0.0:0[0m
+[0m[[0minfo[0m] [0m13:18:22.261 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting null/null[0m
+[0m[[0minfo[0m] [0m13:18:22.261 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED PooledBuffers [0/1024@6144,0/1024@16384,0/1024@-]/PooledBuffers [0/1024@6144,0/1024@32768,0/1024@-][0m
+[0m[[0minfo[0m] [0m13:18:22.262 [initializationRoutine] INFO  o.e.jetty.server.AbstractConnector - Started SocketConnector@0.0.0.0:56632[0m
+[0m[[0minfo[0m] [0m13:18:22.262 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED SocketConnector@0.0.0.0:56632[0m
+[0m[[0minfo[0m] [0m13:18:22.262 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.server.Server@418713f0[0m
+[0m[[0minfo[0m] [0m13:18:22.262 [initializationRoutine] INFO  o.a.spark.broadcast.HttpBroadcast - Broadcast server started at http://10.0.0.6:56632[0m
+[0m[[0minfo[0m] [0m13:18:22.262 [initializationRoutine] INFO  org.apache.spark.HttpFileServer - HTTP File server directory is /var/folders/p1/0fb1zp654wl958h_td65c3v80000gn/T/spark-5f1a3390-68b7-4ff6-9973-63d908335c8b[0m
+[0m[[0minfo[0m] [0m13:18:22.262 [initializationRoutine] INFO  org.apache.spark.HttpServer - Starting HTTP Server[0m
+[0m[[0minfo[0m] [0m13:18:22.262 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.Server@578ccabe + SocketConnector@0.0.0.0:0 as connector[0m
+[0m[[0minfo[0m] [0m13:18:22.262 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.Server@578ccabe + qtp1100483576{8<=0<=0/254,-1} as threadpool[0m
+[0m[[0minfo[0m] [0m13:18:22.263 [initializationRoutine] DEBUG org.apache.spark.HttpServer - HttpServer is not using security[0m
+[0m[[0minfo[0m] [0m13:18:22.263 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.HandlerList@7dbd1352 + org.eclipse.jetty.server.handler.ResourceHandler@7cfb00d6 as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.263 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.HandlerList@7dbd1352 + org.eclipse.jetty.server.handler.DefaultHandler@5c5079c4 as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.263 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.Server@578ccabe + org.eclipse.jetty.server.handler.HandlerList@7dbd1352 as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.263 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.server.Server@578ccabe[0m
+[0m[[0minfo[0m] [0m13:18:22.263 [initializationRoutine] INFO  org.eclipse.jetty.server.Server - jetty-8.1.14.v20131031[0m
+[0m[[0minfo[0m] [0m13:18:22.263 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.server.handler.HandlerList@7dbd1352[0m
+[0m[[0minfo[0m] [0m13:18:22.263 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.server.handler.ResourceHandler@7cfb00d6[0m
+[0m[[0minfo[0m] [0m13:18:22.263 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.server.handler.ResourceHandler@7cfb00d6[0m
+[0m[[0minfo[0m] [0m13:18:22.263 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.server.handler.ResourceHandler@7cfb00d6[0m
+[0m[[0minfo[0m] [0m13:18:22.263 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.server.handler.DefaultHandler@5c5079c4[0m
+[0m[[0minfo[0m] [0m13:18:22.263 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.server.handler.DefaultHandler@5c5079c4[0m
+[0m[[0minfo[0m] [0m13:18:22.263 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.server.handler.DefaultHandler@5c5079c4[0m
+[0m[[0minfo[0m] [0m13:18:22.264 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.server.handler.HandlerList@7dbd1352[0m
+[0m[[0minfo[0m] [0m13:18:22.264 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.server.handler.HandlerList@7dbd1352[0m
+[0m[[0minfo[0m] [0m13:18:22.264 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.server.Server@578ccabe[0m
+[0m[[0minfo[0m] [0m13:18:22.264 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting qtp1100483576{8<=0<=0/254,-1}[0m
+[0m[[0minfo[0m] [0m13:18:22.265 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED qtp1100483576{8<=7<=8/254,0}[0m
+[0m[[0minfo[0m] [0m13:18:22.265 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting SocketConnector@0.0.0.0:0[0m
+[0m[[0minfo[0m] [0m13:18:22.265 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting null/null[0m
+[0m[[0minfo[0m] [0m13:18:22.265 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED PooledBuffers [0/1024@6144,0/1024@16384,0/1024@-]/PooledBuffers [0/1024@6144,0/1024@32768,0/1024@-][0m
+[0m[[0minfo[0m] [0m13:18:22.265 [initializationRoutine] INFO  o.e.jetty.server.AbstractConnector - Started SocketConnector@0.0.0.0:56633[0m
+[0m[[0minfo[0m] [0m13:18:22.265 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED SocketConnector@0.0.0.0:56633[0m
+[0m[[0minfo[0m] [0m13:18:22.265 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.server.Server@578ccabe[0m
+[0m[[0minfo[0m] [0m13:18:22.265 [initializationRoutine] DEBUG org.apache.spark.HttpFileServer - HTTP file server started at: http://10.0.0.6:56633[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-2a9e47bf}[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-2a9e47bf=org.apache.spark.ui.JettyUtils$$anon$1-2a9e47bf}[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-ec71f8a}[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-ec71f8a=org.apache.spark.ui.JettyUtils$$anon$1-ec71f8a}[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-5186d9cf}[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-5186d9cf=org.apache.spark.ui.JettyUtils$$anon$1-5186d9cf}[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-956e748}[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-956e748=org.apache.spark.ui.JettyUtils$$anon$1-956e748}[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-51adfa62}[0m
+[0m[[0minfo[0m] [0m13:18:22.267 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-51adfa62=org.apache.spark.ui.JettyUtils$$anon$1-51adfa62}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-67a08492}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-67a08492=org.apache.spark.ui.JettyUtils$$anon$1-67a08492}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-f6108}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-f6108=org.apache.spark.ui.JettyUtils$$anon$1-f6108}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-3eddbae6}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-3eddbae6=org.apache.spark.ui.JettyUtils$$anon$1-3eddbae6}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-9d29b5}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-9d29b5=org.apache.spark.ui.JettyUtils$$anon$1-9d29b5}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-637ab920}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-637ab920=org.apache.spark.ui.JettyUtils$$anon$1-637ab920}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.268 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-18869366}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-18869366=org.apache.spark.ui.JettyUtils$$anon$1-18869366}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-4b5f001a}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-4b5f001a=org.apache.spark.ui.JettyUtils$$anon$1-4b5f001a}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-22665845}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-22665845=org.apache.spark.ui.JettyUtils$$anon$1-22665845}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-14634690}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-14634690=org.apache.spark.ui.JettyUtils$$anon$1-14634690}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.eclipse.jetty.servlet.DefaultServlet-38d2fad9}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.eclipse.jetty.servlet.DefaultServlet-38d2fad9=org.eclipse.jetty.servlet.DefaultServlet-38d2fad9}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$2-b3e6209}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$2-b3e6209=org.apache.spark.ui.JettyUtils$$anon$2-b3e6209}[0m
+[0m[[0minfo[0m] [0m13:18:22.269 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.270 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.270 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.270 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$2-1b0ab75b}[0m
+[0m[[0minfo[0m] [0m13:18:22.270 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$2-1b0ab75b=org.apache.spark.ui.JettyUtils$$anon$2-1b0ab75b}[0m
+[0m[[0minfo[0m] [0m13:18:22.270 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.270 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.270 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.270 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-1553356c}[0m
+[0m[[0minfo[0m] [0m13:18:22.270 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-1553356c=org.apache.spark.ui.JettyUtils$$anon$1-1553356c}[0m
+[0m[[0minfo[0m] [0m13:18:22.270 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.Server@3a78112d + SelectChannelConnector@0.0.0.0:4040 as connector[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.Server@3a78112d + qtp1118700097{8<=0<=0/254,-1} as threadpool[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/stages,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/stages/json,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/stages/stage,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/stages/stage/json,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/stages/pool,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/stages/pool/json,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/storage,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/storage/json,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/storage/rdd,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/storage/rdd/json,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/environment,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/environment/json,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/executors,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/executors/json,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/static,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/stages/stage/kill,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 + o.e.j.s.ServletContextHandler{/metrics/json,null} as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.server.Server@3a78112d + org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520 as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.server.Server@3a78112d[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] INFO  org.eclipse.jetty.server.Server - jetty-8.1.14.v20131031[0m
+[0m[[0minfo[0m] [0m13:18:22.271 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/stages,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@128a8199 + org.apache.spark.ui.JettyUtils$$anon$1-2a9e47bf as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@128a8199 + [/]=>org.apache.spark.ui.JettyUtils$$anon$1-2a9e47bf as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/stages,null} + org.eclipse.jetty.servlet.ServletHandler@128a8199 as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@128a8199[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-2a9e47bf}[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-2a9e47bf=org.apache.spark.ui.JettyUtils$$anon$1-2a9e47bf}[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@128a8199[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@128a8199[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/stages,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$1-2a9e47bf[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$1-2a9e47bf[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/stages,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/stages/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@6f16eb4f + org.apache.spark.ui.JettyUtils$$anon$1-ec71f8a as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@6f16eb4f + [/]=>org.apache.spark.ui.JettyUtils$$anon$1-ec71f8a as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/stages/json,null} + org.eclipse.jetty.servlet.ServletHandler@6f16eb4f as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@6f16eb4f[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-ec71f8a}[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-ec71f8a=org.apache.spark.ui.JettyUtils$$anon$1-ec71f8a}[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@6f16eb4f[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@6f16eb4f[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/stages/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$1-ec71f8a[0m
+[0m[[0minfo[0m] [0m13:18:22.272 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$1-ec71f8a[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/stages/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/stages/stage,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@575157f8 + org.apache.spark.ui.JettyUtils$$anon$1-5186d9cf as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@575157f8 + [/]=>org.apache.spark.ui.JettyUtils$$anon$1-5186d9cf as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/stages/stage,null} + org.eclipse.jetty.servlet.ServletHandler@575157f8 as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@575157f8[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-5186d9cf}[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-5186d9cf=org.apache.spark.ui.JettyUtils$$anon$1-5186d9cf}[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@575157f8[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@575157f8[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/stages/stage,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$1-5186d9cf[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$1-5186d9cf[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/stages/stage,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/stages/stage/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@8ff6a0f + org.apache.spark.ui.JettyUtils$$anon$1-956e748 as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@8ff6a0f + [/]=>org.apache.spark.ui.JettyUtils$$anon$1-956e748 as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/stages/stage/json,null} + org.eclipse.jetty.servlet.ServletHandler@8ff6a0f as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@8ff6a0f[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-956e748}[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-956e748=org.apache.spark.ui.JettyUtils$$anon$1-956e748}[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@8ff6a0f[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@8ff6a0f[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/stages/stage/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$1-956e748[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$1-956e748[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/stages/stage/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/stages/pool,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.273 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@4ebfa4c0 + org.apache.spark.ui.JettyUtils$$anon$1-51adfa62 as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@4ebfa4c0 + [/]=>org.apache.spark.ui.JettyUtils$$anon$1-51adfa62 as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/stages/pool,null} + org.eclipse.jetty.servlet.ServletHandler@4ebfa4c0 as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@4ebfa4c0[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-51adfa62}[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-51adfa62=org.apache.spark.ui.JettyUtils$$anon$1-51adfa62}[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@4ebfa4c0[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@4ebfa4c0[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/stages/pool,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$1-51adfa62[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$1-51adfa62[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/stages/pool,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/stages/pool/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@162b62cb + org.apache.spark.ui.JettyUtils$$anon$1-67a08492 as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@162b62cb + [/]=>org.apache.spark.ui.JettyUtils$$anon$1-67a08492 as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/stages/pool/json,null} + org.eclipse.jetty.servlet.ServletHandler@162b62cb as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@162b62cb[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-67a08492}[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-67a08492=org.apache.spark.ui.JettyUtils$$anon$1-67a08492}[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@162b62cb[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@162b62cb[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/stages/pool/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$1-67a08492[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$1-67a08492[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/stages/pool/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/storage,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@4b181961 + org.apache.spark.ui.JettyUtils$$anon$1-f6108 as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@4b181961 + [/]=>org.apache.spark.ui.JettyUtils$$anon$1-f6108 as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/storage,null} + org.eclipse.jetty.servlet.ServletHandler@4b181961 as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@4b181961[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.274 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-f6108}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-f6108=org.apache.spark.ui.JettyUtils$$anon$1-f6108}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@4b181961[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@4b181961[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/storage,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$1-f6108[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$1-f6108[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/storage,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/storage/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@3844bd1f + org.apache.spark.ui.JettyUtils$$anon$1-3eddbae6 as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@3844bd1f + [/]=>org.apache.spark.ui.JettyUtils$$anon$1-3eddbae6 as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/storage/json,null} + org.eclipse.jetty.servlet.ServletHandler@3844bd1f as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@3844bd1f[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-3eddbae6}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-3eddbae6=org.apache.spark.ui.JettyUtils$$anon$1-3eddbae6}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@3844bd1f[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@3844bd1f[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/storage/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$1-3eddbae6[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$1-3eddbae6[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/storage/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/storage/rdd,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@bee8773 + org.apache.spark.ui.JettyUtils$$anon$1-9d29b5 as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@bee8773 + [/]=>org.apache.spark.ui.JettyUtils$$anon$1-9d29b5 as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/storage/rdd,null} + org.eclipse.jetty.servlet.ServletHandler@bee8773 as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@bee8773[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-9d29b5}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-9d29b5=org.apache.spark.ui.JettyUtils$$anon$1-9d29b5}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@bee8773[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@bee8773[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/storage/rdd,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$1-9d29b5[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$1-9d29b5[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/storage/rdd,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/storage/rdd/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.275 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@469e81ff + org.apache.spark.ui.JettyUtils$$anon$1-637ab920 as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@469e81ff + [/]=>org.apache.spark.ui.JettyUtils$$anon$1-637ab920 as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/storage/rdd/json,null} + org.eclipse.jetty.servlet.ServletHandler@469e81ff as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@469e81ff[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-637ab920}[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-637ab920=org.apache.spark.ui.JettyUtils$$anon$1-637ab920}[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@469e81ff[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@469e81ff[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/storage/rdd/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$1-637ab920[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$1-637ab920[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/storage/rdd/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/environment,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@4d464b5c + org.apache.spark.ui.JettyUtils$$anon$1-18869366 as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@4d464b5c + [/]=>org.apache.spark.ui.JettyUtils$$anon$1-18869366 as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/environment,null} + org.eclipse.jetty.servlet.ServletHandler@4d464b5c as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@4d464b5c[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-18869366}[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-18869366=org.apache.spark.ui.JettyUtils$$anon$1-18869366}[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@4d464b5c[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@4d464b5c[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/environment,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$1-18869366[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$1-18869366[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/environment,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/environment/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.276 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@50f7abae + org.apache.spark.ui.JettyUtils$$anon$1-4b5f001a as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@50f7abae + [/]=>org.apache.spark.ui.JettyUtils$$anon$1-4b5f001a as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/environment/json,null} + org.eclipse.jetty.servlet.ServletHandler@50f7abae as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@50f7abae[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-4b5f001a}[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-4b5f001a=org.apache.spark.ui.JettyUtils$$anon$1-4b5f001a}[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@50f7abae[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@50f7abae[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/environment/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$1-4b5f001a[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$1-4b5f001a[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/environment/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/executors,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@2f5d6bdc + org.apache.spark.ui.JettyUtils$$anon$1-22665845 as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@2f5d6bdc + [/]=>org.apache.spark.ui.JettyUtils$$anon$1-22665845 as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/executors,null} + org.eclipse.jetty.servlet.ServletHandler@2f5d6bdc as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@2f5d6bdc[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-22665845}[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-22665845=org.apache.spark.ui.JettyUtils$$anon$1-22665845}[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@2f5d6bdc[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@2f5d6bdc[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/executors,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$1-22665845[0m
+[0m[[0minfo[0m] [0m13:18:22.277 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$1-22665845[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/executors,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/executors/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@1d7e86b1 + org.apache.spark.ui.JettyUtils$$anon$1-14634690 as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@1d7e86b1 + [/]=>org.apache.spark.ui.JettyUtils$$anon$1-14634690 as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/executors/json,null} + org.eclipse.jetty.servlet.ServletHandler@1d7e86b1 as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@1d7e86b1[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-14634690}[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-14634690=org.apache.spark.ui.JettyUtils$$anon$1-14634690}[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@1d7e86b1[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@1d7e86b1[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/executors/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$1-14634690[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$1-14634690[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/executors/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/static,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@621d22e9 + org.eclipse.jetty.servlet.DefaultServlet-38d2fad9 as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@621d22e9 + [/]=>org.eclipse.jetty.servlet.DefaultServlet-38d2fad9 as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/static,null} + org.eclipse.jetty.servlet.ServletHandler@621d22e9 as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@621d22e9[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.eclipse.jetty.servlet.DefaultServlet-38d2fad9}[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.eclipse.jetty.servlet.DefaultServlet-38d2fad9=org.eclipse.jetty.servlet.DefaultServlet-38d2fad9}[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@621d22e9[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@621d22e9[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/static,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.DefaultServlet-38d2fad9[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.servlet.DefaultServlet - resource base = file:/Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark/core/target/scala-2.10/classes/org/apache/spark/ui/static/[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.DefaultServlet-38d2fad9[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/static,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.278 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@f5a4fdf + org.apache.spark.ui.JettyUtils$$anon$2-b3e6209 as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@f5a4fdf + [/]=>org.apache.spark.ui.JettyUtils$$anon$2-b3e6209 as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/,null} + org.eclipse.jetty.servlet.ServletHandler@f5a4fdf as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@f5a4fdf[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$2-b3e6209}[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$2-b3e6209=org.apache.spark.ui.JettyUtils$$anon$2-b3e6209}[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@f5a4fdf[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@f5a4fdf[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$2-b3e6209[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$2-b3e6209[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/stages/stage/kill,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@4b9dc663 + org.apache.spark.ui.JettyUtils$$anon$2-1b0ab75b as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@4b9dc663 + [/]=>org.apache.spark.ui.JettyUtils$$anon$2-1b0ab75b as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/stages/stage/kill,null} + org.eclipse.jetty.servlet.ServletHandler@4b9dc663 as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@4b9dc663[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$2-1b0ab75b}[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$2-1b0ab75b=org.apache.spark.ui.JettyUtils$$anon$2-1b0ab75b}[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@4b9dc663[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@4b9dc663[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/stages/stage/kill,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$2-1b0ab75b[0m
+[0m[[0minfo[0m] [0m13:18:22.279 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$2-1b0ab75b[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/stages/stage/kill,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting o.e.j.s.ServletContextHandler{/metrics/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@22bf9aaf + org.apache.spark.ui.JettyUtils$$anon$1-1553356c as servlet[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container org.eclipse.jetty.servlet.ServletHandler@22bf9aaf + [/]=>org.apache.spark.ui.JettyUtils$$anon$1-1553356c as servletMapping[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.jetty.util.component.Container - Container o.e.j.s.ServletContextHandler{/metrics/json,null} + org.eclipse.jetty.servlet.ServletHandler@22bf9aaf as handler[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.servlet.ServletHandler@22bf9aaf[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - filterNameMap={}[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - pathFilters=null[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletFilterMap=null[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletPathMap={/=org.apache.spark.ui.JettyUtils$$anon$1-1553356c}[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.jetty.servlet.ServletHandler - servletNameMap={org.apache.spark.ui.JettyUtils$$anon$1-1553356c=org.apache.spark.ui.JettyUtils$$anon$1-1553356c}[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.servlet.ServletHandler@22bf9aaf[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.servlet.ServletHandler@22bf9aaf[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting o.e.j.s.ServletContextHandler{/metrics/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.apache.spark.ui.JettyUtils$$anon$1-1553356c[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.apache.spark.ui.JettyUtils$$anon$1-1553356c[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED o.e.j.s.ServletContextHandler{/metrics/json,null}[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.server.handler.ContextHandlerCollection@cd0d520[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.j.server.handler.AbstractHandler - starting org.eclipse.jetty.server.Server@3a78112d[0m
+[0m[[0minfo[0m] [0m13:18:22.280 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting qtp1118700097{8<=0<=0/254,-1}[0m
+[0m[[0minfo[0m] [0m13:18:22.281 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED qtp1118700097{8<=7<=8/254,0}[0m
+[0m[[0minfo[0m] [0m13:18:22.282 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting SelectChannelConnector@0.0.0.0:4040[0m
+[0m[[0minfo[0m] [0m13:18:22.282 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting null/null[0m
+[0m[[0minfo[0m] [0m13:18:22.282 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED PooledBuffers [0/1024@6144,0/1024@16384,0/1024@-]/PooledBuffers [0/1024@6144,0/1024@32768,0/1024@-][0m
+[0m[[0minfo[0m] [0m13:18:22.282 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - starting org.eclipse.jetty.server.nio.SelectChannelConnector$ConnectorSelectorManager@29beee7b[0m
+[0m[[0minfo[0m] [0m13:18:22.282 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.server.nio.SelectChannelConnector$ConnectorSelectorManager@29beee7b[0m
+[0m[[0minfo[0m] [0m13:18:22.282 [qtp1118700097-121 Selector0] DEBUG org.eclipse.jetty.io.nio - Starting Thread[qtp1118700097-121 Selector0,5,main] on org.eclipse.jetty.io.nio.SelectorManager$1@474cf5a4[0m
+[0m[[0minfo[0m] [0m13:18:22.282 [qtp1118700097-122 Selector1] DEBUG org.eclipse.jetty.io.nio - Starting Thread[qtp1118700097-122 Selector1,5,main] on org.eclipse.jetty.io.nio.SelectorManager$1@2ebecd4a[0m
+[0m[[0minfo[0m] [0m13:18:22.282 [initializationRoutine] INFO  o.e.jetty.server.AbstractConnector - Started SelectChannelConnector@0.0.0.0:4040[0m
+[0m[[0minfo[0m] [0m13:18:22.282 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED SelectChannelConnector@0.0.0.0:4040[0m
+[0m[[0minfo[0m] [0m13:18:22.282 [initializationRoutine] DEBUG o.e.j.u.component.AbstractLifeCycle - STARTED org.eclipse.jetty.server.Server@3a78112d[0m
+[0m[[0minfo[0m] [0m13:18:22.283 [initializationRoutine] INFO  org.apache.spark.ui.SparkUI - Started SparkUI at http://localhost:4040[0m
+[0m[[0minfo[0m] [0m13:18:22.283 [initializationRoutine] DEBUG org.apache.hadoop.conf.Configuration - java.io.IOException: config()[0m
+[0m[[0minfo[0m] [0m	at org.apache.hadoop.conf.Configuration.<init>(Configuration.java:227)[0m
+[0m[[0minfo[0m] [0m	at org.apache.hadoop.conf.Configuration.<init>(Configuration.java:214)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.deploy.SparkHadoopUtil.newConfiguration(SparkHadoopUtil.scala:71)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.SparkContext.<init>(SparkContext.scala:227)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.examples.SparkPi$.org$apache$spark$examples$SparkPi$$run$1(SparkPi.scala:84)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.examples.SparkPi$$anonfun$main$1.apply$mcV$sp(SparkPi.scala:157)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.examples.SparkPi$$anonfun$main$1.apply(SparkPi.scala:157)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.examples.SparkPi$$anonfun$main$1.apply(SparkPi.scala:157)[0m
+[0m[[0minfo[0m] [0m	at akka.dispatch.verification.STSScheduler$$anon$1.run(STSScheduler.scala:187)[0m
+[0m[[0minfo[0m] [0m	at java.lang.Thread.run(Thread.java:745)[0m
+[0m[[0minfo[0m] [0m[0m
+[0m[[0minfo[0m] [0m13:18:22.403 [initializationRoutine] INFO  org.apache.spark.SparkContext - Added JAR file:/Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark/examples/target/scala-2.10/spark-examples-1.1.0-SNAPSHOT-hadoop1.0.4.jar at http://10.0.0.6:56633/jars/spark-examples-1.1.0-SNAPSHOT-hadoop1.0.4.jar with timestamp 1434485902403[0m
+[0m[[0minfo[0m] [0mSched knows about actor $a[0m
+[0m[[0minfo[0m] [0mSystem has created a new actor: $a[0m
+[0m[[0minfo[0m] [0menqueue_message: Actor[akka://new-system-7/user/$a#806385679] Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>))[0m
+[0m[[0minfo[0m] [0mgiving out ticket[0m
+[0m[[0minfo[0m] [0msend_external_messages[0m
+[0m[[0minfo[0m] [0m13:18:22.405 [new-system-7-akka.actor.default-dispatcher-8] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-7/temp/$e] -> Actor[akka://new-system-7/user/$a#806385679] Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>))[0m
+[0m[[0minfo[0m] [0m13:18:22.405 [new-system-7-akka.actor.default-dispatcher-8] TRACE STSScheduler - event_produced: $e -> $a Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>))[0m
+[0m[[0minfo[0m] [0m!isTimer?Actor[akka://new-system-7/user/$a#806385679] Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>))[0m
+[0m[[0minfo[0m] [0mtaking back ticket[0m
+[0m[[0minfo[0m] [0mkey: (deadLetters,BlockManagerMaster,BasicFingerprint(ExpireDeadHosts))[0m
+[0m[[0minfo[0m] [0mpending keys:[0m
+[0m[[0minfo[0m] [0m($e,$a,BasicFingerprint(Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>))))[0m
+[0m[[0minfo[0m] [0m($d,BlockManagerMaster,BasicFingerprint(HeartBeat))[0m
+[0m[[0minfo[0m] [0mBlocking until enqueue_message...[0m
+[0m[[0minfo[0m] [0m13:18:24.237 [new-system-1-akka.actor.default-dispatcher-2] WARN  Remoting - Shutdown finished, but flushing might not have been successful and some messages might have been dropped. Increase akka.remote.flush-wait-on-shutdown to a larger value to avoid this.[0m
+[0m[[0minfo[0m] [0m13:18:24.237 [new-system-1-akka.actor.default-dispatcher-2] INFO  Remoting - Remoting shut down[0m
+[0m[[0minfo[0m] [0m13:18:24.238 [new-system-1-akka.actor.default-dispatcher-4] INFO  a.r.RemoteActorRefProvider$RemotingTerminator - Remoting shut down.[0m
+[0m[[0minfo[0m] [0m13:18:52.262 [Connection manager future execution context-0] WARN  o.a.spark.storage.BlockManagerMaster - Error sending message to BlockManagerMaster in 1 attempts[0m
+[0m[[0minfo[0m] [0mjava.util.concurrent.TimeoutException: Futures timed out after [30 seconds][0m
+[0m[[0minfo[0m] [0m	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:219) ~[scala-library.jar:na][0m
+[0m[[0minfo[0m] [0m	at scala.concurrent.impl.Promise$DefaultPromise.result(Promise.scala:223) ~[scala-library.jar:na][0m
+[0m[[0minfo[0m] [0m	at scala.concurrent.Await$$anonfun$result$1.apply(package.scala:107) ~[scala-library.jar:na][0m
+[0m[[0minfo[0m] [0m	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:53) ~[scala-library.jar:na][0m
+[0m[[0minfo[0m] [0m	at scala.concurrent.Await$.result(package.scala:107) ~[scala-library.jar:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.storage.BlockManagerMaster.askDriverWithReply(BlockManagerMaster.scala:244) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.storage.BlockManagerMaster.sendHeartBeat(BlockManagerMaster.scala:52) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.storage.BlockManager.org$apache$spark$storage$BlockManager$$heartBeat(BlockManager.scala:121) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.storage.BlockManager$$anonfun$initialize$1$$anonfun$apply$mcV$sp$1.apply$mcV$sp(BlockManager.scala:167) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.util.Utils$.tryOrExit(Utils.scala:793) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.storage.BlockManager$$anonfun$initialize$1.apply$mcV$sp(BlockManager.scala:167) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at akka.actor.Scheduler$$anon$9.run(Scheduler.scala:80) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at akka.actor.LightArrayRevolverScheduler$$anon$3$$anon$2.run(Scheduler.scala:241) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [na:1.8.0_40][0m
+[0m[[0minfo[0m] [0m	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [na:1.8.0_40][0m
+[0m[[0minfo[0m] [0m	at java.lang.Thread.run(Thread.java:745) [na:1.8.0_40][0m
+[0m[[31merror[0m] [0mException in thread "initializationRoutine" org.apache.spark.SparkException: DAGScheduler cannot be initialized due to Futures timed out after [30 seconds][0m
+[0m[[31merror[0m] [0m	at org.apache.spark.SparkContext.<init>(SparkContext.scala:315)[0m
+[0m[[31merror[0m] [0m	at org.apache.spark.examples.SparkPi$.org$apache$spark$examples$SparkPi$$run$1(SparkPi.scala:84)[0m
+[0m[[31merror[0m] [0m	at org.apache.spark.examples.SparkPi$$anonfun$main$1.apply$mcV$sp(SparkPi.scala:157)[0m
+[0m[[31merror[0m] [0m	at org.apache.spark.examples.SparkPi$$anonfun$main$1.apply(SparkPi.scala:157)[0m
+[0m[[31merror[0m] [0m	at org.apache.spark.examples.SparkPi$$anonfun$main$1.apply(SparkPi.scala:157)[0m
+[0m[[31merror[0m] [0m	at akka.dispatch.verification.STSScheduler$$anon$1.run(STSScheduler.scala:187)[0m
+[0m[[31merror[0m] [0m	at java.lang.Thread.run(Thread.java:745)[0m
+[0m[[0minfo[0m] [0menqueue_message: Actor[akka://new-system-7/user/BlockManagerMaster#-837409815] HeartBeat(BlockManagerId(<driver>, localhost, 56631, 0))[0m
+[0m[[0minfo[0m] [0mgiving out ticket[0m
+[0m[[0minfo[0m] [0msend_external_messages[0m
+[0m[[0minfo[0m] [0m13:18:55.266 [new-system-7-akka.actor.default-dispatcher-8] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-7/temp/$f] -> Actor[akka://new-system-7/user/BlockManagerMaster#-837409815] HeartBeat(BlockManagerId(<driver>, localhost, 56631, 0))[0m
+[0m[[0minfo[0m] [0m13:18:55.266 [new-system-7-akka.actor.default-dispatcher-8] TRACE STSScheduler - event_produced: $f -> BlockManagerMaster HeartBeat(BlockManagerId(<driver>, localhost, 56631, 0))[0m
+[0m[[0minfo[0m] [0m!isTimer?Actor[akka://new-system-7/user/BlockManagerMaster#-837409815] HeartBeat(BlockManagerId(<driver>, localhost, 56631, 0))[0m
+[0m[[0minfo[0m] [0mtaking back ticket[0m
+[0m[[0minfo[0m] [0mkey: (deadLetters,BlockManagerMaster,BasicFingerprint(ExpireDeadHosts))[0m
+[0m[[0minfo[0m] [0mpending keys:[0m
+[0m[[0minfo[0m] [0m($f,BlockManagerMaster,BasicFingerprint(HeartBeat))[0m
+[0m[[0minfo[0m] [0m($e,$a,BasicFingerprint(Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>))))[0m
+[0m[[0minfo[0m] [0m($d,BlockManagerMaster,BasicFingerprint(HeartBeat))[0m
+[0m[[0minfo[0m] [0mBlocking until enqueue_message...[0m
+[0m[[0minfo[0m] [0m13:19:25.267 [Connection manager future execution context-0] WARN  o.a.spark.storage.BlockManagerMaster - Error sending message to BlockManagerMaster in 2 attempts[0m
+[0m[[0minfo[0m] [0mjava.util.concurrent.TimeoutException: Futures timed out after [30 seconds][0m
+[0m[[0minfo[0m] [0m	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:219) ~[scala-library.jar:na][0m
+[0m[[0minfo[0m] [0m	at scala.concurrent.impl.Promise$DefaultPromise.result(Promise.scala:223) ~[scala-library.jar:na][0m
+[0m[[0minfo[0m] [0m	at scala.concurrent.Await$$anonfun$result$1.apply(package.scala:107) ~[scala-library.jar:na][0m
+[0m[[0minfo[0m] [0m	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:53) ~[scala-library.jar:na][0m
+[0m[[0minfo[0m] [0m	at scala.concurrent.Await$.result(package.scala:107) ~[scala-library.jar:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.storage.BlockManagerMaster.askDriverWithReply(BlockManagerMaster.scala:244) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.storage.BlockManagerMaster.sendHeartBeat(BlockManagerMaster.scala:52) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.storage.BlockManager.org$apache$spark$storage$BlockManager$$heartBeat(BlockManager.scala:121) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.storage.BlockManager$$anonfun$initialize$1$$anonfun$apply$mcV$sp$1.apply$mcV$sp(BlockManager.scala:167) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.util.Utils$.tryOrExit(Utils.scala:793) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.storage.BlockManager$$anonfun$initialize$1.apply$mcV$sp(BlockManager.scala:167) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at akka.actor.Scheduler$$anon$9.run(Scheduler.scala:80) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at akka.actor.LightArrayRevolverScheduler$$anon$3$$anon$2.run(Scheduler.scala:241) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [na:1.8.0_40][0m
+[0m[[0minfo[0m] [0m	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [na:1.8.0_40][0m
+[0m[[0minfo[0m] [0m	at java.lang.Thread.run(Thread.java:745) [na:1.8.0_40][0m
+[0m[[0minfo[0m] [0menqueue_message: Actor[akka://new-system-7/user/BlockManagerMaster#-837409815] HeartBeat(BlockManagerId(<driver>, localhost, 56631, 0))[0m
+[0m[[0minfo[0m] [0mgiving out ticket[0m
+[0m[[0minfo[0m] [0msend_external_messages[0m
+[0m[[0minfo[0m] [0m13:19:28.269 [new-system-7-akka.actor.default-dispatcher-8] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-7/temp/$g] -> Actor[akka://new-system-7/user/BlockManagerMaster#-837409815] HeartBeat(BlockManagerId(<driver>, localhost, 56631, 0))[0m
+[0m[[0minfo[0m] [0m13:19:28.269 [new-system-7-akka.actor.default-dispatcher-8] TRACE STSScheduler - event_produced: $g -> BlockManagerMaster HeartBeat(BlockManagerId(<driver>, localhost, 56631, 0))[0m
+[0m[[0minfo[0m] [0m!isTimer?Actor[akka://new-system-7/user/BlockManagerMaster#-837409815] HeartBeat(BlockManagerId(<driver>, localhost, 56631, 0))[0m
+[0m[[0minfo[0m] [0mtaking back ticket[0m
+[0m[[0minfo[0m] [0mkey: (deadLetters,BlockManagerMaster,BasicFingerprint(ExpireDeadHosts))[0m
+[0m[[0minfo[0m] [0mpending keys:[0m
+[0m[[0minfo[0m] [0m($g,BlockManagerMaster,BasicFingerprint(HeartBeat))[0m
+[0m[[0minfo[0m] [0m($f,BlockManagerMaster,BasicFingerprint(HeartBeat))[0m
+[0m[[0minfo[0m] [0m($e,$a,BasicFingerprint(Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>))))[0m
+[0m[[0minfo[0m] [0m($d,BlockManagerMaster,BasicFingerprint(HeartBeat))[0m
+[0m[[0minfo[0m] [0mBlocking until enqueue_message...[0m
+[0m[[0minfo[0m] [0m13:19:58.273 [Connection manager future execution context-0] WARN  o.a.spark.storage.BlockManagerMaster - Error sending message to BlockManagerMaster in 3 attempts[0m
+[0m[[0minfo[0m] [0mjava.util.concurrent.TimeoutException: Futures timed out after [30 seconds][0m
+[0m[[0minfo[0m] [0m	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:219) ~[scala-library.jar:na][0m
+[0m[[0minfo[0m] [0m	at scala.concurrent.impl.Promise$DefaultPromise.result(Promise.scala:223) ~[scala-library.jar:na][0m
+[0m[[0minfo[0m] [0m	at scala.concurrent.Await$$anonfun$result$1.apply(package.scala:107) ~[scala-library.jar:na][0m
+[0m[[0minfo[0m] [0m	at scala.concurrent.BlockContext$DefaultBlockContext$.blockOn(BlockContext.scala:53) ~[scala-library.jar:na][0m
+[0m[[0minfo[0m] [0m	at scala.concurrent.Await$.result(package.scala:107) ~[scala-library.jar:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.storage.BlockManagerMaster.askDriverWithReply(BlockManagerMaster.scala:244) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.storage.BlockManagerMaster.sendHeartBeat(BlockManagerMaster.scala:52) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.storage.BlockManager.org$apache$spark$storage$BlockManager$$heartBeat(BlockManager.scala:121) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.storage.BlockManager$$anonfun$initialize$1$$anonfun$apply$mcV$sp$1.apply$mcV$sp(BlockManager.scala:167) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.util.Utils$.tryOrExit(Utils.scala:793) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.storage.BlockManager$$anonfun$initialize$1.apply$mcV$sp(BlockManager.scala:167) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at akka.actor.Scheduler$$anon$9.run(Scheduler.scala:80) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at akka.actor.LightArrayRevolverScheduler$$anon$3$$anon$2.run(Scheduler.scala:241) [classes/:na][0m
+[0m[[0minfo[0m] [0m	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [na:1.8.0_40][0m
+[0m[[0minfo[0m] [0m	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [na:1.8.0_40][0m
+[0m[[0minfo[0m] [0m	at java.lang.Thread.run(Thread.java:745) [na:1.8.0_40][0m

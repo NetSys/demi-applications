@@ -30,6 +30,9 @@ import org.slf4j.LoggerFactory
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 
+import scala.collection.mutable.SynchronizedQueue
+
+
 class SparkViolation extends ViolationFingerprint {
   def matches(other: ViolationFingerprint) : Boolean = false
   def affectedNodes(): Seq[String] = Seq.empty
@@ -133,7 +136,7 @@ object SparkPi {
     sched.nonBlockingExplore(prefix,
       (ret: Option[(EventTrace,ViolationFingerprint)]) => println("STS DONE!"))
 
-    // TODO(cs): having this line after nonBlockingExplore may not be correct -- 
+    // TODO(cs): having this line after nonBlockingExplore may not be correct
     sched.beginUnignorableEvents
 
     // ---- /STS ----
@@ -146,7 +149,17 @@ object SparkPi {
 
     val fingerprintFactory = new FingerprintFactory
     fingerprintFactory.registerFingerprinter(new SparkMessageFingerprinter)
-    val sts = new STSScheduler(sched.event_orchestrator.events, false, fingerprintFactory, false, true, false)
+    // We know that there are no external messages. So, easy way to get around
+    // "deadLetters" issue: mark all messages as not from "deadLetters"
+    // TODO(cs): find a more principled way to do this.
+    val mappedEvents = new SynchronizedQueue[Event]
+    mappedEvents ++= sched.event_orchestrator.events.events.map {
+      case UniqueMsgSend(MsgSend("deadLetters", rcv, msg), id) =>
+         UniqueMsgSend(MsgSend("external", rcv, msg), id)
+      case e => e
+    }
+    val mappedEventTrace = new EventTrace(mappedEvents, sched.event_orchestrator.events.original_externals)
+    val sts = new STSScheduler(mappedEventTrace, false, fingerprintFactory, false, true, false, false)
     Instrumenter().scheduler = sts
     sts.setInvariant(invariant)
     val fakeViolation = new SparkViolation
