@@ -35,7 +35,7 @@ import org.apache.spark.util.CallSite
  */
 private[scheduler] sealed trait DAGSchedulerEvent
 
-private[scheduler] case class JobSubmitted(
+case class JobSubmitted(
     jobId: Int,
     finalRDD: RDD[_],
     func: (TaskContext, Iterator[_]) => _,
@@ -46,21 +46,19 @@ private[scheduler] case class JobSubmitted(
     properties: Properties = null)
   extends DAGSchedulerEvent
 
-private[scheduler] case class StageCancelled(stageId: Int) extends DAGSchedulerEvent
+case class StageCancelled(stageId: Int) extends DAGSchedulerEvent
 
-private[scheduler] case class JobCancelled(jobId: Int) extends DAGSchedulerEvent
+case class JobCancelled(jobId: Int) extends DAGSchedulerEvent
 
-private[scheduler] case class JobGroupCancelled(groupId: String) extends DAGSchedulerEvent
+case class JobGroupCancelled(groupId: String) extends DAGSchedulerEvent
 
-private[scheduler] case object AllJobsCancelled extends DAGSchedulerEvent
+case object AllJobsCancelled extends DAGSchedulerEvent
 
-private[scheduler]
 case class BeginEvent(task: Task[_], taskInfo: TaskInfo) extends DAGSchedulerEvent
 
-private[scheduler]
 case class GettingResultEvent(taskInfo: TaskInfo) extends DAGSchedulerEvent
 
-private[scheduler] case class CompletionEvent(
+case class CompletionEvent(
     task: Task[_],
     reason: TaskEndReason,
     result: Any,
@@ -69,11 +67,11 @@ private[scheduler] case class CompletionEvent(
     taskMetrics: TaskMetrics)
   extends DAGSchedulerEvent
 
-private[scheduler] case class ExecutorAdded(execId: String, host: String) extends DAGSchedulerEvent
+case class ExecutorAdded(execId: String, host: String) extends DAGSchedulerEvent
 
-private[scheduler] case class ExecutorLost(execId: String) extends DAGSchedulerEvent
+case class ExecutorLost(execId: String) extends DAGSchedulerEvent
 
-private[scheduler]
+
 case class TaskSetFailed(taskSet: TaskSet, reason: String) extends DAGSchedulerEvent
 
-private[scheduler] case object ResubmitFailedStages extends DAGSchedulerEvent
+case object ResubmitFailedStages extends DAGSchedulerEvent

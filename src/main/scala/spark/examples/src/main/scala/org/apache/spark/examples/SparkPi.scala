@@ -20,6 +20,9 @@ package org.apache.spark.examples
 import scala.math.random
 
 import org.apache.spark._
+import org.apache.spark.storage._
+import org.apache.spark.scheduler._
+import org.apache.spark.scheduler.local._
 
 import akka.dispatch.verification._
 
@@ -27,10 +30,56 @@ import org.slf4j.LoggerFactory
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 
+class SparkViolation extends ViolationFingerprint {
+  def matches(other: ViolationFingerprint) : Boolean = false
+  def affectedNodes(): Seq[String] = Seq.empty
+}
+
+class SparkMessageFingerprinter extends MessageFingerprinter {
+  override def fingerprint(msg: Any) : Option[MessageFingerprint] = {
+    val alreadyFingerprint = super.fingerprint(msg)
+    if (alreadyFingerprint != None) {
+      return alreadyFingerprint
+    }
+
+    val str = msg match {
+      case BlockManagerMessages.RegisterBlockManager(_,_,_) =>
+        "RegisterBlockManager"
+      case BlockManagerMessages.HeartBeat(_) =>
+        "HeartBeat"
+      case JobSubmitted(_,_,_,_,_,_,_,_) =>
+        "JobSubmitted" // TODO(cs): change me when there are concurrent jobs
+      case BlockManagerMessages.GetLocationsMultipleBlockIds(_) =>
+        "GetLocationsMultipleBlockIds"
+      case BeginEvent(task,_) =>
+        ("BeginEvent", task).toString
+      case CompletionEvent(task, reason, _, _, _, _) =>
+        ("CompletionEvent", task, reason).toString
+      case StatusUpdate(id, state, _) =>
+        ("StatusUpdate", id, state).toString
+      case m =>
+        ""
+    }
+
+    if (str != "") {
+      return Some(BasicFingerprint(str))
+    }
+    return None
+  }
+
+  override def get_external_thread(msg: Any) : Option[Long] = {
+    msg match {
+      case StatusUpdate(id, _, _) => return Some(id)
+      case _ => return None
+    }
+  }
+}
+
 /** Computes an approximation to pi */
 object SparkPi {
   def main(args: Array[String]) {
     def run() {
+      println("Starting SparkPi")
       val conf = new SparkConf().setAppName("Spark Pi")
       val spark = new SparkContext(conf)
       val slices = if (args.length > 0) args(0).toInt else 2
@@ -41,8 +90,10 @@ object SparkPi {
         if (x*x + y*y < 1) 1 else 0
       }.reduce(_ + _)
       println("Pi is roughly " + 4.0 * count / n)
+      Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].beginUnignorableEvents
       spark.stop()
-      // TODO(cs): probably need to null out ActorSystem at the end
+      Instrumenter().executionEnded
+      Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].endUnignorableEvents
     }
 
     // ---- STS ----
@@ -78,18 +129,30 @@ object SparkPi {
 
     val prefix = Array[ExternalEvent](
       WaitCondition(() => false))
-    println("scheduler.nonBlockingExplore")
+
     sched.nonBlockingExplore(prefix,
       (ret: Option[(EventTrace,ViolationFingerprint)]) => println("STS DONE!"))
+
+    // TODO(cs): having this line after nonBlockingExplore may not be correct -- 
     sched.beginUnignorableEvents
+
     // ---- /STS ----
 
     run()
 
-    println("events:")
-    sched.event_orchestrator.events foreach { case e => println(e) }
+    Instrumenter().reset_cancellables
+    Instrumenter().reset_per_system_state
+    Instrumenter()._actorSystem = null
 
-    // val g = Instrumenter().scheduler.asInstanceOf[RandomScheduler].depTracker.getGraph
-    // println(Util.getDot(g))
+    val fingerprintFactory = new FingerprintFactory
+    fingerprintFactory.registerFingerprinter(new SparkMessageFingerprinter)
+    val sts = new STSScheduler(sched.event_orchestrator.events, false, fingerprintFactory, false, true, false)
+    Instrumenter().scheduler = sts
+    sts.setInvariant(invariant)
+    val fakeViolation = new SparkViolation
+    val fakeStats = new MinimizationStats("FAKE", "STSSched")
+
+    sts.beginUnignorableEvents
+    sts.test(prefix, fakeViolation, fakeStats, Some(run))
   }
 }

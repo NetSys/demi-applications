@@ -1,0 +1,4 @@
+ - Sometimes ExpireDeadHosts doesn't ever get scheduled?
+
+ - Need to properly mark external events sent from outside threads. Screws up
+   STSSched's MsgEvent, and subsequence_intersection

@@ -1,0 +1,44 @@
+Timers:
+ - ExpireDeadHosts
+   - rcv: BlockManagerMaster
+
+Messages:
+ - RegisterBlockManager
+   - rcv: BlockManagerMaster
+   - snd: external thread
+ - HeartBeat
+   - rcv: BlockManagerMaster
+   - snd: external thread
+ - Props
+   - rcv: DAGScheduler
+   - snd: external thread
+ - JobSubmitted
+   - rcv: DAGScheduler
+   - snd: external thread
+ - GetLocationsMultipleBlockIds
+   - rcv: BlockManagerMaster
+   - snd: DAGScheduler [upon receiving JobSubmitted]
+ - ArraySeq [answer to GetLocationsMultipleBlockIds]
+   - rcv: DAGScheduler
+   - snd: BlockManagerMaster [upon receiving GetLocationsMultipleBlockIds]
+ - ReviveOffers
+   - rcv: LocalBackendActor
+   - snd DAGScheduler [upon receiving both ArraySeqs]
+ - BeginEvent
+   - rcv: DAGScheduler
+   - snd: LocalBackendActor [upon receiving ReviveOffers]
+ - ExecutorAdded
+   - rcv: DAGScheduler
+   - snd: LocalBackActor [upon receiving ReviveOffers]
+ - StatusUpdate
+   - rcv: LocalBackendActor
+   - snd: ThreadRunner threads
+ - CompletionEvent
+   - rcv: DAGScheduler
+   - snd: ThreadRunner threads [indirectly through TaskSchedulerImpl]
+
+Shutdown:
+ - StopMapOutputTracker
+   - rcv: MapOutputTracker
+ - StopBlockManagerMaster
+   - rcv: BlockManagerMaster

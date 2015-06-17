@@ -27,5 +27,5 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 private[spark] class IdGenerator {
   private var id = new AtomicInteger
-  def next: Int = id.incrementAndGet
+  def next: Int = 1 // id.incrementAndGet
 }

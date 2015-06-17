@@ -26,11 +26,11 @@ import org.apache.spark.TaskState.TaskState
 import org.apache.spark.executor.{Executor, ExecutorBackend}
 import org.apache.spark.scheduler.{SchedulerBackend, TaskSchedulerImpl, WorkerOffer}
 
-private case class ReviveOffers()
+case class ReviveOffers()
 
-private case class StatusUpdate(taskId: Long, state: TaskState, serializedData: ByteBuffer)
+case class StatusUpdate(taskId: Long, state: TaskState, serializedData: ByteBuffer)
 
-private case class KillTask(taskId: Long, interruptThread: Boolean)
+case class KillTask(taskId: Long, interruptThread: Boolean)
 
 /**
  * Calls to LocalBackend are all serialized through LocalActor. Using an actor makes the calls on

@@ -110,6 +110,11 @@ private[spark] class Executor(
   private val runningTasks = new ConcurrentHashMap[Long, TaskRunner]
 
   def launchTask(context: ExecutorBackend, taskId: Long, serializedTask: ByteBuffer) {
+    // XXX STS
+    if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+      val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+      sched.beginExternalAtomicBlock(taskId)
+    }
     val tr = new TaskRunner(context, taskId, serializedTask)
     runningTasks.put(taskId, tr)
     threadPool.execute(tr)
@@ -152,12 +157,6 @@ private[spark] class Executor(
     }
 
     override def run() {
-      // XXX STS
-      if (Instrumenter().scheduler.isInstanceOf[RandomScheduler]) {
-        val sched = Instrumenter().scheduler.asInstanceOf[RandomScheduler]
-        sched.beginExternalAtomicBlock(taskId)
-      }
-
       val startTime = System.currentTimeMillis()
       SparkEnv.set(env)
       Thread.currentThread.setContextClassLoader(replClassLoader)
@@ -267,18 +266,18 @@ private[spark] class Executor(
           }
         }
       } finally {
+        // XXX STS
+        if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+          val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+          sched.endExternalAtomicBlock(taskId)
+        }
+
         // TODO: Unregister shuffle memory only for ResultTask
         val shuffleMemoryMap = env.shuffleMemoryMap
         shuffleMemoryMap.synchronized {
           shuffleMemoryMap.remove(Thread.currentThread().getId)
         }
         runningTasks.remove(taskId)
-
-        // XXX STS
-        if (Instrumenter().scheduler.isInstanceOf[RandomScheduler]) {
-          val sched = Instrumenter().scheduler.asInstanceOf[RandomScheduler]
-          sched.endExternalAtomicBlock(taskId)
-        }
       }
     }
   }

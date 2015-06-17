@@ -42,6 +42,8 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.{BlockId, BlockManager, BlockManagerMaster, RDDBlockId}
 import org.apache.spark.util.{CallSite, SystemClock, Clock, Utils}
 
+import akka.dispatch.verification._
+
 /**
  * The high-level scheduling layer that implements stage-oriented scheduling. It computes a DAG of
  * stages for each job, keeps track of which RDDs and stage outputs are materialized, and finds a
@@ -155,6 +157,11 @@ class DAGScheduler(
       taskInfo: TaskInfo,
       taskMetrics: TaskMetrics) {
     eventProcessActor ! CompletionEvent(task, reason, result, accumUpdates, taskInfo, taskMetrics)
+    // XXX STS
+    if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+      val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+      sched.endExternalAtomicBlock(taskInfo.taskId)
+    }
   }
 
   // Called by TaskScheduler when an executor fails.

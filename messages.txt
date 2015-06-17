@@ -1,0 +1,29 @@
+schedule_new_message(5): $c -> BlockManagerMaster RegisterBlockManager(BlockManagerId(<driver>, 10.0.0.8, 52196, 0),1718196633,Actor[akka://new-system-0/user/BlockManagerActor1#1695787559])[0m
+schedule_new_message(3): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
+schedule_new_message(7): $d -> BlockManagerMaster HeartBeat(BlockManagerId(<driver>, 10.0.0.8, 52196, 0))[0m
+schedule_new_message(9): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
+schedule_new_message(11): $e -> $a Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>))[0m
+schedule_new_message(13): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
+schedule_new_message(15): deadLetters -> $a JobSubmitted(0,MappedRDD[1] at map at SparkPi.scala:33,<function2>,[I@3ae66c85,false,CallSite(reduce at SparkPi.scala:37,org.apache.spark.rdd.RDD.reduce(RDD.scala:837)[0m
+schedule_new_message(17): $f -> BlockManagerMaster GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@1c62b08b)[0m
+schedule_new_message(19): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
+schedule_new_message(21): BlockManagerMaster -> $f ArraySeq(List(), List())[0m
+schedule_new_message(23): $g -> BlockManagerMaster GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@1026878d)[0m
+schedule_new_message(27): BlockManagerMaster -> $g ArraySeq(List(), List())[0m
+schedule_new_message(25): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
+schedule_new_message(29): deadLetters -> LocalBackendActor ReviveOffers[0m
+schedule_new_message(33): deadLetters -> $a BeginEvent(ResultTask(0, 0),org.apache.spark.scheduler.TaskInfo@2dc9de3a)[0m
+schedule_new_message(35): deadLetters -> $a BeginEvent(ResultTask(0, 1),org.apache.spark.scheduler.TaskInfo@159244a9)[0m
+schedule_new_message(31): deadLetters -> $a ExecutorAdded(localhost,localhost)[0m
+schedule_new_message(37): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
+schedule_new_message(39): deadLetters -> LocalBackendActor StatusUpdate(0,RUNNING,java.nio.HeapByteBuffer[pos=0 lim=0 cap=0])[0m
+schedule_new_message(43): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
+schedule_new_message(41): deadLetters -> LocalBackendActor StatusUpdate(1,RUNNING,java.nio.HeapByteBuffer[pos=0 lim=0 cap=0])[0m
+schedule_new_message(45): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
+schedule_new_message(47): deadLetters -> LocalBackendActor StatusUpdate(1,FINISHED,java.nio.HeapByteBuffer[pos=0 lim=700 cap=700])[0m
+schedule_new_message(51): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
+schedule_new_message(49): deadLetters -> LocalBackendActor StatusUpdate(0,FINISHED,java.nio.HeapByteBuffer[pos=0 lim=700 cap=700])[0m
+schedule_new_message(55): deadLetters -> $a CompletionEvent(ResultTask(0, 0),Success,Some(78591),null,org.apache.spark.scheduler.TaskInfo@2dc9de3a,org.apache.spark.executor.TaskMetrics@3f9d0cb)[0m
+schedule_new_message(53): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
+schedule_new_message(57): deadLetters -> $a CompletionEvent(ResultTask(0, 1),Success,Some(78529),null,org.apache.spark.scheduler.TaskInfo@159244a9,org.apache.spark.executor.TaskMetrics@7ea27756)[0m
+schedule_new_message(59): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m

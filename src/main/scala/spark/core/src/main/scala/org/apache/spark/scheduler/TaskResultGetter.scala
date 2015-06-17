@@ -24,6 +24,8 @@ import org.apache.spark.TaskState.TaskState
 import org.apache.spark.serializer.SerializerInstance
 import org.apache.spark.util.Utils
 
+import akka.dispatch.verification._
+
 /**
  * Runs a thread pool that deserializes and remotely fetches (if necessary) task results.
  */
@@ -42,6 +44,12 @@ private[spark] class TaskResultGetter(sparkEnv: SparkEnv, scheduler: TaskSchedul
 
   def enqueueSuccessfulTask(
     taskSetManager: TaskSetManager, tid: Long, serializedData: ByteBuffer) {
+    // XXX STS
+    if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+      val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+      sched.beginExternalAtomicBlock(tid)
+    }
+
     getTaskResultExecutor.execute(new Runnable {
       override def run(): Unit = Utils.logUncaughtExceptions {
         try {
@@ -80,6 +88,12 @@ private[spark] class TaskResultGetter(sparkEnv: SparkEnv, scheduler: TaskSchedul
 
   def enqueueFailedTask(taskSetManager: TaskSetManager, tid: Long, taskState: TaskState,
     serializedData: ByteBuffer) {
+    // XXX STS
+    if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+      val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+      sched.beginExternalAtomicBlock(tid)
+    }
+
     var reason : TaskEndReason = UnknownReason
     getTaskResultExecutor.execute(new Runnable {
       override def run(): Unit = Utils.logUncaughtExceptions {

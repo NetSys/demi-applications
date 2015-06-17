@@ -41,8 +41,7 @@ Actors in the system:
  -  Worker?
 
 TODO(cs):
-  - Read more about ThreadPoolExecutor (java library?)
-  - Difference between "executor" and "backend"?
+ - Some dependenance on time: "Checking for hosts with no recent heart beats in BlockManagerMaster."
 
 Relevant:
   SparkEnv.get.actorSystem
@@ -50,8 +49,13 @@ Relevant:
   scheduler/local/LocalBackend.scala: the actor (and actor system)
 
 Changes to Spark, for rollback:
-  - AkkaUtils.scala => use Instrumenter().actorSystem
-  - Symlink to aspectj
-  - actorBlocked() before each Await call
-  - schedulers/JobWaiter.scala -> endUnignorableEvents
-  - executor/Executor.scala
+ - AkkaUtils.scala => use Instrumenter().actorSystem
+ - Symlink to aspectj
+ - actorBlocked() before each Await call
+ - schedulers/JobWaiter.scala -> endUnignorableEvents
+ - executor/Executor.scala
+ - util/IdGenerator.scala -> return 1
+ [ Alternate to below: use class tags? ]
+ - storage/BlockManagerMessages -> non-private
+ - scheduler/DAGSchedulerEvents -> non-private
+ - scheduler/local/LocalBackend -> non-private
