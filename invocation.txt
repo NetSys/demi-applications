@@ -4,7 +4,7 @@
 /usr/bin/java -Xmx2500M -XX:MaxPermSize=256m -XX:+CMSClassUnloadingEnabled -jar /usr/local/Cellar/sbt/0.13.0/libexec/sbt-launch.jar "project examples" assembly
 
 # Then run
-sbt "project core" "run --master local[*] --class org.apache.spark.examples.SparkPi /Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark/examples/target/scala-2.10/spark-examples-1.1.0-SNAPSHOT-hadoop1.0.4.jar"
+sbt "project core" "run --master local[*] --class org.apache.spark.examples.STSSparkPi /Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark/examples/target/scala-2.10/spark-examples-1.1.0-SNAPSHOT-hadoop1.0.4.jar"
 
 
 -- Notes ---
