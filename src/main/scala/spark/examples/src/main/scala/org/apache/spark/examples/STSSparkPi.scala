@@ -127,7 +127,7 @@ object STSSparkPi {
     val sched = new RandomScheduler(1,
                         new FingerprintFactory,
                         false,
-                        0,
+                        3,
                         true)
     Instrumenter().scheduler = sched
     def invariant(s: Seq[akka.dispatch.verification.ExternalEvent],
