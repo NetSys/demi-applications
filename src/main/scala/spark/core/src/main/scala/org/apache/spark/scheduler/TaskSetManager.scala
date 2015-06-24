@@ -26,6 +26,8 @@ import scala.collection.mutable.HashSet
 import scala.math.max
 import scala.math.min
 
+import scala.collection.mutable.SynchronizedQueue
+
 import org.apache.spark.{ExceptionFailure, ExecutorLostFailure, FetchFailed, Logging, Resubmitted,
   SparkEnv, Success, TaskEndReason, TaskKilled, TaskResultLost, TaskState}
 import org.apache.spark.TaskState.TaskState
@@ -243,10 +245,22 @@ private[spark] class TaskSetManager(
       indexOffset -= 1
       val index = list(indexOffset)
       if (!executorIsBlacklisted(execId, index)) {
+        var chosen : Option[Int] = None
+        if (copiesRunning(index) == 0 && !successful(index)) {
+          // XXX
+          TaskSetManager.decisions += ((taskSet.id, execId, index,
+            new HashMap[String, ArrayBuffer[Int]] ++ pendingTasksForExecutor,
+            new HashMap[String, ArrayBuffer[Int]] ++ pendingTasksForHost,
+            new HashMap[String, ArrayBuffer[Int]] ++ pendingTasksForRack,
+            new ArrayBuffer[Int] ++ pendingTasksWithNoPrefs,
+            new ArrayBuffer[Int] ++ allPendingTasks
+          ))
+          chosen = Some(index)
+        }
         // This should almost always be list.trimEnd(1) to remove tail
         list.remove(indexOffset)
-        if (copiesRunning(index) == 0 && !successful(index)) {
-          return Some(index)
+        if (chosen != None) {
+          return chosen
         }
       }
     }
@@ -778,4 +792,17 @@ private[spark] object TaskSetManager {
   // The user will be warned if any stages contain a task that has a serialized size greater than
   // this.
   val TASK_SIZE_TO_WARN_KB = 100
+
+  // All scheduling decisions, made EVER
+  // TODO(cs): also track speculative tasks
+  val decisions = new SynchronizedQueue[(
+                        String,  // TaskSet.id
+                        String,  // Executor.id
+                        Int,     // task
+                        HashMap[String, ArrayBuffer[Int]], // pendingTasksForExecutor
+                        HashMap[String, ArrayBuffer[Int]], // pendingTasksForHost
+                        HashMap[String, ArrayBuffer[Int]], // pendingTasksForRack
+                        ArrayBuffer[Int],  // pendingTasksWithNoPrefs
+                        ArrayBuffer[Int]   // allPendingTasks
+                      )]
 }

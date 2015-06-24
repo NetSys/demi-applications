@@ -1,0 +1,7 @@
+- How to submit tasks with different prefs? (do I need to submit multiple
+  jobs?)
+
+- Can I trigger this in local mode?
+
+- Does RandomScheduler check invariants frequently enough when its external
+  event in WaitCondition?
