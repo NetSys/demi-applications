@@ -42,6 +42,16 @@ Actors in the system:
 
 TODO(cs):
  - Some dependenance on time: "Checking for hosts with no recent heart beats in BlockManagerMaster."
+ 
+ Probably this:
+ 
+TODO(cs): a few uses of scheduler.schedule(block) instead of
+scheduler.schedule(message):
+  - BlockManager.scala:heartBeat
+  - AppClient.scala:registerWithMaster
+  - Worker.scala:registerWithMaster
+  - TaskSchedulerImpl:checkSpeculatableTasks
+
 
 Relevant:
   SparkEnv.get.actorSystem
