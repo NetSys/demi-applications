@@ -78,37 +78,29 @@ class SparkMessageFingerprinter extends MessageFingerprinter {
 /** Computes an approximation to pi */
 object STSSparkPi {
   def main(args: Array[String]) {
+    var spark : SparkContext = null
+    var future : SimpleFutureAction[Int] = null
+    val prematureStopSempahore = new Semaphore(0)
+
     def run() {
       println("Starting SparkPi")
       val conf = new SparkConf().setAppName("Spark Pi").setSparkHome("/Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark")
-      val spark = new SparkContext(conf)
+      spark = new SparkContext(conf)
       val slices = if (args.length > 0) args(0).toInt else 2
-      val n = 100000 * slices
-      val count = spark.parallelize(1 to n, slices).map { i =>
+      val n = slices
+      future = spark.makeRDD(
+        //          NODE_LOCAL                NODE_LOCAL         ANY       ANY
+        Seq((0,Seq("localhost", "0")),(1,Seq("localhost", "0")),(2,Seq()),(3,Seq()))
+      ).map { i =>
         val x = random * 2 - 1
         val y = random * 2 - 1
         if (x*x + y*y < 1) 1 else 0
-      }.reduce(_ + _)
-      println("Pi is roughly " + 4.0 * count / n)
-      Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].beginUnignorableEvents
-      spark.stop()
-      Instrumenter().executionEnded
-      Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].endUnignorableEvents
-      Instrumenter().shutdown_system(false)
-    }
+      }.reduceNonBlocking(_ + _)
 
-    // ---- STS ----
-    /*
-    def urlses(cl: ClassLoader): Array[java.net.URL] = cl match {
-      case null => Array()
-      case u: java.net.URLClassLoader => u.getURLs() ++ urlses(cl.getParent)
-      case _ => urlses(cl.getParent)
+      // Block until either the job is complete or a violation was found.
+      prematureStopSempahore.acquire
+      println("Pi is roughly FOO")
     }
-
-    val  urls = urlses(getClass.getClassLoader)
-    println("CLASSPATH")
-    println(urls.filterNot(_.toString.contains("ivy")).mkString("\n"))
-    */
 
     // Override configs: set level to trace
     val root = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).asInstanceOf[ch.qos.logback.classic.Logger]
@@ -123,53 +115,44 @@ object STSSparkPi {
     Instrumenter().scheduler = sched
     sched.setInvariant(LocalityInversion.invariant)
 
-        val chosenLevel = localityLevel()
-        // Now see if there were any pending tasks that were more local than
-        // the one chosen.
-        def lowestPendingLocality() : TaskLocality.TaskLocality = {
-          for ((level, map) <- Seq(
-            (TaskLocality.PROCESS_LOCAL, pendingTasksForExecutor),
-            (TaskLocality.NODE_LOCAL, pendingTasksForHost),
-            (TaskLocality.RACK_LOCAL, pendingTasksForRack))) {
-            for (array <- map.values) {
-              if (!array.isEmpty) {
-                return level
-              }
-            }
-          }
+    val prefix = Array[ExternalEvent](
+      WaitCondition(() => future != null && future.isCompleted))
 
-          for ((level, array) <- Seq(
-            (TaskLocality.NO_PREF, pendingTasksWithNoPrefs),
-            (TaskLocality.ANY, allPendingTasks))) {
-            if (!array.isEmpty) {
-              return level
-            }
-          }
-
-          // Else it's speculative, which we currently assume isn't turned on.
-          throw new IllegalStateException("No locality level?")
-        }
-
-        val lowestLevel = lowestPendingLocality()
-        if (lowestLevel < chosenLevel) {
-          return Some(new LocalityInversion(taskSet))
-        }
+    def terminationCallback(ret: Option[(EventTrace,ViolationFingerprint)]) {
+      // Either a violation was found, or the WaitCondition returned true i.e.
+      // the job completed.
+      ret match {
+        case Some(tuple) =>
+          println("ViolationFound!")
+          // Wake up the run() thread
+        case None =>
+          println("Job is done...")
       }
-      return None
+      prematureStopSempahore.release()
     }
 
-    val prefix = Array[ExternalEvent](
-      WaitCondition(() => false))
-
-    sched.nonBlockingExplore(prefix,
-      (ret: Option[(EventTrace,ViolationFingerprint)]) => println("STS DONE!"))
+    sched.nonBlockingExplore(prefix, terminationCallback)
 
     // TODO(cs): having this line after nonBlockingExplore may not be correct
     sched.beginUnignorableEvents
 
     // ---- /STS ----
 
-    run()
+    try {
+      run()
+    } finally {
+      if (spark != null) {
+        if (!sched.unignorableEvents.get()) {
+          sched.beginUnignorableEvents
+        }
+        spark.stop()
+        Instrumenter().executionEnded
+        sched.endUnignorableEvents
+        // N.B. Requires us to comment out SparkEnv's actorSystem.shutdown()
+        // line
+        Instrumenter().shutdown_system(false)
+      }
+    }
 
     /*
     Instrumenter().reset_cancellables

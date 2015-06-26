@@ -840,6 +840,33 @@ abstract class RDD[T: ClassTag](
   }
 
   /**
+   * Reduces the elements of this RDD using the specified commutative and
+   * associative binary operator.
+   */
+  def reduceNonBlocking(f: (T, T) => T): SimpleFutureAction[T] = {
+    val cleanF = sc.clean(f)
+    val reducePartition: Iterator[T] => Option[T] = iter => {
+      if (iter.hasNext) {
+        Some(iter.reduceLeft(cleanF))
+      } else {
+        None
+      }
+    }
+    var jobResult: Option[T] = None
+    val mergeResult = (index: Int, taskResult: Option[T]) => {
+      if (taskResult.isDefined) {
+        jobResult = jobResult match {
+          case Some(value) => Some(f(value, taskResult.get))
+          case None => taskResult
+        }
+      }
+    }
+    sc.submitJob(this, reducePartition, 0 until partitions.size, mergeResult, jobResult.get)
+    // // Get the final result out of our Option, or throw an exception if the RDD was empty
+    // jobResult.getOrElse(throw new UnsupportedOperationException("empty collection"))
+  }
+
+  /**
    * Aggregate the elements of each partition, and then the results for all the partitions, using a
    * given associative function and a neutral "zero value". The function op(t1, t2) is allowed to
    * modify t1 and return it as its result value to avoid object allocation; however, it should not
