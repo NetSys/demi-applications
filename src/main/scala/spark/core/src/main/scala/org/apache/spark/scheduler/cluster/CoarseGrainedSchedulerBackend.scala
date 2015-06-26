@@ -32,6 +32,8 @@ import org.apache.spark.scheduler.{SchedulerBackend, SlaveLost, TaskDescription,
 import org.apache.spark.scheduler.cluster.CoarseGrainedClusterMessages._
 import org.apache.spark.util.{SerializableBuffer, AkkaUtils, Utils}
 
+import akka.dispatch.verification._
+
 /**
  * A scheduler backend that waits for coarse grained executors to connect to it through Akka.
  * This backend holds onto each executor for the duration of the Spark job rather than relinquishing
@@ -70,7 +72,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, actorSystem: A
 
     def receive = {
       case RegisterExecutor(executorId, hostPort, cores) =>
-        Utils.checkHostPort(hostPort, "Host port expected " + hostPort)
+        //Utils.checkHostPort(hostPort, "Host port expected " + hostPort)
         if (executorActor.contains(executorId)) {
           sender ! RegisterExecutorFailed("Duplicate executor ID: " + executorId)
         } else {

@@ -45,6 +45,8 @@ import org.apache.spark.scheduler.{EventLoggingListener, ReplayListenerBus}
 import org.apache.spark.ui.SparkUI
 import org.apache.spark.util.{AkkaUtils, SignalLogger, Utils}
 
+import akka.dispatch.verification._
+
 private[spark] class Master(
     host: String,
     port: Int,
@@ -83,7 +85,7 @@ private[spark] class Master(
   val waitingDrivers = new ArrayBuffer[DriverInfo] // Drivers currently spooled for scheduling
   var nextDriverNumber = 0
 
-  Utils.checkHost(host, "Expected hostname")
+  // Utils.checkHost(host, "Expected hostname")
 
   val masterMetricsSystem = MetricsSystem.createMetricsSystem("master", conf, securityMgr)
   val applicationMetricsSystem = MetricsSystem.createMetricsSystem("applications", conf,
@@ -384,7 +386,7 @@ private[spark] class Master(
     case DisassociatedEvent(_, address, _) => {
       // The disconnected client could've been either a worker or an app; remove whichever it was
       logInfo(s"$address got disassociated, removing it.")
-      addressToWorker.get(address).foreach(removeWorker)
+      //addressToWorker.get(address).foreach(removeWorker)
       addressToApp.get(address).foreach(finishApplication)
       if (state == RecoveryState.RECOVERING && canCompleteRecovery) { completeRecovery() }
     }
@@ -556,21 +558,21 @@ private[spark] class Master(
     }
 
     val workerAddress = worker.actor.path.address
-    if (addressToWorker.contains(workerAddress)) {
-      val oldWorker = addressToWorker(workerAddress)
-      if (oldWorker.state == WorkerState.UNKNOWN) {
-        // A worker registering from UNKNOWN implies that the worker was restarted during recovery.
-        // The old worker must thus be dead, so we will remove it and accept the new worker.
-        removeWorker(oldWorker)
-      } else {
-        logInfo("Attempted to re-register worker at same address: " + workerAddress)
-        return false
-      }
-    }
+    // if (addressToWorker.contains(workerAddress)) {
+    //   val oldWorker = addressToWorker(workerAddress)
+    //   if (oldWorker.state == WorkerState.UNKNOWN) {
+    //     // A worker registering from UNKNOWN implies that the worker was restarted during recovery.
+    //     // The old worker must thus be dead, so we will remove it and accept the new worker.
+    //     removeWorker(oldWorker)
+    //   } else {
+    //     logInfo("Attempted to re-register worker at same address: " + workerAddress)
+    //     return false
+    //   }
+    // }
 
     workers += worker
     idToWorker(worker.id) = worker
-    addressToWorker(workerAddress) = worker
+    //addressToWorker(workerAddress) = worker
     true
   }
 
@@ -578,7 +580,7 @@ private[spark] class Master(
     logInfo("Removing worker " + worker.id + " on " + worker.host + ":" + worker.port)
     worker.setState(WorkerState.DEAD)
     idToWorker -= worker.id
-    addressToWorker -= worker.actor.path.address
+    //addressToWorker -= worker.actor.path.address
     for (exec <- worker.executors.values) {
       logInfo("Telling app of lost executor: " + exec.id)
       exec.application.driver ! ExecutorUpdated(
@@ -765,6 +767,7 @@ private[spark] object Master extends Logging {
   val sparkUrlRegex = "spark://([^:]+):([0-9]+)".r
 
   def main(argStrings: Array[String]) {
+    throw new RuntimeException("Master running as own process...")
     SignalLogger.register(log)
     val conf = new SparkConf
     val args = new MasterArguments(argStrings, conf)
@@ -790,6 +793,25 @@ private[spark] object Master extends Logging {
     val securityMgr = new SecurityManager(conf)
     val (actorSystem, boundPort) = AkkaUtils.createActorSystem(systemName, host, port, conf = conf,
       securityManager = securityMgr)
+    val actor = actorSystem.actorOf(Props(classOf[Master], host, boundPort, webUiPort,
+      securityMgr), actorName)
+    val timeout = AkkaUtils.askTimeout(conf)
+    val respFuture = actor.ask(RequestWebUIPort)(timeout)
+    Instrumenter().actorBlocked
+    val resp = Await.result(respFuture, timeout).asInstanceOf[WebUIPortResponse]
+    (actorSystem, boundPort, resp.webUIBoundPort)
+  }
+
+  def startSystemAndActorWithSecurityManager(
+      host: String,
+      port: Int,
+      webUiPort: Int,
+      conf: SparkConf,
+      securityMgr: SecurityManager): (ActorSystem, Int, Int) = {
+    //val (actorSystem, boundPort) = AkkaUtils.createActorSystem(systemName, host, port, conf = conf,
+    //  securityManager = securityMgr)
+    val boundPort = 1
+    val actorSystem = Instrumenter()._actorSystem
     val actor = actorSystem.actorOf(Props(classOf[Master], host, boundPort, webUiPort,
       securityMgr), actorName)
     val timeout = AkkaUtils.askTimeout(conf)

@@ -40,6 +40,7 @@ private class ClientActor(driverArgs: ClientArguments, conf: SparkConf) extends 
   val timeout = AkkaUtils.askTimeout(conf)
 
   override def preStart() = {
+    throw new RuntimeException("STS needs to instrument ClientActor!")
     masterActor = context.actorSelection(Master.toAkkaUrl(driverArgs.master))
 
     context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])

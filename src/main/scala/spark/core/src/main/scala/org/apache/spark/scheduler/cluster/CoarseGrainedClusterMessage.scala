@@ -41,7 +41,7 @@ private[spark] object CoarseGrainedClusterMessages {
   // Executors to driver
   case class RegisterExecutor(executorId: String, hostPort: String, cores: Int)
     extends CoarseGrainedClusterMessage {
-    Utils.checkHostPort(hostPort, "Expected host port")
+    //Utils.checkHostPort(hostPort, "Expected host port")
   }
 
   case class StatusUpdate(executorId: String, taskId: Long, state: TaskState,

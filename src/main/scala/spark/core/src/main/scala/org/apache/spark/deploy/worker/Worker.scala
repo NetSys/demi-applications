@@ -1,5 +1,7 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
+ calExecutorId, localExecutorHostname, scheduler.conf.getAll, isLocal = true)
+
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
@@ -24,6 +26,8 @@ import java.util.Date
 import scala.collection.mutable.HashMap
 import scala.concurrent.duration._
 import scala.language.postfixOps
+
+import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor._
 import akka.remote.{DisassociatedEvent, RemotingLifecycleEvent}
@@ -54,8 +58,8 @@ private[spark] class Worker(
   extends Actor with Logging {
   import context.dispatcher
 
-  Utils.checkHost(host, "Expected hostname")
-  assert (port > 0)
+  //Utils.checkHost(host, "Expected hostname")
+  //assert (port > 0)
 
   def createDateFormat = new SimpleDateFormat("yyyyMMddHHmmss")  // For worker and executor IDs
 
@@ -73,7 +77,7 @@ private[spark] class Worker(
 
 
   val masterLock: Object = new Object()
-  var master: ActorSelection = null
+  var master: ActorRef = context.actorFor("../Master")
   var masterAddress: Address = null
   var activeMasterUrl: String = ""
   var activeMasterWebUiUrl : String = ""
@@ -90,7 +94,8 @@ private[spark] class Worker(
 
   val publicAddress = {
     val envVar = System.getenv("SPARK_PUBLIC_DNS")
-    if (envVar != null) envVar else host
+    // if (envVar != null) envVar else host
+    actorName
   }
   var webUi: WorkerWebUI = null
 
@@ -142,7 +147,7 @@ private[spark] class Worker(
     masterLock.synchronized {
       activeMasterUrl = url
       activeMasterWebUiUrl = uiUrl
-      master = context.actorSelection(Master.toAkkaUrl(activeMasterUrl))
+      //master = context.actorSelection(Master.toAkkaUrl(activeMasterUrl))
       masterAddress = activeMasterUrl match {
         case Master.sparkUrlRegex(_host, _port) =>
           Address("akka.tcp", Master.systemName, _host, _port.toInt)
@@ -156,7 +161,8 @@ private[spark] class Worker(
   def tryRegisterAllMasters() {
     for (masterUrl <- masterUrls) {
       logInfo("Connecting to master " + masterUrl + "...")
-      val actor = context.actorSelection(Master.toAkkaUrl(masterUrl))
+      //val actor = context.actorSelection(Master.toAkkaUrl(masterUrl))
+      val actor = context.actorFor("../Master")
       actor ! RegisterWorker(workerId, host, port, cores, memory, webUi.boundPort, publicAddress)
     }
   }
@@ -353,7 +359,8 @@ private[spark] class Worker(
   }
 
   def generateWorkerId(): String = {
-    "worker-%s-%s-%d".format(createDateFormat.format(new Date), host, port)
+    // "worker-%s-%s-%d".format(createDateFormat.format(new Date), host, port)
+    actorName
   }
 
   override def postStop() {
@@ -366,7 +373,10 @@ private[spark] class Worker(
 }
 
 private[spark] object Worker extends Logging {
+  val workerId = new AtomicInteger(0)
+
   def main(argStrings: Array[String]) {
+    throw new RuntimeException("Worker running as own process")
     SignalLogger.register(log)
     val args = new WorkerArguments(argStrings)
     val (actorSystem, _) = startSystemAndActor(args.host, args.port, args.webUiPort, args.cores,
@@ -395,4 +405,20 @@ private[spark] object Worker extends Logging {
     (actorSystem, boundPort)
   }
 
+  def startActor(
+      actorSystem: ActorSystem,
+      boundPort: Int,
+      host: String,
+      webUiPort: Int,
+      cores: Int,
+      memory: Int,
+      masterUrls: Array[String],
+      workDir: String,
+      securityMgr: SecurityManager) {
+
+    val conf = new SparkConf
+    val actorName = "Worker" + workerId.incrementAndGet()
+    actorSystem.actorOf(Props(classOf[Worker], host, boundPort, webUiPort, cores, memory,
+      masterUrls, actorSystem.name, actorName,  workDir, conf, securityMgr), name = actorName)
+  }
 }

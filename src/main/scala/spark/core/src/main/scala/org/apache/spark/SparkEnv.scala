@@ -87,7 +87,7 @@ class SparkEnv (
     blockManager.stop()
     blockManager.master.stop()
     metricsSystem.stop()
-    actorSystem.shutdown()
+    //actorSystem.shutdown()
     // Unfortunately Akka's awaitTermination doesn't actually wait for the Netty server to shut
     // down, but let's call it anyway in case it gets fixed in a later release
     // UPDATE: In Akka 2.1.x, this hangs if there are remote actors, so we can't call it.
@@ -201,6 +201,7 @@ object SparkEnv extends Logging {
         val timeout = AkkaUtils.lookupTimeout(conf)
         logInfo(s"Connecting to $name: $url")
         Instrumenter().actorBlocked
+        throw new RuntimeException("STS needs to instrument SparkEnv")
         Await.result(actorSystem.actorSelection(url).resolveOne(timeout), timeout)
       }
     }

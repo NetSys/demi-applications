@@ -28,6 +28,10 @@ import org.apache.spark.deploy.{ApplicationDescription, Command, ExecutorState}
 import org.apache.spark.deploy.DeployMessages.ExecutorStateChanged
 import org.apache.spark.util.logging.FileAppender
 
+import akka.dispatch.verification._
+
+import org.apache.spark.executor._
+
 /**
  * Manages the execution of one executor process.
  */
@@ -62,13 +66,13 @@ private[spark] class ExecutorRunner(
       override def run() { fetchAndRunExecutor() }
     }
     workerThread.start()
-    // Shutdown hook that kills actors on shutdown.
-    shutdownHook = new Thread() {
-      override def run() {
-        killProcess(Some("Worker shutting down"))
-      }
-    }
-    Runtime.getRuntime.addShutdownHook(shutdownHook)
+    // // Shutdown hook that kills actors on shutdown.
+    // shutdownHook = new Thread() {
+    //   override def run() {
+    //     killProcess(Some("Worker shutting down"))
+    //   }
+    // }
+    // Runtime.getRuntime.addShutdownHook(shutdownHook)
   }
 
   /**
@@ -100,7 +104,7 @@ private[spark] class ExecutorRunner(
       workerThread.interrupt()
       workerThread = null
       state = ExecutorState.KILLED
-      Runtime.getRuntime.removeShutdownHook(shutdownHook)
+      //Runtime.getRuntime.removeShutdownHook(shutdownHook)
     }
   }
 
@@ -127,50 +131,52 @@ private[spark] class ExecutorRunner(
   def fetchAndRunExecutor() {
     try {
       // Create the executor's working directory
-      val executorDir = new File(workDir, appId + "/" + execId)
-      if (!executorDir.mkdirs()) {
-        throw new IOException("Failed to create directory " + executorDir)
-      }
+      // val executorDir = new File(workDir, appId + "/" + execId)
+      // if (!executorDir.mkdirs()) {
+      //   throw new IOException("Failed to create directory " + executorDir)
+      // }
 
-      // Launch the process
-      val command = getCommandSeq
-      logInfo("Launch command: " + command.mkString("\"", "\" \"", "\""))
-      val builder = new ProcessBuilder(command: _*).directory(executorDir)
-      val env = builder.environment()
-      for ((key, value) <- appDesc.command.environment) {
-        env.put(key, value)
-      }
-      // In case we are running this from within the Spark Shell, avoid creating a "scala"
-      // parent process for the executor command
-      env.put("SPARK_LAUNCH_WITH_SCALA", "0")
-      process = builder.start()
-      val header = "Spark Executor Command: %s\n%s\n\n".format(
-        command.mkString("\"", "\" \"", "\""), "=" * 40)
+      // // Launch the x process x (*thread!)
+      val args = appDesc.command.arguments.map(substituteVariables).toArray
+      CoarseGrainedExecutorBackend.runLocal(Instrumenter()._actorSystem, args(1))
+      // val command = getCommandSeq
+      // logInfo("Launch command: " + command.mkString("\"", "\" \"", "\""))
+      // val builder = new ProcessBuilder(command: _*).directory(executorDir)
+      // val env = builder.environment()
+      // for ((key, value) <- appDesc.command.environment) {
+      //   env.put(key, value)
+      // }
+      // // In case we are running this from within the Spark Shell, avoid creating a "scala"
+      // // parent process for the executor command
+      // env.put("SPARK_LAUNCH_WITH_SCALA", "0")
+      // process = builder.start()
+      // val header = "Spark Executor Command: %s\n%s\n\n".format(
+      //   command.mkString("\"", "\" \"", "\""), "=" * 40)
 
-      // Redirect its stdout and stderr to files
-      val stdout = new File(executorDir, "stdout")
-      stdoutAppender = FileAppender(process.getInputStream, stdout, conf)
+      // // Redirect its stdout and stderr to files
+      // val stdout = new File(executorDir, "stdout")
+      // stdoutAppender = FileAppender(process.getInputStream, stdout, conf)
 
-      val stderr = new File(executorDir, "stderr")
-      Files.write(header, stderr, Charsets.UTF_8)
-      stderrAppender = FileAppender(process.getErrorStream, stderr, conf)
+      // val stderr = new File(executorDir, "stderr")
+      // Files.write(header, stderr, Charsets.UTF_8)
+      // stderrAppender = FileAppender(process.getErrorStream, stderr, conf)
 
-      // Wait for it to exit; executor may exit with code 0 (when driver instructs it to shutdown)
-      // or with nonzero exit code
-      val exitCode = process.waitFor()
+      // // Wait for it to exit; executor may exit with code 0 (when driver instructs it to shutdown)
+      // // or with nonzero exit code
       state = ExecutorState.EXITED
+      val exitCode = 0 // XXX
       val message = "Command exited with code " + exitCode
       worker ! ExecutorStateChanged(appId, execId, state, Some(message), Some(exitCode))
     } catch {
       case interrupted: InterruptedException => {
         logInfo("Runner thread for executor " + fullId + " interrupted")
         state = ExecutorState.KILLED
-        killProcess(None)
+        //killProcess(None)
       }
       case e: Exception => {
         logError("Error running executor", e)
         state = ExecutorState.FAILED
-        killProcess(Some(e.toString))
+        //killProcess(Some(e.toString))
       }
     }
   }

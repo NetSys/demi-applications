@@ -21,7 +21,7 @@ import scala.collection.mutable.ArrayBuffer
 
 import akka.actor.ActorSystem
 
-import org.apache.spark.{Logging, SparkConf}
+import org.apache.spark.{Logging, SparkConf, SecurityManager}
 import org.apache.spark.deploy.worker.Worker
 import org.apache.spark.deploy.master.Master
 import org.apache.spark.util.Utils
@@ -45,16 +45,23 @@ class LocalSparkCluster(numWorkers: Int, coresPerWorker: Int, memoryPerWorker: I
 
     /* Start the Master */
     val conf = new SparkConf(false)
-    val (masterSystem, masterPort, _) = Master.startSystemAndActor(localHostname, 0, 0, conf)
+    val securityManager = new SecurityManager(conf)
+    val (masterSystem, masterPort, _) =
+        Master.startSystemAndActorWithSecurityManager(localHostname, 0, 0,
+          conf, securityManager)
     masterActorSystems += masterSystem
     val masterUrl = "spark://" + localHostname + ":" + masterPort
     val masters = Array(masterUrl)
 
     /* Start the Workers */
     for (workerNum <- 1 to numWorkers) {
-      val (workerSystem, _) = Worker.startSystemAndActor(localHostname, 0, 0, coresPerWorker,
-        memoryPerWorker, masters, null, Some(workerNum))
-      workerActorSystems += workerSystem
+      //val (workerSystem, _) = Worker.startSystemAndActor(localHostname, 0, 0, coresPerWorker,
+      //  memoryPerWorker, masters, null, Some(workerNum))
+      //workerActorSystems += workerSystem
+      // Use the same actor system as the master
+      Worker.startActor(masterSystem, masterPort, localHostname, 0,
+        coresPerWorker, memoryPerWorker, masters,
+        null, securityManager)
     }
 
     masters
@@ -65,9 +72,9 @@ class LocalSparkCluster(numWorkers: Int, coresPerWorker: Int, memoryPerWorker: I
     // Stop the workers before the master so they don't get upset that it disconnected
     // TODO: In Akka 2.1.x, ActorSystem.awaitTermination hangs when you have remote actors!
     //       This is unfortunate, but for now we just comment it out.
-    workerActorSystems.foreach(_.shutdown())
+    //workerActorSystems.foreach(_.shutdown())
     // workerActorSystems.foreach(_.awaitTermination())
-    masterActorSystems.foreach(_.shutdown())
+    //masterActorSystems.foreach(_.shutdown())
     // masterActorSystems.foreach(_.awaitTermination())
     masterActorSystems.clear()
     workerActorSystems.clear()

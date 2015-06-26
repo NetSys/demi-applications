@@ -323,7 +323,7 @@ private[spark] class MapOutputTrackerMaster(conf: SparkConf)
   }
 
   override def stop() {
-    sendTracker(StopMapOutputTracker)
+    //sendTracker(StopMapOutputTracker)
     mapStatuses.clear()
     trackerActor = null
     metadataCleaner.cancel()

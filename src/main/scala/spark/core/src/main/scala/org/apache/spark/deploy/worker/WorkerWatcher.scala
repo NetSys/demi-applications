@@ -33,6 +33,7 @@ private[spark] class WorkerWatcher(workerUrl: String) extends Actor
     context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
 
     logInfo(s"Connecting to worker $workerUrl")
+    throw new RuntimeException("STS needs to instrument WorkerWatchers!")
     val worker = context.actorSelection(workerUrl)
     worker ! SendHeartbeat // need to send a message here to initiate connection
   }

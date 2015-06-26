@@ -27,6 +27,7 @@ import org.apache.spark.util.{AkkaUtils, Utils}
  */
 object DriverWrapper {
   def main(args: Array[String]) {
+    throw new RuntimeException("Don't RUN DRIVER WRAPPER?")
     args.toList match {
       case workerUrl :: mainClass :: extraArgs =>
         val conf = new SparkConf()

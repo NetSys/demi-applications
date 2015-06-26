@@ -59,7 +59,7 @@ private[spark] class AppClient(
   var activeMasterUrl: String = null
 
   class ClientActor extends Actor with Logging {
-    var master: ActorSelection = null
+    var master: ActorRef = null
     var alreadyDisconnected = false  // To avoid calling listener.disconnected() multiple times
     var alreadyDead = false  // To avoid calling listener.dead() multiple times
     var registrationRetryTimer: Option[Cancellable] = None
@@ -79,7 +79,8 @@ private[spark] class AppClient(
     def tryRegisterAllMasters() {
       for (masterUrl <- masterUrls) {
         logInfo("Connecting to master " + masterUrl + "...")
-        val actor = context.actorSelection(Master.toAkkaUrl(masterUrl))
+        // val actor = context.actorSelection(Master.toAkkaUrl(masterUrl))
+        val actor = context.actorFor("../Master")
         actor ! RegisterApplication(appDescription)
       }
     }
@@ -106,7 +107,8 @@ private[spark] class AppClient(
 
     def changeMaster(url: String) {
       activeMasterUrl = url
-      master = context.actorSelection(Master.toAkkaUrl(activeMasterUrl))
+      // master = context.actorSelection(Master.toAkkaUrl(activeMasterUrl))
+      master = context.actorFor("../Master")
       masterAddress = activeMasterUrl match {
         case Master.sparkUrlRegex(host, port) =>
           Address("akka.tcp", Master.systemName, host, port.toInt)
@@ -196,10 +198,10 @@ private[spark] class AppClient(
   def stop() {
     if (actor != null) {
       try {
-        val timeout = AkkaUtils.askTimeout(conf)
-        val future = actor.ask(StopAppClient)(timeout)
-        Instrumenter().actorBlocked
-        Await.result(future, timeout)
+        // val timeout = AkkaUtils.askTimeout(conf)
+        // val future = actor.ask(StopAppClient)(timeout)
+        // Instrumenter().actorBlocked
+        // Await.result(future, timeout)
       } catch {
         case e: TimeoutException =>
           logInfo("Stop request to Master timed out; it may already be shut down.")

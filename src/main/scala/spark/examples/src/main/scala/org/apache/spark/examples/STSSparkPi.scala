@@ -90,7 +90,7 @@ object STSSparkPi {
   def main(args: Array[String]) {
     def run() {
       println("Starting SparkPi")
-      val conf = new SparkConf().setAppName("Spark Pi")
+      val conf = new SparkConf().setAppName("Spark Pi").setSparkHome("/Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark")
       val spark = new SparkContext(conf)
       val slices = if (args.length > 0) args(0).toInt else 2
       val n = 100000 * slices
@@ -104,6 +104,7 @@ object STSSparkPi {
       spark.stop()
       Instrumenter().executionEnded
       Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].endUnignorableEvents
+      Instrumenter().shutdown_system(false)
     }
 
     // ---- STS ----
@@ -218,6 +219,7 @@ object STSSparkPi {
 
     run()
 
+    /*
     Instrumenter().reset_cancellables
     Instrumenter().reset_per_system_state
     Instrumenter()._actorSystem = null
@@ -242,5 +244,6 @@ object STSSparkPi {
 
     sts.beginUnignorableEvents
     sts.test(prefix, fakeViolation, fakeStats, Some(run))
+    */
   }
 }
