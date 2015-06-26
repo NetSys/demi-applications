@@ -33,17 +33,7 @@ import ch.qos.logback.classic.Logger
 
 import scala.collection.mutable.SynchronizedQueue
 
-
-// TODO(cs): probably want to tweak this fingerprint a bit.
-class LocalityInversion(val taskSetId: String) extends ViolationFingerprint {
-  def matches(other: ViolationFingerprint) : Boolean = {
-    if (!other.isInstanceOf[LocalityInversion]) {
-      return false
-    }
-    return other.asInstanceOf[LocalityInversion].taskSetId == taskSetId
-  }
-  def affectedNodes(): Seq[String] = Seq.empty
-}
+import java.util.concurrent.Semaphore
 
 class SparkMessageFingerprinter extends MessageFingerprinter {
   override def fingerprint(msg: Any) : Option[MessageFingerprint] = {
@@ -131,44 +121,7 @@ object STSSparkPi {
                         3,
                         true)
     Instrumenter().scheduler = sched
-    def invariant(s: Seq[akka.dispatch.verification.ExternalEvent],
-                  c: scala.collection.mutable.HashMap[String,Option[akka.dispatch.verification.CheckpointReply]])
-                : Option[akka.dispatch.verification.ViolationFingerprint] = {
-      while (!TaskSetManager.decisions.isEmpty) {
-        val (taskSet,
-             executor,
-             index,
-             pendingTasksForExecutor,
-             pendingTasksForHost,
-             pendingTasksForRack,
-             pendingTasksWithNoPrefs,
-             allPendingTasks) = TaskSetManager.decisions.dequeue
-        // First find out the lowest locality level for the chosen task
-        def localityLevel() : TaskLocality.TaskLocality = {
-          for ((level, map) <- Seq(
-            (TaskLocality.PROCESS_LOCAL, pendingTasksForExecutor),
-            (TaskLocality.NODE_LOCAL, pendingTasksForHost),
-            (TaskLocality.RACK_LOCAL, pendingTasksForRack))) {
-            for (array <- map.values) {
-              array.find(idx => idx == index) match {
-                case Some(idx) => return level
-                case None =>
-              }
-            }
-          }
-          // TODO(cs): check if TaskLocality.NO_PREF is in the correct
-          // index in TaskLocality.scala
-          for ((level, array) <- Seq(
-            (TaskLocality.NO_PREF, pendingTasksWithNoPrefs),
-            (TaskLocality.ANY, allPendingTasks))) {
-            array.find(idx => idx == index) match {
-              case Some(idx) => return level
-              case None =>
-            }
-          }
-          // Else it's speculative, which we currently assume isn't turned on.
-          throw new IllegalStateException("No locality level?")
-        }
+    sched.setInvariant(LocalityInversion.invariant)
 
         val chosenLevel = localityLevel()
         // Now see if there were any pending tasks that were more local than
@@ -204,7 +157,6 @@ object STSSparkPi {
       }
       return None
     }
-    sched.setInvariant(invariant)
 
     val prefix = Array[ExternalEvent](
       WaitCondition(() => false))
