@@ -190,7 +190,7 @@ private[spark] class AppClient(
 
   def start() {
     // Just launch an actor; it will call back into the listener.
-    actor = actorSystem.actorOf(Props(new ClientActor))
+    actor = actorSystem.actorOf(Props(new ClientActor), name="AppClient")
   }
 
   def stop() {

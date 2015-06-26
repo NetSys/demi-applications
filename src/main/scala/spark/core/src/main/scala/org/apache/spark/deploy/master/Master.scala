@@ -144,9 +144,11 @@ private[spark] class Master(
 
     leaderElectionAgent = RECOVERY_MODE match {
         case "ZOOKEEPER" =>
-          context.actorOf(Props(classOf[ZooKeeperLeaderElectionAgent], self, masterUrl, conf))
+          context.actorOf(Props(classOf[ZooKeeperLeaderElectionAgent], self,
+            masterUrl, conf), name="leaderElectionAgent")
         case _ =>
-          context.actorOf(Props(classOf[MonarchyLeaderAgent], self))
+          context.actorOf(Props(classOf[MonarchyLeaderAgent], self),
+            name="leaderElectionAgent")
       }
   }
 

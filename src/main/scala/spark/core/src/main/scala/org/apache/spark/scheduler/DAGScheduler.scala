@@ -121,7 +121,8 @@ class DAGScheduler(
   private val failedEpoch = new HashMap[String, Long]
 
   private val dagSchedulerActorSupervisor =
-    env.actorSystem.actorOf(Props(new DAGSchedulerActorSupervisor(this)))
+    env.actorSystem.actorOf(Props(new DAGSchedulerActorSupervisor(this)),
+      name="DAGSchedulerActorSupervisor")
 
   private[scheduler] var eventProcessActor: ActorRef = _
 
