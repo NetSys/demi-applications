@@ -204,6 +204,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, actorSystem: A
       if (driverActor != null) {
         logInfo("Shutting down all executors")
         val future = driverActor.ask(StopExecutors)(timeout)
+        Instrumenter().actorBlocked
         Await.ready(future, timeout)
       }
     } catch {
@@ -217,6 +218,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, actorSystem: A
     try {
       if (driverActor != null) {
         val future = driverActor.ask(StopDriver)(timeout)
+        Instrumenter().actorBlocked
         Await.ready(future, timeout)
       }
     } catch {
@@ -241,6 +243,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, actorSystem: A
   def removeExecutor(executorId: String, reason: String) {
     try {
       val future = driverActor.ask(RemoveExecutor(executorId, reason))(timeout)
+      Instrumenter().actorBlocked
       Await.ready(future, timeout)
     } catch {
       case e: Exception =>
