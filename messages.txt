@@ -1,29 +1,45 @@
-schedule_new_message(5): $c -> BlockManagerMaster RegisterBlockManager(BlockManagerId(<driver>, 10.0.0.8, 52196, 0),1718196633,Actor[akka://new-system-0/user/BlockManagerActor1#1695787559])[0m
-schedule_new_message(3): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
-schedule_new_message(7): $d -> BlockManagerMaster HeartBeat(BlockManagerId(<driver>, 10.0.0.8, 52196, 0))[0m
-schedule_new_message(9): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
-schedule_new_message(11): $e -> $a Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>))[0m
-schedule_new_message(13): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
-schedule_new_message(15): deadLetters -> $a JobSubmitted(0,MappedRDD[1] at map at SparkPi.scala:33,<function2>,[I@3ae66c85,false,CallSite(reduce at SparkPi.scala:37,org.apache.spark.rdd.RDD.reduce(RDD.scala:837)[0m
-schedule_new_message(17): $f -> BlockManagerMaster GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@1c62b08b)[0m
-schedule_new_message(19): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
-schedule_new_message(21): BlockManagerMaster -> $f ArraySeq(List(), List())[0m
-schedule_new_message(23): $g -> BlockManagerMaster GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@1026878d)[0m
-schedule_new_message(27): BlockManagerMaster -> $g ArraySeq(List(), List())[0m
-schedule_new_message(25): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
-schedule_new_message(29): deadLetters -> LocalBackendActor ReviveOffers[0m
-schedule_new_message(33): deadLetters -> $a BeginEvent(ResultTask(0, 0),org.apache.spark.scheduler.TaskInfo@2dc9de3a)[0m
-schedule_new_message(35): deadLetters -> $a BeginEvent(ResultTask(0, 1),org.apache.spark.scheduler.TaskInfo@159244a9)[0m
-schedule_new_message(31): deadLetters -> $a ExecutorAdded(localhost,localhost)[0m
-schedule_new_message(37): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
-schedule_new_message(39): deadLetters -> LocalBackendActor StatusUpdate(0,RUNNING,java.nio.HeapByteBuffer[pos=0 lim=0 cap=0])[0m
-schedule_new_message(43): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
-schedule_new_message(41): deadLetters -> LocalBackendActor StatusUpdate(1,RUNNING,java.nio.HeapByteBuffer[pos=0 lim=0 cap=0])[0m
-schedule_new_message(45): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
-schedule_new_message(47): deadLetters -> LocalBackendActor StatusUpdate(1,FINISHED,java.nio.HeapByteBuffer[pos=0 lim=700 cap=700])[0m
-schedule_new_message(51): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
-schedule_new_message(49): deadLetters -> LocalBackendActor StatusUpdate(0,FINISHED,java.nio.HeapByteBuffer[pos=0 lim=700 cap=700])[0m
-schedule_new_message(55): deadLetters -> $a CompletionEvent(ResultTask(0, 0),Success,Some(78591),null,org.apache.spark.scheduler.TaskInfo@2dc9de3a,org.apache.spark.executor.TaskMetrics@3f9d0cb)[0m
-schedule_new_message(53): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
-schedule_new_message(57): deadLetters -> $a CompletionEvent(ResultTask(0, 1),Success,Some(78529),null,org.apache.spark.scheduler.TaskInfo@159244a9,org.apache.spark.executor.TaskMetrics@7ea27756)[0m
-schedule_new_message(59): deadLetters -> BlockManagerMaster ExpireDeadHosts[0m
+schedule_new_message(3): $c -> BlockManagerMaster RegisterBlockManager(BlockManagerId(<driver>, dhcp-45-26.eecs.berkeley.edu, 61099, 0),1718196633,Actor[akka://new-system-1/user/BlockManagerActor1#2139781089])[0m
+schedule_new_message(5): $d -> BlockManagerMaster HeartBeat(BlockManagerId(<driver>, dhcp-45-26.eecs.berkeley.edu, 61099, 0))[0m
+schedule_new_message(7): $e -> Master RequestWebUIPort[0m
+schedule_new_message(9): leaderElectionAgent -> Master ElectedLeader[0m
+schedule_new_message(11): $f -> DAGSchedulerActorSupervisor Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>))[0m
+schedule_new_message(13): AppClient -> Master RegisterApplication(ApplicationDescription(Spark Pi))[0m
+schedule_new_message(17): Worker1 -> Master RegisterWorker(Worker1,dhcp-45-26.eecs.berkeley.edu,1,1,512,61103,Worker1)[0m
+schedule_new_message(19): Worker2 -> Master RegisterWorker(Worker2,dhcp-45-26.eecs.berkeley.edu,1,1,512,61104,Worker2)[0m
+schedule_new_message(15): Master -> AppClient RegisteredApplication(app-20150625154506-0000,spark://dhcp-45-26.eecs.berkeley.edu:1)[0m
+schedule_new_message(27): Master -> Worker2 RegisteredWorker(spark://dhcp-45-26.eecs.berkeley.edu:1,http://dhcp-45-26.eecs.berkeley.edu:61102)[0m
+schedule_new_message(23): Master -> Worker1 LaunchExecutor(spark://dhcp-45-26.eecs.berkeley.edu:1,app-20150625154506-0000,0,ApplicationDescription(Spark Pi),1,512)[0m
+schedule_new_message(21): Master -> Worker1 RegisteredWorker(spark://dhcp-45-26.eecs.berkeley.edu:1,http://dhcp-45-26.eecs.berkeley.edu:61102)[0m
+schedule_new_message(25): Master -> AppClient ExecutorAdded(0,Worker1,dhcp-45-26.eecs.berkeley.edu:1,1,512)[0m
+schedule_new_message(29): Master -> Worker2 LaunchExecutor(spark://dhcp-45-26.eecs.berkeley.edu:1,app-20150625154506-0000,1,ApplicationDescription(Spark Pi),1,512)[0m
+schedule_new_message(33): Worker2 -> Master ExecutorStateChanged(app-20150625154506-0000,1,RUNNING,None,None)[0m
+schedule_new_message(31): Master -> AppClient ExecutorAdded(1,Worker2,dhcp-45-26.eecs.berkeley.edu:1,1,512)[0m
+schedule_new_message(37): $g -> CoarseGrainedScheduler RetrieveSparkProps[0m
+schedule_new_message(35): Master -> AppClient ExecutorUpdated(1,RUNNING,None,None)[0m
+schedule_new_message(39): executor1 -> CoarseGrainedScheduler RegisterExecutor(1,1,1)[0m
+schedule_new_message(41): CoarseGrainedScheduler -> executor1 RegisteredExecutor[0m
+schedule_new_message(43): deadLetters -> $a ExecutorAdded(1,1)[0m
+schedule_new_message(45): deadLetters -> $a JobSubmitted(0,MappedRDD[1] at map at STSSparkPi.scala:97,<function2>,[I@673bb956,false,CallSite(reduce at STSSparkPi.scala:101,org.apache.spark.rdd.RDD.reduce(RDD.scala:837)[0m
+schedule_new_message(47): $h -> BlockManagerMaster GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@4cf4d388)[0m
+schedule_new_message(49): BlockManagerMaster -> $h ArraySeq(List(), List())[0m
+schedule_new_message(51): $i -> BlockManagerMaster GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@1410e867)[0m
+schedule_new_message(53): BlockManagerMaster -> $i ArraySeq(List(), List())[0m
+schedule_new_message(55): deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+schedule_new_message(57): deadLetters -> $a BeginEvent(ResultTask(0, 0),org.apache.spark.scheduler.TaskInfo@3e1c7892)[0m
+schedule_new_message(59): CoarseGrainedScheduler -> executor1 LaunchTask(org.apache.spark.util.SerializableBuffer@4232d5f2)[0m
+schedule_new_message(61): executor1 -> CoarseGrainedScheduler StatusUpdate(1,0,RUNNING,org.apache.spark.util.SerializableBuffer@10caec81)[0m
+schedule_new_message(63): executor1 -> CoarseGrainedScheduler StatusUpdate(1,0,FINISHED,org.apache.spark.util.SerializableBuffer@27686a00)[0m
+schedule_new_message(67): CoarseGrainedScheduler -> executor1 LaunchTask(org.apache.spark.util.SerializableBuffer@4e9300)[0m
+schedule_new_message(65): deadLetters -> $a BeginEvent(ResultTask(0, 1),org.apache.spark.scheduler.TaskInfo@6cae6696)[0m
+schedule_new_message(69): deadLetters -> $a CompletionEvent(ResultTask(0, 0),Success,Some(78561),null,org.apache.spark.scheduler.TaskInfo@3e1c7892,org.apache.spark.executor.TaskMetrics@6619a756)[0m
+schedule_new_message(71): executor1 -> CoarseGrainedScheduler StatusUpdate(1,1,RUNNING,org.apache.spark.util.SerializableBuffer@33c10aef)[0m
+schedule_new_message(73): executor1 -> CoarseGrainedScheduler StatusUpdate(1,1,FINISHED,org.apache.spark.util.SerializableBuffer@148dbb2b)[0m
+schedule_new_message(75): deadLetters -> $a CompletionEvent(ResultTask(0, 1),Success,Some(78565),null,org.apache.spark.scheduler.TaskInfo@6cae6696,org.apache.spark.executor.TaskMetrics@23030d8d)[0m
+schedule_new_message(77): $j -> CoarseGrainedScheduler StopExecutors[0m
+schedule_new_message(79): CoarseGrainedScheduler -> executor1 StopExecutor[0m
+schedule_new_message(82): $k -> CoarseGrainedScheduler StopDriver[0m
+schedule_new_message(83): deadLetters -> Worker2 ExecutorStateChanged(app-20150625154506-0000,1,EXITED,Some(Command exited with code 0),Some(0))[0m
+schedule_new_message(85): Worker2 -> Master ExecutorStateChanged(app-20150625154506-0000,1,EXITED,Some(Command exited with code 0),Some(0))[0m
+schedule_new_message(87): Master -> AppClient ExecutorUpdated(1,EXITED,Some(Command exited with code 0),Some(0))[0m
+schedule_new_message(89): deadLetters -> CoarseGrainedScheduler RemoveExecutor(1,Unknown executor exit code (0))[0m
+schedule_new_message(91): $l -> BlockManagerMaster StopBlockManagerMaster[0m

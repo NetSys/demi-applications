@@ -9,9 +9,48 @@ Messages:
  - HeartBeat
    - rcv: BlockManagerMaster
    - snd: external thread
+ - ElectedLeader
+   - rcv: Master
+   - snd: leaderElectionLeader.preStart()
  - Props
-   - rcv: DAGScheduler
+   - rcv: DAGSchedulerActorSupervisor
    - snd: external thread
+ - RegisterApplication
+   - rcv: Master
+   - snd: AppClient.preStart()
+ - RegisteredApplication
+   - rcv: AppClient
+   - snd: Master
+ - RegisterWorker
+   - rcv: Master
+   - snd: Worker.preStart()
+ - RegisteredWorker
+   - rcv: Worker
+   - snd: Master
+ - LaunchExecutor
+   - rcv: Worker
+   - snd: Master [after receiving RegisterWorker]
+ - ExecutorAdded
+   - rcv: AppClient
+   - snd: Master [after receiving RegisterWorker]
+ - ExecutorStateChanged
+   - rcv: Master
+   - snd: Worker [separate thread]
+ - ExecutorUpdated
+   - rcv: AppClient
+   - snd: Master
+ - RetrieveSparkProps
+   - rcv: CoarseGrainedScheduler
+   - snd: executor thread
+ - RegisterExecutor
+   - rcv: CoarseGrainedScheduler
+   - snd: CoarseGrainedExecutorBackend.preStart()
+ - RegisteredExecutor
+   - rcv: CoarseGrainedExecutorBackend
+   - snd: CoarseGrainedScheduler
+ - ExecutorAdded
+   - rcv: DAGScheduler
+   - snd: external thread? Called by TaskScheduler when a host is added
  - JobSubmitted
    - rcv: DAGScheduler
    - snd: external thread
@@ -22,16 +61,16 @@ Messages:
    - rcv: DAGScheduler
    - snd: BlockManagerMaster [upon receiving GetLocationsMultipleBlockIds]
  - ReviveOffers
-   - rcv: LocalBackendActor
-   - snd DAGScheduler [upon receiving both ArraySeqs]
+   - rcv: CoarseGrainedScheduler
+   - snd: DAGScheduler [indirectly through TaskSchedulerImpl upon receiving both ArraySeqs]
  - BeginEvent
    - rcv: DAGScheduler
-   - snd: LocalBackendActor [upon receiving ReviveOffers]
- - ExecutorAdded
-   - rcv: DAGScheduler
-   - snd: LocalBackActor [upon receiving ReviveOffers]
+   - snd: CoarseGrainedScheduler [indirectly through TaskSchedulerImpl upon receiving ReviveOffers]
+ - LaunchTask
+   - rcv: CoarseGrainedExecutorBackend
+   - snd: CoarseGrainedScheduler [upon receiving ]
  - StatusUpdate
-   - rcv: LocalBackendActor
+   - rcv: CoarseGrainedExecutorBackend
    - snd: ThreadRunner threads
  - CompletionEvent
    - rcv: DAGScheduler
@@ -42,3 +81,12 @@ Shutdown:
    - rcv: MapOutputTracker
  - StopBlockManagerMaster
    - rcv: BlockManagerMaster
+ - StopExecutor
+   - rcv: CoarseGrainedScheduler
+   - snd: ?
+ - StopExecutor
+   - rcv: CoarseGrainedExecutorBackend
+   - snd: CoarseGrainedScheduler
+ - StopDriver
+   - rcv: CoarseGrainedScheduler
+   - snd: ?
