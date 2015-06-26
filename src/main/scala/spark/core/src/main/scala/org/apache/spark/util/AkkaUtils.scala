@@ -103,7 +103,7 @@ private[spark] object AkkaUtils extends Logging {
       """.stripMargin))
 
     val actorSystem = Instrumenter().actorSystem(Some(akkaConf))
-    Instrumenter().executionStarted
+    Instrumenter().unsetPassthrough
     // val actorSystem = ActorSystem(name, akkaConf)
     val provider = actorSystem.asInstanceOf[ExtendedActorSystem].provider
     val boundPort = provider.getDefaultAddress.port.get

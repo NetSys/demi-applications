@@ -106,7 +106,6 @@ object STSSparkPi {
     val root = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).asInstanceOf[ch.qos.logback.classic.Logger]
     root.setLevel(Level.TRACE)
 
-    Instrumenter().waitForExecutionStart
     val sched = new RandomScheduler(1,
                         new FingerprintFactory,
                         false,
@@ -139,15 +138,19 @@ object STSSparkPi {
     // ---- /STS ----
 
     try {
+      Instrumenter().setPassthrough // unset within Spark
       run()
     } finally {
       if (spark != null) {
-        if (!sched.unignorableEvents.get()) {
-          sched.beginUnignorableEvents
+        if (sched.unignorableEvents.get()) {
+          sched.endUnignorableEvents
         }
+        // TODO(cs): also ensure that atomic blocks are marked off properly?
+
+        // don't pay attention to shutdown messages.
+        Instrumenter().setPassthrough
         spark.stop()
-        Instrumenter().executionEnded
-        sched.endUnignorableEvents
+
         // N.B. Requires us to comment out SparkEnv's actorSystem.shutdown()
         // line
         Instrumenter().shutdown_system(false)
@@ -155,10 +158,6 @@ object STSSparkPi {
     }
 
     /*
-    Instrumenter().reset_cancellables
-    Instrumenter().reset_per_system_state
-    Instrumenter()._actorSystem = null
-
     val fingerprintFactory = new FingerprintFactory
     fingerprintFactory.registerFingerprinter(new SparkMessageFingerprinter)
     // We know that there are no external messages. So, easy way to get around
