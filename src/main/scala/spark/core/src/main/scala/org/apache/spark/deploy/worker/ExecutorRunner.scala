@@ -138,7 +138,7 @@ private[spark] class ExecutorRunner(
 
       // // Launch the x process x (*thread!)
       val args = appDesc.command.arguments.map(substituteVariables).toArray
-      CoarseGrainedExecutorBackend.runLocal(Instrumenter()._actorSystem, args(1))
+      CoarseGrainedExecutorBackend.runLocal(Instrumenter()._actorSystem, execId.toString)
       // val command = getCommandSeq
       // logInfo("Launch command: " + command.mkString("\"", "\" \"", "\""))
       // val builder = new ProcessBuilder(command: _*).directory(executorDir)
