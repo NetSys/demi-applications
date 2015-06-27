@@ -66,13 +66,6 @@ class SparkMessageFingerprinter extends MessageFingerprinter {
     }
     return None
   }
-
-  override def get_external_thread(msg: Any) : Option[Long] = {
-    msg match {
-      case StatusUpdate(id, _, _) => return Some(id)
-      case _ => return None
-    }
-  }
 }
 
 /** Computes an approximation to pi */
