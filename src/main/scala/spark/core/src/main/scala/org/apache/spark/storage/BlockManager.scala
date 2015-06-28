@@ -506,7 +506,7 @@ private[spark] class BlockManager(
 
   private def doGetRemote(blockId: BlockId, asBlockResult: Boolean): Option[Any] = {
     require(blockId != null, "BlockId is null")
-    val locations = Random.shuffle(master.getLocations(blockId))
+    val locations = master.getLocations(blockId) // XXX Random.shuffle()
     for (loc <- locations) {
       logDebug(s"Getting remote block $blockId from $loc")
       val data = BlockManagerWorker.syncGetBlock(
