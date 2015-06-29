@@ -119,13 +119,18 @@ object STSSparkPi {
     val root = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).asInstanceOf[ch.qos.logback.classic.Logger]
     root.setLevel(Level.TRACE)
 
-    val sched = new RandomScheduler(1,
-                        new FingerprintFactory,
-                        false,
-                        3,
-                        true)
+    val fingerprintFactory = new FingerprintFactory
+    fingerprintFactory.registerFingerprinter(new SparkMessageFingerprinter)
+
+    val schedulerConfig = SchedulerConfig(
+      messageFingerprinter=fingerprintFactory,
+      shouldShutdownActorSystem=false,
+      filterKnownAbsents=false,
+      ignoreTimers=false,
+      invariant_check=Some(LocalityInversion.invariant))
+
+    val sched = new RandomScheduler(schedulerConfig, invariant_check_interval=3)
     Instrumenter().scheduler = sched
-    sched.setInvariant(LocalityInversion.invariant)
 
     val prefix = Array[ExternalEvent](
       WaitCondition(() => future != null && future.isCompleted))
@@ -186,8 +191,6 @@ object STSSparkPi {
       case Some((trace, violation)) =>
         println("Violation was found! Trying replay")
 
-        val fingerprintFactory = new FingerprintFactory
-        fingerprintFactory.registerFingerprinter(new SparkMessageFingerprinter)
         // We know that there are no external messages. So, easy way to get around
         // "deadLetters" duplicate messages send issue: mark all messages as not from "deadLetters"
         // TODO(cs): find a more principled way to do this.
@@ -198,9 +201,8 @@ object STSSparkPi {
           case e => e
         }
         val mappedEventTrace = new EventTrace(mappedEvents, trace.original_externals)
-        val sts = new STSScheduler(mappedEventTrace, false, fingerprintFactory, false, true, false, false)
+        val sts = new STSScheduler(schedulerConfig, mappedEventTrace)
         Instrumenter().scheduler = sts
-        sts.setInvariant(LocalityInversion.invariant)
         val fakeStats = new MinimizationStats("FAKE", "STSSched")
 
         sts.beginUnignorableEvents

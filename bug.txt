@@ -1,10 +1,10 @@
-TODO(cs): make a config object, add a `ignore timers` option
-
-TODO(cs): source of non-determinism: scheduler.schedule(block)
-
 TODO(cs): submitting jobs requires you to run *code*, not just send a message.
 Need a new external event that runs a piece of code at a particular point of
 time.
+
+TODO(cs): treat executor adds as an external event too!
+
+TODO(cs): source of non-determinism: scheduler.schedule(block)
 
 - TODO(cs): occasionally doesn't fuzz properly. See no_start_properly.txt
 
