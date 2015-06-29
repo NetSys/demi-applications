@@ -159,6 +159,7 @@ class DAGScheduler(
       taskMetrics: TaskMetrics) {
     eventProcessActor ! CompletionEvent(task, reason, result, accumUpdates, taskInfo, taskMetrics)
     // XXX STS
+    println("endAtomicBlock: DAGScheduler.taskEnded:"+taskInfo.taskId)
     if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
       val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
       sched.endExternalAtomicBlock(taskInfo.taskId)

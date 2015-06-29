@@ -29,7 +29,7 @@ import org.apache.spark.util.Utils
 private[deploy] sealed trait DeployMessage extends Serializable
 
 /** Contains messages sent between Scheduler actor nodes. */
-private[deploy] object DeployMessages {
+object DeployMessages {
 
   // Worker to Master
 

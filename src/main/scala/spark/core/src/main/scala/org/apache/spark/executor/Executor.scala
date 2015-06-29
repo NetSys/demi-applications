@@ -111,6 +111,7 @@ private[spark] class Executor(
 
   def launchTask(context: ExecutorBackend, taskId: Long, serializedTask: ByteBuffer) {
     // XXX STS
+    println("beginAtomicBlock: Executor.launchTask:"+taskId)
     if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
       val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
       sched.beginExternalAtomicBlock(taskId)
@@ -267,6 +268,7 @@ private[spark] class Executor(
         }
       } finally {
         // XXX STS
+        println("endAtomicBlock: Executor.finally:launchTask:"+taskId)
         if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
           val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
           sched.endExternalAtomicBlock(taskId)

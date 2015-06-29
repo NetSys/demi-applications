@@ -24,7 +24,7 @@ import org.apache.spark.util.{SerializableBuffer, Utils}
 
 private[spark] sealed trait CoarseGrainedClusterMessage extends Serializable
 
-private[spark] object CoarseGrainedClusterMessages {
+object CoarseGrainedClusterMessages {
 
   case object RetrieveSparkProps extends CoarseGrainedClusterMessage
 

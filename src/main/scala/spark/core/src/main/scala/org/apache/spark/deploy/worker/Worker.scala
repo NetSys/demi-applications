@@ -370,7 +370,7 @@ private[spark] class Worker(
   }
 }
 
-private[spark] object Worker extends Logging {
+object Worker extends Logging {
   val workerId = new AtomicInteger(0)
 
   def main(argStrings: Array[String]) {

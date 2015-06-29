@@ -69,7 +69,14 @@ private[spark] class ApplicationInfo(
   }
 
   def addExecutor(worker: WorkerInfo, cores: Int, useID: Option[Int] = None): ExecutorInfo = {
-    val exec = new ExecutorInfo(newExecutorId(useID), this, worker, cores, desc.memoryPerSlave)
+    // val exec = new ExecutorInfo(newExecutorId(useID), this, worker, cores, desc.memoryPerSlave)
+    // Make the exec id match the worker!
+    val regex = "Worker(\\d+)".r
+    val id = worker.id match {
+      case regex(m) => m
+      case _ => throw new IllegalStateException("NONDETERMINIMIMIMSM") //newExecutorId(useId)
+    }
+    val exec = new ExecutorInfo(id.toInt, this, worker, cores, desc.memoryPerSlave)
     executors(exec.id) = exec
     coresGranted += cores
     exec

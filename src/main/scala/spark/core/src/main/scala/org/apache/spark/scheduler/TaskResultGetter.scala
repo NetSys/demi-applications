@@ -45,6 +45,7 @@ private[spark] class TaskResultGetter(sparkEnv: SparkEnv, scheduler: TaskSchedul
   def enqueueSuccessfulTask(
     taskSetManager: TaskSetManager, tid: Long, serializedData: ByteBuffer) {
     // XXX STS
+    println("beginAtomicBlock: TaskResultGetter.enqueueSuccessfulTask"+tid)
     if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
       val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
       sched.beginExternalAtomicBlock(tid)
@@ -89,6 +90,7 @@ private[spark] class TaskResultGetter(sparkEnv: SparkEnv, scheduler: TaskSchedul
   def enqueueFailedTask(taskSetManager: TaskSetManager, tid: Long, taskState: TaskState,
     serializedData: ByteBuffer) {
     // XXX STS
+    println("endAtomicBlock: TaskResultGetter.enqueueFailedTask"+tid)
     if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
       val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
       sched.beginExternalAtomicBlock(tid)

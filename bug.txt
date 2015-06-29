@@ -1,4 +1,4 @@
-TODO(cs): need to reset Worker.idGenerator upon replay!!
+TODO(cs): make a config object, add a `ignore timers` option
 
 TODO(cs): source of non-determinism: scheduler.schedule(block)
 
@@ -6,8 +6,7 @@ TODO(cs): submitting jobs requires you to run *code*, not just send a message.
 Need a new external event that runs a piece of code at a particular point of
 time.
 
-- How to submit tasks with different prefs? (do I need to submit multiple
-  jobs?)
-  - how are execIds specified?
-
 - TODO(cs): occasionally doesn't fuzz properly. See no_start_properly.txt
+
+- TODO(cs): a problem?
+[info] 17:56:42.933 [new-system-1-akka.actor.default-dispatcher-3] ERROR o.a.s.scheduler.TaskSchedulerImpl - Ignoring update with state RUNNING for TID 0 because its task set is gone (this is likely the result of receiving duplicate task finished status updates)

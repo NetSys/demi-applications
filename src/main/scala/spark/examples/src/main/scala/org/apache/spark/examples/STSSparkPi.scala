@@ -24,6 +24,8 @@ import org.apache.spark.storage._
 import org.apache.spark.scheduler._
 import org.apache.spark.scheduler.TaskLocality
 import org.apache.spark.scheduler.local._
+import org.apache.spark.deploy.worker.Worker
+import org.apache.spark.scheduler.cluster.CoarseGrainedClusterMessages
 
 import akka.dispatch.verification._
 
@@ -32,6 +34,8 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 
 import scala.collection.mutable.SynchronizedQueue
+
+import org.apache.spark.deploy.DeployMessages
 
 import java.util.concurrent.Semaphore
 
@@ -55,8 +59,20 @@ class SparkMessageFingerprinter extends MessageFingerprinter {
         ("BeginEvent", task).toString
       case CompletionEvent(task, reason, _, _, _, _) =>
         ("CompletionEvent", task, reason).toString
-      case StatusUpdate(id, state, _) =>
+      case org.apache.spark.scheduler.local.StatusUpdate(id, state, _) =>
         ("StatusUpdate", id, state).toString
+      case CoarseGrainedClusterMessages.StatusUpdate(execId, tid, state, _) =>
+        ("StatusUpdate", execId, tid, state).toString
+      case DeployMessages.RegisteredApplication(_, _) =>
+        ("RegisteredApplication").toString
+      case DeployMessages.ExecutorStateChanged(_, id, state, _, _) =>
+        ("ExecutorStateChanged", id, state).toString
+      case DeployMessages.RegisterWorker(id, host, port, cores, memory, webUiPort, publicAddress) =>
+        ("RegisterWorker", id).toString
+      case DeployMessages.RegisteredWorker(_, _) =>
+        ("RegisteredWorker").toString
+      case CoarseGrainedClusterMessages.LaunchTask(_) =>
+        ("LaunchTask").toString
       case m =>
         ""
     }
@@ -74,6 +90,7 @@ object STSSparkPi {
     var spark : SparkContext = null
     var future : SimpleFutureAction[Int] = null
     val prematureStopSempahore = new Semaphore(0)
+    var stsReturn : Option[(EventTrace,ViolationFingerprint)] = None
 
     def run() {
       println("Starting SparkPi")
@@ -89,6 +106,9 @@ object STSSparkPi {
         val y = random * 2 - 1
         if (x*x + y*y < 1) 1 else 0
       }.reduceNonBlocking(_ + _)
+
+      // We've finished the bootstrapping phase.
+      Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].endUnignorableEvents
 
       // Block until either the job is complete or a violation was found.
       prematureStopSempahore.acquire
@@ -113,13 +133,7 @@ object STSSparkPi {
     def terminationCallback(ret: Option[(EventTrace,ViolationFingerprint)]) {
       // Either a violation was found, or the WaitCondition returned true i.e.
       // the job completed.
-      ret match {
-        case Some(tuple) =>
-          println("ViolationFound!")
-          // Wake up the run() thread
-        case None =>
-          println("Job is done...")
-      }
+      stsReturn = ret
       prematureStopSempahore.release()
     }
 
@@ -128,12 +142,7 @@ object STSSparkPi {
     // TODO(cs): having this line after nonBlockingExplore may not be correct
     sched.beginUnignorableEvents
 
-    // ---- /STS ----
-
-    try {
-      Instrumenter().setPassthrough // unset within Spark
-      run()
-    } finally {
+    def cleanup() {
       if (spark != null) {
         if (sched.unignorableEvents.get()) {
           sched.endUnignorableEvents
@@ -144,33 +153,63 @@ object STSSparkPi {
         Instrumenter().setPassthrough
         spark.stop()
 
+
         // N.B. Requires us to comment out SparkEnv's actorSystem.shutdown()
         // line
         Instrumenter().shutdown_system(false)
+
+        // XXX actorSystem.awaitTermination blocks forever. And simply
+        // proceeding causes exceptions upon trying to create new actors (even
+        // after nulling out Instrumenter()._actorSystem...?). So, we do the
+         // worst hack: we sleep for a bit...
+        Thread.sleep(3)
+
+        // So that Spark can start its own actorSystem again
+        Instrumenter()._actorSystem = null
+        Instrumenter().reset_per_system_state
+        Worker.workerId.set(0)
       }
     }
 
-    /*
-    val fingerprintFactory = new FingerprintFactory
-    fingerprintFactory.registerFingerprinter(new SparkMessageFingerprinter)
-    // We know that there are no external messages. So, easy way to get around
-    // "deadLetters" issue: mark all messages as not from "deadLetters"
-    // TODO(cs): find a more principled way to do this.
-    val mappedEvents = new SynchronizedQueue[Event]
-    mappedEvents ++= sched.event_orchestrator.events.events.map {
-      case UniqueMsgSend(MsgSend("deadLetters", rcv, msg), id) =>
-         UniqueMsgSend(MsgSend("external", rcv, msg), id)
-      case e => e
+    def runAndCleanup() {
+      try {
+        Instrumenter().setPassthrough // unset within Spark
+        run()
+      } finally {
+        cleanup()
+      }
     }
-    val mappedEventTrace = new EventTrace(mappedEvents, sched.event_orchestrator.events.original_externals)
-    val sts = new STSScheduler(mappedEventTrace, false, fingerprintFactory, false, true, false, false)
-    Instrumenter().scheduler = sts
-    sts.setInvariant(invariant)
-    val fakeViolation = new LocalityInversion("foo")
-    val fakeStats = new MinimizationStats("FAKE", "STSSched")
 
-    sts.beginUnignorableEvents
-    sts.test(prefix, fakeViolation, fakeStats, Some(run))
-    */
+    runAndCleanup()
+
+    stsReturn match {
+      case Some((trace, violation)) =>
+        println("Violation was found! Trying replay")
+
+        val fingerprintFactory = new FingerprintFactory
+        fingerprintFactory.registerFingerprinter(new SparkMessageFingerprinter)
+        // We know that there are no external messages. So, easy way to get around
+        // "deadLetters" duplicate messages send issue: mark all messages as not from "deadLetters"
+        // TODO(cs): find a more principled way to do this.
+        val mappedEvents = new SynchronizedQueue[Event]
+        mappedEvents ++= trace.events.map {
+          case UniqueMsgSend(MsgSend("deadLetters", rcv, msg), id) =>
+             UniqueMsgSend(MsgSend("external", rcv, msg), id)
+          case e => e
+        }
+        val mappedEventTrace = new EventTrace(mappedEvents, trace.original_externals)
+        val sts = new STSScheduler(mappedEventTrace, false, fingerprintFactory, false, true, false, false)
+        Instrumenter().scheduler = sts
+        sts.setInvariant(LocalityInversion.invariant)
+        val fakeStats = new MinimizationStats("FAKE", "STSSched")
+
+        sts.beginUnignorableEvents
+        sts.test(prefix, violation, fakeStats, Some(runAndCleanup))
+
+        println("Replayed successfully!")
+
+      case None =>
+        println("Job finished successfully...")
+    }
   }
 }

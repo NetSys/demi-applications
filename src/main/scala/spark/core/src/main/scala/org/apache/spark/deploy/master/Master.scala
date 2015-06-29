@@ -168,7 +168,9 @@ private[spark] class Master(
     fileSystemsUsed.foreach(_.close())
     masterMetricsSystem.stop()
     applicationMetricsSystem.stop()
-    persistenceEngine.close()
+    if (persistenceEngine != null) {
+      persistenceEngine.close()
+    }
     context.stop(leaderElectionAgent)
   }
 
@@ -702,9 +704,9 @@ private[spark] class Master(
 
   /** Generate a new app ID given a app's submission date */
   def newApplicationId(submitDate: Date): String = {
-    val appId = "app-%s-%04d".format(createDateFormat.format(submitDate), nextAppNumber)
+    //val appId = "app-%s-%04d".format(createDateFormat.format(submitDate), nextAppNumber)
     nextAppNumber += 1
-    appId
+    "theOnlyApp"
   }
 
   /** Check for, and remove, any timed-out workers */
