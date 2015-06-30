@@ -116,8 +116,10 @@ object STSSparkPi {
     }
 
     // Override configs: set level to trace
-    val root = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).asInstanceOf[ch.qos.logback.classic.Logger]
-    root.setLevel(Level.TRACE)
+    LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.TRACE)
+    // Quite noisy loggers
+    LoggerFactory.getLogger("org.eclipse.jetty").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.WARN)
+    LoggerFactory.getLogger("org.eclipse.jetty.util.component.AbstractLifeCycle").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.ERROR)
 
     val fingerprintFactory = new FingerprintFactory
     fingerprintFactory.registerFingerprinter(new SparkMessageFingerprinter)
