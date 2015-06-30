@@ -105,8 +105,9 @@ private[spark] object AkkaUtils extends Logging {
     val actorSystem = Instrumenter().actorSystem(Some(akkaConf))
     Instrumenter().unsetPassthrough
     // val actorSystem = ActorSystem(name, akkaConf)
-    val provider = actorSystem.asInstanceOf[ExtendedActorSystem].provider
-    val boundPort = provider.getDefaultAddress.port.get
+    //val provider = actorSystem.asInstanceOf[ExtendedActorSystem].provider
+    //val boundPort = provider.getDefaultAddress.port.get
+    val boundPort = 1
 
     (actorSystem, boundPort)
   }

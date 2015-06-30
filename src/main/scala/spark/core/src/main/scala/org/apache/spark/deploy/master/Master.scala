@@ -125,7 +125,7 @@ private[spark] class Master(
     logInfo("Starting Spark master at " + masterUrl)
     // Listen for remote client disconnection events, since they don't go through Akka's watch()
     context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
-    webUi.bind()
+    //webUi.bind()
     masterWebUiUrl = "http://" + masterPublicAddress + ":" + webUi.boundPort
     context.system.scheduler.schedule(0 millis, WORKER_TIMEOUT millis, self, CheckForWorkerTimeOut)
 
@@ -676,6 +676,7 @@ private[spark] class Master(
    * Return whether this is successful.
    */
   def rebuildSparkUI(app: ApplicationInfo): Boolean = {
+    return false
     val appName = app.desc.name
     val eventLogDir = app.desc.eventLogDir.getOrElse { return false }
     val fileSystem = Utils.getHadoopFileSystem(eventLogDir)

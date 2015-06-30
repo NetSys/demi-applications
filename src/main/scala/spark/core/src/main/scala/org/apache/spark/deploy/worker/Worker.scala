@@ -133,8 +133,8 @@ private[spark] class Worker(
     logInfo("Spark home: " + sparkHome)
     createWorkDir()
     context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
-    webUi = new WorkerWebUI(this, workDir, Some(webUiPort))
-    webUi.bind()
+    //webUi = new WorkerWebUI(this, workDir, Some(webUiPort))
+    //webUi.bind()
     registerWithMaster()
 
     metricsSystem.registerSource(workerSource)
@@ -161,7 +161,7 @@ private[spark] class Worker(
       logInfo("Connecting to master " + masterUrl + "...")
       //val actor = context.actorSelection(Master.toAkkaUrl(masterUrl))
       val actor = context.actorFor("../Master")
-      actor ! RegisterWorker(workerId, host, port, cores, memory, webUi.boundPort, publicAddress)
+      actor ! RegisterWorker(workerId, host, port, cores, memory, 1234, publicAddress)
     }
   }
 
@@ -365,7 +365,7 @@ private[spark] class Worker(
     registrationRetryTimer.foreach(_.cancel())
     executors.values.foreach(_.kill())
     drivers.values.foreach(_.kill())
-    webUi.stop()
+    //webUi.stop()
     metricsSystem.stop()
   }
 }
