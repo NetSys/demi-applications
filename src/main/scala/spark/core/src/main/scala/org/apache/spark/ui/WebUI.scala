@@ -111,9 +111,9 @@ private[spark] abstract class WebUI(
 
   /** Stop the server behind this web interface. Only valid after bind(). */
   def stop() {
-    assert(serverInfo.isDefined,
-      "Attempted to stop %s before binding to a server!".format(className))
-    serverInfo.get.server.stop()
+    //assert(serverInfo.isDefined,
+    //  "Attempted to stop %s before binding to a server!".format(className))
+    //serverInfo.get.server.stop()
   }
 }
 
