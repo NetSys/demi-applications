@@ -38,6 +38,9 @@ import scala.collection.mutable.SynchronizedQueue
 import org.apache.spark.deploy.DeployMessages
 
 import java.util.concurrent.Semaphore
+import java.util.concurrent.atomic.AtomicBoolean
+
+import akka.actor.Props
 
 class SparkMessageFingerprinter extends MessageFingerprinter {
   override def fingerprint(msg: Any) : Option[MessageFingerprint] = {
@@ -84,6 +87,28 @@ class SparkMessageFingerprinter extends MessageFingerprinter {
   }
 }
 
+object WorkerCreator {
+  def createWorkerProps(name: String): Start = {
+    return Start(() => {
+      val conf = new SparkConf
+      val securityMgr = new SecurityManager(conf)
+      Props(classOf[Worker], "localhost", 12345, 12346, 1, 512,
+            Array[String]("Master"), "foobarbaz", name, null, conf,
+            securityMgr)
+    }, name)
+  }
+
+  def createWorker(name: String) {
+    val conf = new SparkConf
+    val securityMgr = new SecurityManager(conf)
+    Instrumenter()._actorSystem.actorOf(
+      Props(classOf[Worker], "localhost", 12345, 12346, 1, 512,
+            Array[String]("Master"), "foobarbaz", name, null, conf,
+            securityMgr),
+      name=name)
+  }
+}
+
 /** Computes an approximation to pi */
 object STSSparkPi {
   def main(args: Array[String]) {
@@ -91,6 +116,7 @@ object STSSparkPi {
     var future : SimpleFutureAction[Int] = null
     val prematureStopSempahore = new Semaphore(0)
     var stsReturn : Option[(EventTrace,ViolationFingerprint)] = None
+    var doneSubmittingJob = new AtomicBoolean(false)
 
     def run() {
       println("Starting SparkPi")
@@ -109,6 +135,7 @@ object STSSparkPi {
 
       // We've finished the bootstrapping phase.
       Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].endUnignorableEvents
+      doneSubmittingJob.set(true)
 
       // Block until either the job is complete or a violation was found.
       prematureStopSempahore.acquire
@@ -135,12 +162,17 @@ object STSSparkPi {
     Instrumenter().scheduler = sched
 
     val prefix = Array[ExternalEvent](
+      WaitCondition(() => doneSubmittingJob.get())) ++
+      (1 to 3).map { case i => CodeBlock(() =>
+        WorkerCreator.createWorker("Worker"+i)) } ++
+      Array[ExternalEvent](
       WaitCondition(() => future != null && future.isCompleted))
 
     def terminationCallback(ret: Option[(EventTrace,ViolationFingerprint)]) {
       // Either a violation was found, or the WaitCondition returned true i.e.
       // the job completed.
       stsReturn = ret
+      println("TERMINATING!")
       prematureStopSempahore.release()
     }
 
@@ -160,7 +192,6 @@ object STSSparkPi {
         Instrumenter().setPassthrough
         spark.stop()
 
-
         // N.B. Requires us to comment out SparkEnv's actorSystem.shutdown()
         // line
         Instrumenter().shutdown_system(false)
@@ -174,7 +205,6 @@ object STSSparkPi {
         // So that Spark can start its own actorSystem again
         Instrumenter()._actorSystem = null
         Instrumenter().reset_per_system_state
-        Worker.workerId.set(0)
       }
     }
 
@@ -209,9 +239,7 @@ object STSSparkPi {
 
         sts.beginUnignorableEvents
         sts.test(prefix, violation, fakeStats, Some(runAndCleanup))
-
-        println("Replayed successfully!")
-
+        prematureStopSempahore.release()
       case None =>
         println("Job finished successfully...")
     }

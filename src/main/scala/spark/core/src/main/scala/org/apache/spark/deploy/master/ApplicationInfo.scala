@@ -71,6 +71,7 @@ private[spark] class ApplicationInfo(
   def addExecutor(worker: WorkerInfo, cores: Int, useID: Option[Int] = None): ExecutorInfo = {
     // val exec = new ExecutorInfo(newExecutorId(useID), this, worker, cores, desc.memoryPerSlave)
     // Make the exec id match the worker!
+    // XXX
     val regex = "Worker(\\d+)".r
     val id = worker.id match {
       case regex(m) => m

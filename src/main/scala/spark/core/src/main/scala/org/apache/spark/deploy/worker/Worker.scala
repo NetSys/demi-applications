@@ -38,6 +38,8 @@ import org.apache.spark.deploy.worker.ui.WorkerWebUI
 import org.apache.spark.metrics.MetricsSystem
 import org.apache.spark.util.{AkkaUtils, SignalLogger, Utils}
 
+import akka.dispatch.verification._
+
 /**
   * @param masterUrls Each url should look like spark://host:port.
   */
@@ -55,6 +57,22 @@ private[spark] class Worker(
     val securityMgr: SecurityManager)
   extends Actor with Logging {
   import context.dispatcher
+
+  // XXX STS
+  val regex = "Worker(\\d+)".r
+  val id = actorName match {
+    case regex(m) => m.toLong
+    case _ => throw new IllegalStateException("NONDETERMINIMIMIMSM") //newExecutorId(useId)
+  }
+  // Signal to STS that we should wait until after preStart has been
+  // triggered...
+  // TODO(cs): another option: treat preStart invocations as messages, to be
+  // scheduled like other messages.
+  if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+    val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+    sched.beginExternalAtomicBlock(id)
+  }
+
 
   //Utils.checkHost(host, "Expected hostname")
   //assert (port > 0)
@@ -136,6 +154,13 @@ private[spark] class Worker(
     //webUi = new WorkerWebUI(this, workDir, Some(webUiPort))
     //webUi.bind()
     registerWithMaster()
+
+    // XXX STS
+    // Signal to STS that preStart messages have been sent!
+    if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+      val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+      sched.endExternalAtomicBlock(id)
+    }
 
     metricsSystem.registerSource(workerSource)
     metricsSystem.start()
