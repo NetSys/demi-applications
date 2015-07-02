@@ -158,7 +158,8 @@ object STSSparkPi {
       ignoreTimers=false,
       invariant_check=Some(LocalityInversion.invariant))
 
-    val sched = new RandomScheduler(schedulerConfig, invariant_check_interval=3)
+    val sched = new RandomScheduler(schedulerConfig,
+      invariant_check_interval=3, randomizationStrategy=new SrcDstFIFO)
     sched.setMaxMessages(1000)
     Instrumenter().scheduler = sched
 
