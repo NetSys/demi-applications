@@ -159,6 +159,7 @@ object STSSparkPi {
       invariant_check=Some(LocalityInversion.invariant))
 
     val sched = new RandomScheduler(schedulerConfig, invariant_check_interval=3)
+    sched.setMaxMessages(1000)
     Instrumenter().scheduler = sched
 
     val prefix = Array[ExternalEvent](
@@ -210,6 +211,7 @@ object STSSparkPi {
 
     def runAndCleanup() {
       try {
+        // pass-through akka-remote initialization
         Instrumenter().setPassthrough // unset within Spark
         run()
       } finally {
@@ -233,13 +235,15 @@ object STSSparkPi {
           case e => e
         }
         val mappedEventTrace = new EventTrace(mappedEvents, trace.original_externals)
-        val sts = new STSScheduler(schedulerConfig, mappedEventTrace)
-        Instrumenter().scheduler = sts
-        val fakeStats = new MinimizationStats("FAKE", "STSSched")
 
-        sts.beginUnignorableEvents
-        sts.test(prefix, violation, fakeStats, Some(runAndCleanup))
-        prematureStopSempahore.release()
+        val sts = new STSScheduler(schedulerConfig, mappedEventTrace, false)
+        sts.setPreTestCallback(() => sts.beginUnignorableEvents)
+        sts.setPostTestCallback(() => prematureStopSempahore.release())
+
+        RunnerUtils.stsSchedDDMin(false, schedulerConfig,
+          mappedEventTrace, violation,
+          initializationRoutine=Some(runAndCleanup),
+          _sched=Some(sts))
       case None =>
         println("Job finished successfully...")
     }
