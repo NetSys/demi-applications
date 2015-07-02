@@ -70,6 +70,7 @@ private[spark] class Worker(
   // scheduled like other messages.
   if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
     val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+    println("Worker.beginExternalAtomicBlock("+id+")")
     sched.beginExternalAtomicBlock(id)
   }
 
