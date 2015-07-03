@@ -569,6 +569,7 @@ class DAGScheduler(
    */
   protected def runLocally(job: ActiveJob) {
     logInfo("Computing the requested partition locally")
+    throw new RuntimeException("Need to instrument runLocally!")
     new Thread("Local computation of job " + job.jobId) {
       override def run() {
         runLocallyWithinThread(job)

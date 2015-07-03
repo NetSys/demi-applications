@@ -209,10 +209,13 @@ private[spark] class TaskSchedulerImpl(
   def resourceOffers(offers: Seq[WorkerOffer]): Seq[Seq[TaskDescription]] = synchronized {
     SparkEnv.set(sc.env)
 
+    // XXX
+    val sortedOffers = offers.sortBy[String](o => o.executorId)
+
     // Mark each slave as alive and remember its hostname
     // Also track if new executor is added
     var newExecAvail = false
-    for (o <- offers) {
+    for (o <- sortedOffers) {
       executorIdToHost(o.executorId) = o.host
       if (!executorsByHost.contains(o.host)) {
         executorsByHost(o.host) = new HashSet[String]()
@@ -222,7 +225,7 @@ private[spark] class TaskSchedulerImpl(
     }
 
     // Randomly shuffle offers to avoid always placing tasks on the same set of workers.
-    val shuffledOffers = offers // XXX Random.shuffle(offers)
+    val shuffledOffers = sortedOffers // XXX Random.shuffle(offers)
     // Build a list of tasks to assign to each worker.
     val tasks = shuffledOffers.map(o => new ArrayBuffer[TaskDescription](o.cores))
     val availableCpus = shuffledOffers.map(o => o.cores).toArray

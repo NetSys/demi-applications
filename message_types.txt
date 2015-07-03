@@ -35,13 +35,13 @@ Messages:
    - snd: Master [after receiving RegisterWorker]
  - ExecutorStateChanged
    - rcv: Master
-   - snd: Worker [separate thread]
+   - snd: Worker fork thread, also CoarseGrainedExecutorBackend
  - ExecutorUpdated
    - rcv: AppClient
    - snd: Master
  - RetrieveSparkProps
    - rcv: CoarseGrainedScheduler
-   - snd: executor thread
+   - snd: Worker fork thread
  - RegisterExecutor
    - rcv: CoarseGrainedScheduler
    - snd: CoarseGrainedExecutorBackend.preStart()

@@ -88,6 +88,7 @@ object LocalityInversion {
       }
 
       val lowestLevel = lowestPendingLocality()
+      println("Index: " + index + " executor: " + executor)
       println("lowestLevel:"+lowestLevel+" chosenLevel:"+chosenLevel)
       if (lowestLevel < chosenLevel) {
         return Some(new LocalityInversion(taskSet))

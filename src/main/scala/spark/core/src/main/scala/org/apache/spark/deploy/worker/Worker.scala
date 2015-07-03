@@ -70,7 +70,7 @@ private[spark] class Worker(
   // scheduled like other messages.
   if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
     val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
-    println("Worker.beginExternalAtomicBlock("+id+")")
+    println("beginAtomicBlock: Worker("+id+")")
     sched.beginExternalAtomicBlock(id)
   }
 
@@ -158,6 +158,7 @@ private[spark] class Worker(
 
     // XXX STS
     // Signal to STS that preStart messages have been sent!
+    println("endAtomicBlock: Worker("+id+")")
     if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
       val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
       sched.endExternalAtomicBlock(id)

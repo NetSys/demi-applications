@@ -62,6 +62,12 @@ private[spark] class ExecutorRunner(
   var shutdownHook: Thread = null
 
   def start() {
+    // XXX
+    println("beginAtomicBlock: ExecutorRunner.start"+execId)
+    if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+      val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+      sched.beginExternalAtomicBlock(execId)
+    }
     workerThread = new Thread("ExecutorRunner for " + fullId) {
       override def run() { fetchAndRunExecutor() }
     }
@@ -138,7 +144,8 @@ private[spark] class ExecutorRunner(
 
       // // Launch the x process x (*thread!)
       val args = appDesc.command.arguments.map(substituteVariables).toArray
-      CoarseGrainedExecutorBackend.runLocal(Instrumenter()._actorSystem, execId.toString)
+      CoarseGrainedExecutorBackend.runLocal(Instrumenter()._actorSystem,
+        execId.toString, execId)
       // val command = getCommandSeq
       // logInfo("Launch command: " + command.mkString("\"", "\" \"", "\""))
       // val builder = new ProcessBuilder(command: _*).directory(executorDir)

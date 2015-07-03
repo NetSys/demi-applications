@@ -64,6 +64,14 @@ private[spark] class CoarseGrainedExecutorBackend(
     driver = context.actorFor("../CoarseGrainedScheduler")
     driver ! RegisterExecutor(executorId, hostPort, cores)
     context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
+
+    // XXX
+    // done preStart
+    println("endAtomicBlock: CoarseGrainedExecutorBackend.preStart"+executorId)
+    if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+      val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+      sched.endExternalAtomicBlock(executorId.toLong)
+    }
   }
 
   override def receive = {
@@ -121,12 +129,27 @@ private[spark] class CoarseGrainedExecutorBackend(
 }
 
 private[spark] object CoarseGrainedExecutorBackend extends Logging {
-  def runLocal(actorSystem: ActorSystem, executorId: String) {
+  def runLocal(actorSystem: ActorSystem, executorId: String, execId: Int) {
     val driver = actorSystem.actorFor("/user/CoarseGrainedScheduler")
     val timeout = 30.seconds
     val fut = Patterns.ask(driver, RetrieveSparkProps, timeout)
+    // XXX
+    // End here to allow the ask answer to be scheduled
+    println("endAtomicBlock: ExecutorRunner.start"+execId)
+    if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+      val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+      sched.endExternalAtomicBlock(execId)
+    }
     Instrumenter().actorBlocked
     val props = Await.result(fut, timeout).asInstanceOf[Seq[(String, String)]]
+
+    // XXX
+    // Begin again to deal with preStart
+    println("beginAtomicBlock: CoarseGrainedExecutorBackend.preStart"+execId)
+    if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+      val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+      sched.beginExternalAtomicBlock(execId)
+    }
 
     val doneSemaphore = new Semaphore(0)
     actorSystem.actorOf(
