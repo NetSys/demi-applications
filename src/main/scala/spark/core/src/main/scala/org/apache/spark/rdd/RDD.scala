@@ -843,7 +843,7 @@ abstract class RDD[T: ClassTag](
    * Reduces the elements of this RDD using the specified commutative and
    * associative binary operator.
    */
-  def reduceNonBlocking(f: (T, T) => T): SimpleFutureAction[T] = {
+  def reduceNonBlocking(jobId: Int, f: (T, T) => T): SimpleFutureAction[T] = {
     val cleanF = sc.clean(f)
     val reducePartition: Iterator[T] => Option[T] = iter => {
       if (iter.hasNext) {
@@ -861,7 +861,8 @@ abstract class RDD[T: ClassTag](
         }
       }
     }
-    sc.submitJob(this, reducePartition, 0 until partitions.size, mergeResult, jobResult.get)
+    sc.submitJob(this, reducePartition, 0 until partitions.size, mergeResult,
+      jobResult.get, jobId=Some(jobId))
     // // Get the final result out of our Option, or throw an exception if the RDD was empty
     // jobResult.getOrElse(throw new UnsupportedOperationException("empty collection"))
   }

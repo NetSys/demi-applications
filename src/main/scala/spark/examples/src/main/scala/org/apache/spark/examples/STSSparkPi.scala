@@ -54,8 +54,8 @@ class SparkMessageFingerprinter extends MessageFingerprinter {
         "RegisterBlockManager"
       case BlockManagerMessages.HeartBeat(_) =>
         "HeartBeat"
-      case JobSubmitted(_,_,_,_,_,_,_,_) =>
-        "JobSubmitted" // TODO(cs): change me when there are concurrent jobs
+      case JobSubmitted(jobId,_,_,_,_,_,_,_) =>
+        ("JobSubmitted", jobId).toString
       case BlockManagerMessages.GetLocationsMultipleBlockIds(_) =>
         "GetLocationsMultipleBlockIds"
       case BeginEvent(task,_) =>
@@ -109,37 +109,70 @@ object WorkerCreator {
   }
 }
 
+object MyJob {
+  def mapFunction(i: Int): Int = {
+    val x = random * 2 - 1
+    val y = random * 2 - 1
+    if (x*x + y*y < 1) 1 else 0
+  }
+
+  def reduceFunction(i: Int, j: Int): Int = {
+    return i + j
+  }
+}
+
 /** Computes an approximation to pi */
 object STSSparkPi {
   def main(args: Array[String]) {
     var spark : SparkContext = null
     var future : SimpleFutureAction[Int] = null
-    val prematureStopSempahore = new Semaphore(0)
+    var prematureStopSempahore = new Semaphore(0)
     var stsReturn : Option[(EventTrace,ViolationFingerprint)] = None
     var doneSubmittingJob = new AtomicBoolean(false)
 
-    def run() {
-      println("Starting SparkPi")
-      val conf = new SparkConf().setAppName("Spark Pi").setSparkHome("/Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark")
-      spark = new SparkContext(conf)
+    def resetSharedVariables() {
+      spark = null
+      future = null
+      prematureStopSempahore = new Semaphore(0)
+      doneSubmittingJob = new AtomicBoolean(false)
+    }
+
+    def run(jobId: Int) {
+      val firstRun = (jobId == 0)
+
+      if (spark == null) {
+        println("Starting SparkPi")
+        val conf = new SparkConf().setAppName("Spark Pi").setSparkHome("/Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark")
+        spark = new SparkContext(conf)
+      }
       val slices = if (args.length > 0) args(0).toInt else 2
       val n = slices
-      future = spark.makeRDD(
+
+      println("Submitting job")
+
+      val partitions = if (firstRun)
         //          NODE_LOCAL                NODE_LOCAL         ANY       ANY
         Seq((0,Seq("localhost", "0")),(1,Seq("localhost", "0")),(2,Seq()),(3,Seq()))
-      ).map { i =>
-        val x = random * 2 - 1
-        val y = random * 2 - 1
-        if (x*x + y*y < 1) 1 else 0
-      }.reduceNonBlocking(_ + _)
+        //        ANY
+        else Seq((1,Seq()))
 
-      // We've finished the bootstrapping phase.
-      Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].endUnignorableEvents
-      doneSubmittingJob.set(true)
+      val mapRdds = spark.makeRDD(partitions).map(MyJob.mapFunction)
 
-      // Block until either the job is complete or a violation was found.
-      prematureStopSempahore.acquire
-      println("Pi is roughly FOO")
+      if (firstRun) {
+        future = mapRdds.reduceNonBlocking(jobId, MyJob.reduceFunction)
+      } else {
+        mapRdds.reduceNonBlocking(jobId, MyJob.reduceFunction)
+      }
+
+      if (firstRun) {
+        // We've finished the bootstrapping phase.
+        Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].endUnignorableEvents
+        doneSubmittingJob.set(true)
+
+        // Block until either the job is complete or a violation was found.
+        prematureStopSempahore.acquire
+        println("Pi is roughly FOO")
+      }
     }
 
     // Override configs: set level to trace
@@ -167,6 +200,7 @@ object STSSparkPi {
       WaitCondition(() => doneSubmittingJob.get())) ++
       (1 to 3).map { case i => CodeBlock(() =>
         WorkerCreator.createWorker("Worker"+i)) } ++
+      (1 to 3).map { case i => CodeBlock(() => run(i)) } ++
       Array[ExternalEvent](
       WaitCondition(() => future != null && future.isCompleted))
 
@@ -207,6 +241,7 @@ object STSSparkPi {
         // So that Spark can start its own actorSystem again
         Instrumenter()._actorSystem = null
         Instrumenter().reset_per_system_state
+        resetSharedVariables
       }
     }
 
@@ -214,7 +249,7 @@ object STSSparkPi {
       try {
         // pass-through akka-remote initialization
         Instrumenter().setPassthrough // unset within Spark
-        run()
+        run(0)
       } finally {
         cleanup()
       }

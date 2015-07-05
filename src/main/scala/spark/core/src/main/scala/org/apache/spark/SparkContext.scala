@@ -1162,7 +1162,8 @@ class SparkContext(config: SparkConf) extends Logging {
       processPartition: Iterator[T] => U,
       partitions: Seq[Int],
       resultHandler: (Int, U) => Unit,
-      resultFunc: => R): SimpleFutureAction[R] =
+      resultFunc: => R,
+      jobId:Option[Int]=None): SimpleFutureAction[R] =
   {
     val cleanF = clean(processPartition)
     val callSite = getCallSite
@@ -1173,7 +1174,8 @@ class SparkContext(config: SparkConf) extends Logging {
       callSite,
       allowLocal = false,
       resultHandler,
-      localProperties.get)
+      localProperties.get,
+      _jobId=jobId)
     new SimpleFutureAction(waiter, resultFunc)
   }
 
