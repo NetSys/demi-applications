@@ -1,5 +1,10 @@
 TODO(cs): submitting jobs requires you to run *code*, not just send a message.
 Need a new external event that runs a piece of code at a particular point of
-time.
+time. Notes:
+   - Can be done synchronously, i.e., don't need a separate thread
+   - SparkContext.submitJob does cause a message to be sent. Need to treat
+     this as an external thread, even though its name is akka-dispatcher
+   - I don't think we need AtomicBlocks.
+   - need to reuse the same SparkContext
 
 TODO(cs): source of non-determinism: scheduler.schedule(block)
