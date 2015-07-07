@@ -58,21 +58,6 @@ private[spark] class Worker(
   extends Actor with Logging {
   import context.dispatcher
 
-  // XXX STS
-  val regex = "Worker(\\d+)".r
-  val id = actorName match {
-    case regex(m) => m.toLong
-    case _ => throw new IllegalStateException("NONDETERMINIMIMIMSM") //newExecutorId(useId)
-  }
-  // Signal to STS that we should wait until after preStart has been
-  // triggered...
-  // TODO(cs): another option: treat preStart invocations as messages, to be
-  // scheduled like other messages.
-  if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
-    val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
-    println("beginAtomicBlock: Worker("+id+")")
-    sched.beginExternalAtomicBlock(id)
-  }
 
 
   //Utils.checkHost(host, "Expected hostname")
@@ -158,6 +143,11 @@ private[spark] class Worker(
 
     // XXX STS
     // Signal to STS that preStart messages have been sent!
+    val regex = "Worker(\\d+)".r
+    val id = actorName match {
+      case regex(m) => m.toLong
+      case _ => throw new IllegalStateException("NONDETERMINIMIMIMSM") //newExecutorId(useId)
+    }
     println("endAtomicBlock: Worker("+id+")")
     if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
       val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
@@ -441,8 +431,26 @@ object Worker extends Logging {
       workDir: String,
       securityMgr: SecurityManager) {
 
+    throw new RuntimeException("Deprecated. CodeBlock!!")
+
     val conf = new SparkConf
     val actorName = "Worker" + workerId.incrementAndGet()
+    // XXX STS
+    val regex = "Worker(\\d+)".r
+    val id = actorName match {
+      case regex(m) => m.toLong
+      case _ => throw new IllegalStateException("NONDETERMINIMIMIMSM") //newExecutorId(useId)
+    }
+    // Signal to STS that we should wait until after preStart has been
+    // triggered...
+    // TODO(cs): another option: treat preStart invocations as messages, to be
+    // scheduled like other messages.
+    if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+      val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+      println("beginAtomicBlock: Worker("+id+")")
+      sched.beginExternalAtomicBlock(id)
+    }
+
     actorSystem.actorOf(Props(classOf[Worker], host, boundPort, webUiPort, cores, memory,
       masterUrls, actorSystem.name, actorName,  workDir, conf, securityMgr), name = actorName)
   }

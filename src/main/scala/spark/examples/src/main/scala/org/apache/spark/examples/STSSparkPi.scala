@@ -88,19 +88,25 @@ class SparkMessageFingerprinter extends MessageFingerprinter {
 }
 
 object WorkerCreator {
-  def createWorkerProps(name: String): Start = {
-    return Start(() => {
-      val conf = new SparkConf
-      val securityMgr = new SecurityManager(conf)
-      Props(classOf[Worker], "localhost", 12345, 12346, 1, 512,
-            Array[String]("Master"), "foobarbaz", name, null, conf,
-            securityMgr)
-    }, name)
-  }
-
   def createWorker(name: String) {
     val conf = new SparkConf
     val securityMgr = new SecurityManager(conf)
+
+    // Signal to STS that we should wait until after preStart has been
+    // triggered...
+    val regex = "Worker(\\d+)".r
+    val id = name match {
+      case regex(m) => m.toLong
+      case _ => throw new IllegalStateException("WTF")
+    }
+    // TODO(cs): another option: treat preStart invocations as messages, to be
+    // scheduled like other messages.
+    if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+      val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+      println("beginAtomicBlock: Worker("+id+")")
+      sched.beginExternalAtomicBlock(id)
+    }
+
     Instrumenter()._actorSystem.actorOf(
       Props(classOf[Worker], "localhost", 12345, 12346, 1, 512,
             Array[String]("Master"), "foobarbaz", name, null, conf,
