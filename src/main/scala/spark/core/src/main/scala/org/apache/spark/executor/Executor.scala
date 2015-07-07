@@ -60,7 +60,7 @@ private[spark] class Executor(
 
   // Set spark.* properties from executor arg
   val conf = new SparkConf(true)
-  conf.setAll(properties)
+  //conf.setAll(properties)
 
   // If we are in yarn mode, systems can have different disk layouts so we must set it
   // to what Yarn on this system said was available. This will be used later when SparkEnv
