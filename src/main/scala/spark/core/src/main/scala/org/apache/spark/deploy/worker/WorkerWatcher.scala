@@ -18,7 +18,7 @@
 package org.apache.spark.deploy.worker
 
 import akka.actor.{Actor, Address, AddressFromURIString}
-import akka.remote.{AssociatedEvent, AssociationErrorEvent, AssociationEvent, DisassociatedEvent, RemotingLifecycleEvent}
+//import akka.remote.{AssociatedEvent, AssociationErrorEvent, AssociationEvent, DisassociatedEvent, RemotingLifecycleEvent}
 
 import org.apache.spark.Logging
 import org.apache.spark.deploy.DeployMessages.SendHeartbeat
@@ -30,7 +30,7 @@ import org.apache.spark.deploy.DeployMessages.SendHeartbeat
 private[spark] class WorkerWatcher(workerUrl: String) extends Actor
     with Logging {
   override def preStart() {
-    context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
+    //context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
 
     logInfo(s"Connecting to worker $workerUrl")
     throw new RuntimeException("STS needs to instrument WorkerWatchers!")
@@ -50,23 +50,23 @@ private[spark] class WorkerWatcher(workerUrl: String) extends Actor
   def exitNonZero() = if (isTesting) isShutDown = true else System.exit(-1)
 
   override def receive = {
-    case AssociatedEvent(localAddress, remoteAddress, inbound) if isWorker(remoteAddress) =>
-      logInfo(s"Successfully connected to $workerUrl")
+    //case AssociatedEvent(localAddress, remoteAddress, inbound) if isWorker(remoteAddress) =>
+    //  logInfo(s"Successfully connected to $workerUrl")
 
-    case AssociationErrorEvent(cause, localAddress, remoteAddress, inbound)
-        if isWorker(remoteAddress) =>
-      // These logs may not be seen if the worker (and associated pipe) has died
-      logError(s"Could not initialize connection to worker $workerUrl. Exiting.")
-      logError(s"Error was: $cause")
-      exitNonZero()
+    //case AssociationErrorEvent(cause, localAddress, remoteAddress, inbound)
+    //    if isWorker(remoteAddress) =>
+    //  // These logs may not be seen if the worker (and associated pipe) has died
+    //  logError(s"Could not initialize connection to worker $workerUrl. Exiting.")
+    //  logError(s"Error was: $cause")
+    //  exitNonZero()
 
-    case DisassociatedEvent(localAddress, remoteAddress, inbound) if isWorker(remoteAddress) =>
-      // This log message will never be seen
-      logError(s"Lost connection to worker actor $workerUrl. Exiting.")
-      exitNonZero()
+    //case DisassociatedEvent(localAddress, remoteAddress, inbound) if isWorker(remoteAddress) =>
+    //  // This log message will never be seen
+    //  logError(s"Lost connection to worker actor $workerUrl. Exiting.")
+    //  exitNonZero()
 
-    case e: AssociationEvent =>
-      // pass through association events relating to other remote actor systems
+    //case e: AssociationEvent =>
+    //  // pass through association events relating to other remote actor systems
 
     case e => logWarning(s"Received unexpected actor system event: $e")
   }

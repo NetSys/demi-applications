@@ -23,7 +23,7 @@ import scala.concurrent.Await
 
 import akka.actor.{Actor, ActorSelection, Props, ActorSystem, ActorRef}
 import akka.pattern.Patterns
-import akka.remote.{RemotingLifecycleEvent, DisassociatedEvent}
+//import akka.remote.{RemotingLifecycleEvent, DisassociatedEvent}
 
 import org.apache.spark.{Logging, SecurityManager, SparkConf, SparkEnv}
 import org.apache.spark.TaskState.TaskState
@@ -63,7 +63,7 @@ private[spark] class CoarseGrainedExecutorBackend(
     //driver = context.actorSelection(driverUrl)
     driver = context.actorFor("../CoarseGrainedScheduler")
     driver ! RegisterExecutor(executorId, hostPort, cores)
-    context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
+    //context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
 
     // XXX
     // done preStart
@@ -111,10 +111,10 @@ private[spark] class CoarseGrainedExecutorBackend(
         executor.killTask(taskId, interruptThread)
       }
 
-    case x: DisassociatedEvent =>
-      logError(s"Driver $x disassociated! Shutting down.")
-      releaseSemaphore
-      throw new RuntimeException(s"Driver $x disassociated! Shutting down.")
+    //case x: DisassociatedEvent =>
+    //  logError(s"Driver $x disassociated! Shutting down.")
+    //  releaseSemaphore
+    //  throw new RuntimeException(s"Driver $x disassociated! Shutting down.")
 
     case StopExecutor =>
       logInfo("Driver commanded a shutdown")

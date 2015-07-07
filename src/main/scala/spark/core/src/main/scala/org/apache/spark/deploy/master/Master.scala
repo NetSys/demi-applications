@@ -30,7 +30,7 @@ import akka.dispatch.verification.Instrumenter
 
 import akka.actor._
 import akka.pattern.ask
-import akka.remote.{DisassociatedEvent, RemotingLifecycleEvent}
+//import akka.remote.{DisassociatedEvent, RemotingLifecycleEvent}
 import akka.serialization.SerializationExtension
 import org.apache.hadoop.fs.FileSystem
 
@@ -124,7 +124,7 @@ private[spark] class Master(
   override def preStart() {
     logInfo("Starting Spark master at " + masterUrl)
     // Listen for remote client disconnection events, since they don't go through Akka's watch()
-    context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
+    //context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
     //webUi.bind()
     masterWebUiUrl = "http://" + masterPublicAddress + ":" + webUi.boundPort
     context.system.scheduler.schedule(0 millis, WORKER_TIMEOUT millis, self, CheckForWorkerTimeOut)
@@ -385,13 +385,13 @@ private[spark] class Master(
       if (canCompleteRecovery) { completeRecovery() }
     }
 
-    case DisassociatedEvent(_, address, _) => {
-      // The disconnected client could've been either a worker or an app; remove whichever it was
-      logInfo(s"$address got disassociated, removing it.")
-      //addressToWorker.get(address).foreach(removeWorker)
-      addressToApp.get(address).foreach(finishApplication)
-      if (state == RecoveryState.RECOVERING && canCompleteRecovery) { completeRecovery() }
-    }
+    //case DisassociatedEvent(_, address, _) => {
+    //  // The disconnected client could've been either a worker or an app; remove whichever it was
+    //  logInfo(s"$address got disassociated, removing it.")
+    //  //addressToWorker.get(address).foreach(removeWorker)
+    //  addressToApp.get(address).foreach(finishApplication)
+    //  if (state == RecoveryState.RECOVERING && canCompleteRecovery) { completeRecovery() }
+    //}
 
     case RequestMasterState => {
       sender ! MasterStateResponse(host, port, workers.toArray, apps.toArray, completedApps.toArray,

@@ -24,7 +24,6 @@ import akka.dispatch.verification.Instrumenter
 
 import akka.actor._
 import akka.pattern.ask
-import akka.remote.{AssociationErrorEvent, DisassociatedEvent, RemotingLifecycleEvent}
 import org.apache.log4j.{Level, Logger}
 
 import org.apache.spark.{Logging, SecurityManager, SparkConf}
@@ -43,7 +42,7 @@ private class ClientActor(driverArgs: ClientArguments, conf: SparkConf) extends 
     throw new RuntimeException("STS needs to instrument ClientActor!")
     masterActor = context.actorSelection(Master.toAkkaUrl(driverArgs.master))
 
-    context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
+    // context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
 
     println(s"Sending ${driverArgs.cmd} command to ${driverArgs.master}")
 
@@ -128,14 +127,14 @@ private class ClientActor(driverArgs: ClientArguments, conf: SparkConf) extends 
       println(message)
       if (success) pollAndReportStatus(driverId) else System.exit(-1)
 
-    case DisassociatedEvent(_, remoteAddress, _) =>
-      println(s"Error connecting to master ${driverArgs.master} ($remoteAddress), exiting.")
-      System.exit(-1)
+    //case DisassociatedEvent(_, remoteAddress, _) =>
+    //  println(s"Error connecting to master ${driverArgs.master} ($remoteAddress), exiting.")
+    //  System.exit(-1)
 
-    case AssociationErrorEvent(cause, _, remoteAddress, _) =>
-      println(s"Error connecting to master ${driverArgs.master} ($remoteAddress), exiting.")
-      println(s"Cause was: $cause")
-      System.exit(-1)
+    //case AssociationErrorEvent(cause, _, remoteAddress, _) =>
+    //  println(s"Error connecting to master ${driverArgs.master} ($remoteAddress), exiting.")
+    //  println(s"Cause was: $cause")
+    //  System.exit(-1)
   }
 }
 

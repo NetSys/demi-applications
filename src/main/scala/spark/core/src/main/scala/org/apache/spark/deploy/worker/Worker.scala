@@ -28,7 +28,7 @@ import scala.language.postfixOps
 import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor._
-import akka.remote.{DisassociatedEvent, RemotingLifecycleEvent}
+// import akka.remote.{DisassociatedEvent, RemotingLifecycleEvent}
 
 import org.apache.spark.{Logging, SecurityManager, SparkConf, SparkException}
 import org.apache.spark.deploy.{ExecutorDescription, ExecutorState}
@@ -151,7 +151,7 @@ private[spark] class Worker(
       host, port, cores, Utils.megabytesToString(memory)))
     logInfo("Spark home: " + sparkHome)
     createWorkDir()
-    context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
+    //context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
     //webUi = new WorkerWebUI(this, workDir, Some(webUiPort))
     //webUi.bind()
     registerWithMaster()
@@ -366,9 +366,9 @@ private[spark] class Worker(
       coresUsed -= driver.driverDesc.cores
     }
 
-    case x: DisassociatedEvent if x.remoteAddress == masterAddress =>
-      logInfo(s"$x Disassociated !")
-      masterDisconnected()
+    //case x: DisassociatedEvent if x.remoteAddress == masterAddress =>
+    //  logInfo(s"$x Disassociated !")
+    //  masterDisconnected()
 
     case RequestWorkerState => {
       sender ! WorkerStateResponse(host, port, workerId, executors.values.toList,
