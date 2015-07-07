@@ -83,6 +83,7 @@ private[spark] object AkkaUtils extends Logging {
       |akka.stdout-loglevel = "ERROR"
       |akka.jvm-exit-on-fatal-error = off
       |akka.actor.default-dispatcher.throughput = $akkaBatchSize
+      |akka.actor.provider = "akka.actor.LocalActorRefProvider"
       |akka.log-config-on-start = $logAkkaConfig
       |akka.log-dead-letters = $lifecycleEvents
       |akka.log-dead-letters-during-shutdown = $lifecycleEvents

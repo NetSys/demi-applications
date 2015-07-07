@@ -132,7 +132,10 @@ private[spark] object CoarseGrainedExecutorBackend extends Logging {
   def runLocal(actorSystem: ActorSystem, executorId: String, execId: Int) {
     val driver = actorSystem.actorFor("/user/CoarseGrainedScheduler")
     val timeout = 30.seconds
-    val fut = Patterns.ask(driver, RetrieveSparkProps, timeout)
+
+    val fut = Instrumenter().serializeAskWithID(executorId,
+      () => Patterns.ask(driver, RetrieveSparkProps, timeout))
+
     // XXX
     // End here to allow the ask answer to be scheduled
     println("endAtomicBlock: ExecutorRunner.start"+execId)
