@@ -181,35 +181,6 @@ object STSSparkPi {
       }
     }
 
-    // Override configs: set level to trace
-    LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.TRACE)
-    // Quite noisy loggers
-    LoggerFactory.getLogger("org.eclipse.jetty").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.WARN)
-    LoggerFactory.getLogger("org.eclipse.jetty.util.component.AbstractLifeCycle").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.ERROR)
-
-    val fingerprintFactory = new FingerprintFactory
-    fingerprintFactory.registerFingerprinter(new SparkMessageFingerprinter)
-
-    val schedulerConfig = SchedulerConfig(
-      messageFingerprinter=fingerprintFactory,
-      shouldShutdownActorSystem=false,
-      filterKnownAbsents=false,
-      ignoreTimers=false,
-      invariant_check=Some(LocalityInversion.invariant))
-
-    val sched = new RandomScheduler(schedulerConfig,
-      invariant_check_interval=3, randomizationStrategy=new SrcDstFIFO)
-    sched.setMaxMessages(1000)
-    Instrumenter().scheduler = sched
-
-    val prefix = Array[ExternalEvent](
-      WaitCondition(() => doneSubmittingJob.get())) ++
-      (1 to 3).map { case i => CodeBlock(() =>
-        WorkerCreator.createWorker("Worker"+i)) } ++
-      (1 to 3).map { case i => CodeBlock(() => run(i)) } ++
-      Array[ExternalEvent](
-      WaitCondition(() => future != null && future.isCompleted))
-
     def terminationCallback(ret: Option[(EventTrace,ViolationFingerprint)]) {
       // Either a violation was found, or the WaitCondition returned true i.e.
       // the job completed.
@@ -218,15 +189,10 @@ object STSSparkPi {
       prematureStopSempahore.release()
     }
 
-    sched.nonBlockingExplore(prefix, terminationCallback)
-
-    // TODO(cs): having this line after nonBlockingExplore may not be correct
-    sched.beginUnignorableEvents
-
     def cleanup() {
       if (spark != null) {
-        if (sched.unignorableEvents.get()) {
-          sched.endUnignorableEvents
+        if (Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].unignorableEvents.get()) {
+          Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].endUnignorableEvents
         }
         // TODO(cs): also ensure that atomic blocks are marked off properly?
 
@@ -260,6 +226,41 @@ object STSSparkPi {
         cleanup()
       }
     }
+
+    // Override configs: set level to trace
+    LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.TRACE)
+    // Quite noisy loggers
+    LoggerFactory.getLogger("org.eclipse.jetty").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.WARN)
+    LoggerFactory.getLogger("org.eclipse.jetty.util.component.AbstractLifeCycle").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.ERROR)
+
+    // Begin fuzzing..
+    val fingerprintFactory = new FingerprintFactory
+    fingerprintFactory.registerFingerprinter(new SparkMessageFingerprinter)
+
+    val schedulerConfig = SchedulerConfig(
+      messageFingerprinter=fingerprintFactory,
+      shouldShutdownActorSystem=false,
+      filterKnownAbsents=false,
+      ignoreTimers=false,
+      invariant_check=Some(LocalityInversion.invariant))
+
+    val sched = new RandomScheduler(schedulerConfig,
+      invariant_check_interval=3, randomizationStrategy=new SrcDstFIFO)
+    sched.setMaxMessages(1000)
+    Instrumenter().scheduler = sched
+
+    val prefix = Array[ExternalEvent](
+      WaitCondition(() => doneSubmittingJob.get())) ++
+      (1 to 3).map { case i => CodeBlock(() =>
+        WorkerCreator.createWorker("Worker"+i)) } ++
+      (1 to 3).map { case i => CodeBlock(() => run(i)) } ++
+      Array[ExternalEvent](
+      WaitCondition(() => future != null && future.isCompleted))
+
+    sched.nonBlockingExplore(prefix, terminationCallback)
+
+    // TODO(cs): having this line after nonBlockingExplore may not be correct
+    sched.beginUnignorableEvents
 
     runAndCleanup()
 
