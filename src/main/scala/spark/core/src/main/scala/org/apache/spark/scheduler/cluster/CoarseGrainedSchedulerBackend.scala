@@ -68,16 +68,6 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, actorSystem: A
       val reviveInterval = conf.getLong("spark.scheduler.revive.interval", 1000)
       import context.dispatcher
       context.system.scheduler.schedule(0.millis, reviveInterval.millis, self, ReviveOffers)
-      // XXX
-      // Signal to STS that we should wait until after preStart has been
-      // triggered...
-      // TODO(cs): another option: treat preStart invocations as messages, to be
-      // scheduled like other messages.
-      if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
-        val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
-        println("endAtomicBlock: CoarseGrainedSchedulerBackend(-1)")
-        sched.endExternalAtomicBlock(-1)
-      }
     }
 
     def receive = {
@@ -207,17 +197,6 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, actorSystem: A
       }
     }
     // TODO (prashant) send conf instead of properties
-    // XXX
-    // Signal to STS that we should wait until after preStart has been
-    // triggered...
-    // TODO(cs): another option: treat preStart invocations as messages, to be
-    // scheduled like other messages.
-    if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
-      val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
-      println("beginAtomicBlock: CoarseGrainedSchedulerBackend(-1)")
-      sched.beginExternalAtomicBlock(-1)
-    }
-
     driverActor = actorSystem.actorOf(
       Props(new DriverActor(properties)), name = CoarseGrainedSchedulerBackend.ACTOR_NAME)
   }
