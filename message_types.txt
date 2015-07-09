@@ -33,14 +33,14 @@ Messages:
  - ExecutorAdded
    - rcv: AppClient
    - snd: Master [after receiving RegisterWorker]
- - ExecutorStateChanged
+ - ExecutorStateChanged: STARTED | RUNNING | FINISHED
    - rcv: Master
    - snd: Worker fork thread, also CoarseGrainedExecutorBackend
- - ExecutorUpdated
+ - ExecutorUpdated: STARTED | RUNNING | FINISHED
    - rcv: AppClient
    - snd: Master
  - RetrieveSparkProps
-   - rcv: CoarseGrainedScheduler
+   - rcv: CoarseGrainedScheduler "Driver"
    - snd: Worker fork thread
  - RegisterExecutor
    - rcv: CoarseGrainedScheduler
@@ -69,7 +69,7 @@ Messages:
  - LaunchTask
    - rcv: CoarseGrainedExecutorBackend
    - snd: CoarseGrainedScheduler [upon receiving ]
- - StatusUpdate
+ - StatusUpdate: STARTED | RUNNING | FAILED | SUCCESSFUL
    - rcv: CoarseGrainedExecutorBackend
    - snd: ThreadRunner threads
  - CompletionEvent
