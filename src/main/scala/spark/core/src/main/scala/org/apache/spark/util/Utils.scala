@@ -1287,4 +1287,12 @@ private[spark] object Utils extends Logging {
     }
   }
 
+  /**
+   * Convert all spark properties set in the given SparkConf to a sequence of java options.
+   */
+  def sparkJavaOpts(conf: SparkConf, filterKey: (String => Boolean) = _ => true): Seq[String] = {
+    conf.getAll
+      .filter { case (k, _) => filterKey(k) }
+      .map { case (k, v) => s"-D$k=$v" }
+  }
 }
