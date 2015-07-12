@@ -25,6 +25,7 @@ import org.apache.spark.scheduler._
 import org.apache.spark.scheduler.TaskLocality
 import org.apache.spark.scheduler.local._
 import org.apache.spark.deploy.worker.Worker
+import org.apache.spark.deploy.master.Master
 import org.apache.spark.scheduler.cluster.CoarseGrainedClusterMessages
 
 import akka.dispatch.verification._
@@ -39,6 +40,8 @@ import org.apache.spark.deploy.DeployMessages
 
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
+
+import java.io._
 
 import akka.actor.Props
 
@@ -87,7 +90,7 @@ class SparkMessageFingerprinter extends MessageFingerprinter {
   }
 }
 
-object WorkerCreator {
+object ActorCreator {
   def createWorker(name: String) {
     val conf = new SparkConf
     val securityMgr = new SecurityManager(conf)
@@ -112,6 +115,24 @@ object WorkerCreator {
             Array[String]("Master"), "foobarbaz", name, null, conf,
             securityMgr),
       name=name)
+  }
+
+  def createMaster() {
+    val conf = new SparkConf
+    val securityMgr = new SecurityManager(conf)
+
+    // Signal to STS that we should wait until after preStart has been
+    // triggered...
+    if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+      val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+      println("beginAtomicBlock: Master")
+      sched.beginExternalAtomicBlock(-1)
+    }
+
+    Instrumenter()._actorSystem.actorOf(
+      Props(classOf[Master], "localhost", 12345, 12346, securityMgr, true), "Master")
+
+    Instrumenter().blockedActors = Instrumenter().blockedActors - "Master"
   }
 }
 
@@ -148,7 +169,12 @@ object STSSparkPi {
 
       if (spark == null) {
         println("Starting SparkPi")
-        val conf = new SparkConf().setAppName("Spark Pi").setSparkHome("/Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark")
+        val conf = new SparkConf().
+          setAppName("Spark Pi").
+          setSparkHome("/Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark").
+          set("spark.deploy.recoveryMode", "FILESYSTEM").
+          set("spark.deploy.recoveryDirectory", "/tmp/spark")
+
         spark = new SparkContext(conf)
       }
       val slices = if (args.length > 0) args(0).toInt else 2
@@ -214,6 +240,12 @@ object STSSparkPi {
         Instrumenter()._actorSystem = null
         Instrumenter().reset_per_system_state
         resetSharedVariables
+
+        // Delete master failover state
+        for {
+          files <- Option(new File("/tmp/spark").listFiles)
+          file <- files
+        } file.delete()
       }
     }
 
@@ -229,7 +261,7 @@ object STSSparkPi {
 
     // Override configs: set level to trace
     LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.TRACE)
-    // Quite noisy loggers
+    // Quiet noisy loggers
     LoggerFactory.getLogger("org.eclipse.jetty").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.WARN)
     LoggerFactory.getLogger("org.eclipse.jetty.util.component.AbstractLifeCycle").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.ERROR)
 
@@ -241,8 +273,8 @@ object STSSparkPi {
       messageFingerprinter=fingerprintFactory,
       shouldShutdownActorSystem=false,
       filterKnownAbsents=false,
-      ignoreTimers=false,
-      invariant_check=Some(LocalityInversion.invariant))
+      ignoreTimers=true, // XXX
+      invariant_check=Some(CrashUponRecovery.invariant))
 
     val sched = new RandomScheduler(schedulerConfig,
       invariant_check_interval=3, randomizationStrategy=new SrcDstFIFO)
@@ -251,10 +283,14 @@ object STSSparkPi {
 
     val prefix = Array[ExternalEvent](
       WaitCondition(() => doneSubmittingJob.get())) ++
-      (1 to 3).map { case i => CodeBlock(() =>
-        WorkerCreator.createWorker("Worker"+i)) } ++
-      (1 to 3).map { case i => CodeBlock(() => run(i)) } ++
+      (1 to 1).map { case i => CodeBlock(() =>
+        ActorCreator.createWorker("Worker"+i)) } ++
+      //(1 to 1).map { case i => CodeBlock(() => run(i)) } ++
       Array[ExternalEvent](
+      WaitCondition(() => Worker.connected.get() > 0),
+      HardKill("Master"),
+      CodeBlock(() =>
+        ActorCreator.createMaster()),
       WaitCondition(() => future != null && future.isCompleted))
 
     sched.nonBlockingExplore(prefix, terminationCallback)

@@ -59,7 +59,6 @@ private[spark] class AppClient(
   var activeMasterUrl: String = null
 
   class ClientActor extends Actor with Logging {
-    var master: ActorRef = null
     var alreadyDisconnected = false  // To avoid calling listener.disconnected() multiple times
     var alreadyDead = false  // To avoid calling listener.dead() multiple times
     var registrationRetryTimer: Option[Cancellable] = None
@@ -108,7 +107,7 @@ private[spark] class AppClient(
     def changeMaster(url: String) {
       activeMasterUrl = url
       // master = context.actorSelection(Master.toAkkaUrl(activeMasterUrl))
-      master = context.actorFor("../Master")
+      //master = context.actorFor("../Master")
       masterAddress = activeMasterUrl match {
         case Master.sparkUrlRegex(host, port) =>
           Address("akka.tcp", Master.systemName, host, port.toInt)

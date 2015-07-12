@@ -79,7 +79,7 @@ private[spark] class Worker(
 
 
   val masterLock: Object = new Object()
-  var master: ActorRef = context.actorFor("../Master")
+  // var master: ActorRef = context.actorFor("../Master")
   var masterAddress: Address = null
   var activeMasterUrl: String = ""
   var activeMasterWebUiUrl : String = ""
@@ -130,6 +130,10 @@ private[spark] class Worker(
     }
   }
 
+  def master(): ActorRef = {
+    return context.actorFor("../Master")
+  }
+
   override def preStart() {
     assert(!registered)
     logInfo("Starting Spark worker %s:%d with %d cores, %s RAM".format(
@@ -170,6 +174,8 @@ private[spark] class Worker(
           throw new SparkException("Invalid spark URL: " + x)
       }
       connected = true
+      // XXX
+      Worker.connected.getAndIncrement()
     }
   }
 
@@ -389,6 +395,7 @@ private[spark] class Worker(
 
 object Worker extends Logging {
   val workerId = new AtomicInteger(0)
+  val connected = new AtomicInteger(0)
 
   def main(argStrings: Array[String]) {
     throw new RuntimeException("Worker running as own process")

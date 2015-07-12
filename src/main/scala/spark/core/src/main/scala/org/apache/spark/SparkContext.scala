@@ -311,8 +311,8 @@ class SparkContext(config: SparkConf) extends Logging {
   try {
     dagScheduler = new DAGScheduler(this)
   } catch {
-    case e: Exception => throw
-      new SparkException("DAGScheduler cannot be initialized due to %s".format(e.getMessage))
+    case e: Exception => throw e
+      //new SparkException("DAGScheduler cannot be initialized due to %s".format(e))
   }
 
   // start TaskScheduler after taskScheduler sets DAGScheduler reference in DAGScheduler's
