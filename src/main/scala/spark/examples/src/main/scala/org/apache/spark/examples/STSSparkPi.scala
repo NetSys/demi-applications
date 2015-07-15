@@ -27,6 +27,7 @@ import org.apache.spark.scheduler.local._
 import org.apache.spark.deploy.worker.Worker
 import org.apache.spark.deploy.master.Master
 import org.apache.spark.scheduler.cluster.CoarseGrainedClusterMessages
+import org.apache.spark.deploy._
 
 import akka.dispatch.verification._
 
@@ -288,6 +289,11 @@ object STSSparkPi {
       //(1 to 1).map { case i => CodeBlock(() => run(i)) } ++
       Array[ExternalEvent](
       WaitCondition(() => Worker.connected.get() > 0),
+      Send("Master",
+        BasicMessageConstructor(DeployMessages.RequestSubmitDriver(
+          new DriverDescription("", 1, 1, false,
+            Command("", Seq.empty, Map.empty, Seq.empty, Seq.empty, Seq.empty))))),
+      WaitCondition(() => Master.hasSubmittedDriver.get()),
       HardKill("Master"),
       CodeBlock(() =>
         ActorCreator.createMaster()),

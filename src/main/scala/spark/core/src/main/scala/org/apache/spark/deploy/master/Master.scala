@@ -19,6 +19,8 @@ package org.apache.spark.deploy.master
 
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.concurrent.atomic.AtomicBoolean
+
 
 import scala.collection.mutable.{ArrayBuffer, HashMap, HashSet}
 import scala.concurrent.Await
@@ -242,12 +244,13 @@ private[spark] class Master(
         waitingDrivers += driver
         drivers.add(driver)
         schedule()
+        Master.hasSubmittedDriver.set(true)
 
         // TODO: It might be good to instead have the submission client poll the master to determine
         //       the current status of the driver. For now it's simply "fire and forget".
 
         sender ! SubmitDriverResponse(true, Some(driver.id),
-          s"Driver successfully submitted as ${driver.id}")
+            s"Driver successfully submitted as ${driver.id}")
       }
     }
 
@@ -487,7 +490,7 @@ private[spark] class Master(
     } catch {
       case npe: NullPointerException =>
         println("MASTER CAUSED NullPointerException. YAY")
-        Master.hasCausedNPE = true
+        Master.hasCausedNPE.set(true)
         //throw npe
     }
   }
@@ -751,6 +754,7 @@ private[spark] class Master(
   }
 
   def newDriverId(submitDate: Date): String = {
+    // TODO(cs): make me deterministic?
     val appId = "driver-%s-%04d".format(createDateFormat.format(submitDate), nextDriverNumber)
     nextDriverNumber += 1
     appId
@@ -787,7 +791,8 @@ private[spark] class Master(
 }
 
 object Master extends Logging {
-  var hasCausedNPE = false
+  var hasCausedNPE = new AtomicBoolean(false)
+  var hasSubmittedDriver = new AtomicBoolean(false) // XXX
 
   val systemName = "sparkMaster"
   private val actorName = "Master"

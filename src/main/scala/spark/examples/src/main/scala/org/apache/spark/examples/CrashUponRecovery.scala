@@ -18,7 +18,7 @@ object CrashUponRecovery {
   def invariant(s: Seq[akka.dispatch.verification.ExternalEvent],
                 c: scala.collection.mutable.HashMap[String,Option[akka.dispatch.verification.CheckpointReply]])
               : Option[akka.dispatch.verification.ViolationFingerprint] = {
-    if (Master.hasCausedNPE) {
+    if (Master.hasCausedNPE.get()) {
       return Some(new CrashUponRecovery)
     }
     return None
