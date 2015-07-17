@@ -242,6 +242,10 @@ object STSSparkPi {
         Instrumenter().reset_per_system_state
         resetSharedVariables
 
+        Master.hasCausedNPE.set(false)
+        Master.hasSubmittedDriver.set(false)
+        Worker.connected.set(0)
+
         // Delete master failover state
         for {
           files <- Option(new File("/tmp/spark").listFiles)
@@ -298,6 +302,7 @@ object STSSparkPi {
       CodeBlock(() =>
         ActorCreator.createMaster()),
       WaitCondition(() => future != null && future.isCompleted))
+    // XXX modify dag below if you modify prefix
 
     sched.nonBlockingExplore(prefix, terminationCallback)
 
@@ -315,6 +320,9 @@ object STSSparkPi {
         // TODO(cs): find a more principled way to do this.
         val mappedEvents = new SynchronizedQueue[Event]
         mappedEvents ++= trace.events.map {
+          case u @ UniqueMsgSend(MsgSend("deadLetters", rcv,
+                                 DeployMessages.RequestSubmitDriver(_)), id) =>
+            u
           case UniqueMsgSend(MsgSend("deadLetters", rcv, msg), id) =>
              UniqueMsgSend(MsgSend("external", rcv, msg), id)
           case e => e
@@ -325,10 +333,18 @@ object STSSparkPi {
         sts.setPreTestCallback(() => sts.beginUnignorableEvents)
         sts.setPostTestCallback(() => prematureStopSempahore.release())
 
+        val dag = new UnmodifiedEventDag(trace.original_externals flatMap {
+          case WaitQuiescence() => None
+          case WaitCondition(_) => None
+          case e => Some(e)
+        })
+        // Conjoin the HardKill and the subsequent recover
+        dag.conjoinAtoms(prefix(5), prefix(6))
+
         RunnerUtils.stsSchedDDMin(false, schedulerConfig,
           mappedEventTrace, violation,
           initializationRoutine=Some(runAndCleanup),
-          _sched=Some(sts))
+          _sched=Some(sts), dag=Some(dag))
       case None =>
         println("Job finished successfully...")
     }
