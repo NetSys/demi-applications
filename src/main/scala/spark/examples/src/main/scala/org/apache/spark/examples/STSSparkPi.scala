@@ -166,7 +166,7 @@ object STSSparkPi {
     }
 
     def run(jobId: Int) {
-      val firstRun = (jobId == 0)
+      val firstInvocation = (jobId == 0)
 
       if (spark == null) {
         println("Starting SparkPi")
@@ -183,7 +183,7 @@ object STSSparkPi {
 
       println("Submitting job")
 
-      val partitions = if (firstRun)
+      val partitions = if (firstInvocation)
         //          NODE_LOCAL                NODE_LOCAL         ANY       ANY
         Seq((0,Seq("localhost", "0")),(1,Seq("localhost", "0")),(2,Seq()),(3,Seq()))
         //        ANY
@@ -191,13 +191,13 @@ object STSSparkPi {
 
       val mapRdds = spark.makeRDD(partitions).map(MyJob.mapFunction)
 
-      if (firstRun) {
+      if (firstInvocation) {
         future = mapRdds.reduceNonBlocking(jobId, MyJob.reduceFunction)
       } else {
         mapRdds.reduceNonBlocking(jobId, MyJob.reduceFunction)
       }
 
-      if (firstRun) {
+      if (firstInvocation) {
         // We've finished the bootstrapping phase.
         Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].endUnignorableEvents
         doneSubmittingJob.set(true)
@@ -306,7 +306,6 @@ object STSSparkPi {
 
     sched.nonBlockingExplore(prefix, terminationCallback)
 
-    // TODO(cs): having this line after nonBlockingExplore may not be correct
     sched.beginUnignorableEvents
 
     runAndCleanup()
@@ -315,23 +314,17 @@ object STSSparkPi {
       case Some((trace, violation)) =>
         println("Violation was found! Trying replay")
 
-        // We know that there are no external messages. So, easy way to get around
-        // "deadLetters" duplicate messages send issue: mark all messages as not from "deadLetters"
-        // TODO(cs): find a more principled way to do this.
-        val mappedEvents = new SynchronizedQueue[Event]
-        mappedEvents ++= trace.events.map {
-          case u @ UniqueMsgSend(MsgSend("deadLetters", rcv,
-                                 DeployMessages.RequestSubmitDriver(_)), id) =>
-            u
-          case UniqueMsgSend(MsgSend("deadLetters", rcv, msg), id) =>
-             UniqueMsgSend(MsgSend("external", rcv, msg), id)
-          case e => e
-        }
-        val mappedEventTrace = new EventTrace(mappedEvents, trace.original_externals)
+        val mappedEventTrace = STSSparkPi.removeDeadLetters(trace)
 
         val sts = new STSScheduler(schedulerConfig, mappedEventTrace, false)
-        sts.setPreTestCallback(() => sts.beginUnignorableEvents)
-        sts.setPostTestCallback(() => prematureStopSempahore.release())
+        def preTest() {
+          Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].beginUnignorableEvents
+        }
+        def postTest() {
+          prematureStopSempahore.release()
+        }
+        sts.setPreTestCallback(preTest)
+        sts.setPostTestCallback(postTest)
 
         val dag = new UnmodifiedEventDag(trace.original_externals flatMap {
           case WaitQuiescence() => None
@@ -341,12 +334,39 @@ object STSSparkPi {
         // Conjoin the HardKill and the subsequent recover
         dag.conjoinAtoms(prefix(5), prefix(6))
 
-        RunnerUtils.stsSchedDDMin(false, schedulerConfig,
+        val (mcs, stats, verified_mcs, _) = RunnerUtils.stsSchedDDMin(false, schedulerConfig,
           mappedEventTrace, violation,
           initializationRoutine=Some(runAndCleanup),
           _sched=Some(sts), dag=Some(dag))
+
+        verified_mcs match {
+          case Some(trace) =>
+            val mappedTrace = STSSparkPi.removeDeadLetters(trace)
+            val (internalStats, minimized) = RunnerUtils.minimizeInternals(
+              schedulerConfig, mcs, mappedTrace, Seq.empty, violation,
+              initializationRoutine=Some(runAndCleanup), preTest=Some(preTest),
+              postTest=Some(postTest))
+            // TODO(cs): RunnerUtils.printMinimizationStats
+          case None =>
+        }
       case None =>
         println("Job finished successfully...")
     }
+  }
+
+  def removeDeadLetters(trace: EventTrace): EventTrace = {
+    // We know that there are no external messages. So, easy way to get around
+    // "deadLetters" duplicate messages send issue: mark all messages as not from "deadLetters"
+    // TODO(cs): find a more principled way to do this.
+    val mappedEvents = new SynchronizedQueue[Event]
+    mappedEvents ++= trace.events.map {
+      case u @ UniqueMsgSend(MsgSend("deadLetters", rcv,
+                             DeployMessages.RequestSubmitDriver(_)), id) =>
+        u
+      case UniqueMsgSend(MsgSend("deadLetters", rcv, msg), id) =>
+         UniqueMsgSend(MsgSend("external", rcv, msg), id)
+      case e => e
+    }
+    return new EventTrace(mappedEvents, trace.original_externals)
   }
 }
