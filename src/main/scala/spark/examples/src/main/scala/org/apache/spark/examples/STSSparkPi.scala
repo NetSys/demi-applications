@@ -311,12 +311,12 @@ object STSSparkPi {
     runAndCleanup()
 
     stsReturn match {
-      case Some((trace, violation)) =>
+      case Some((initTrace, violation)) =>
         println("Violation was found! Trying replay")
 
-        val mappedEventTrace = STSSparkPi.removeDeadLetters(trace)
+        val mappedInitTrace = STSSparkPi.removeDeadLetters(initTrace)
 
-        val sts = new STSScheduler(schedulerConfig, mappedEventTrace, false)
+        val sts = new STSScheduler(schedulerConfig, mappedInitTrace, false)
         def preTest() {
           Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].beginUnignorableEvents
         }
@@ -326,7 +326,7 @@ object STSSparkPi {
         sts.setPreTestCallback(preTest)
         sts.setPostTestCallback(postTest)
 
-        val dag = new UnmodifiedEventDag(trace.original_externals flatMap {
+        val dag = new UnmodifiedEventDag(initTrace.original_externals flatMap {
           case WaitQuiescence() => None
           case WaitCondition(_) => None
           case e => Some(e)
@@ -335,18 +335,20 @@ object STSSparkPi {
         dag.conjoinAtoms(prefix(5), prefix(6))
 
         val (mcs, stats, verified_mcs, _) = RunnerUtils.stsSchedDDMin(false, schedulerConfig,
-          mappedEventTrace, violation,
+          mappedInitTrace, violation,
           initializationRoutine=Some(runAndCleanup),
           _sched=Some(sts), dag=Some(dag))
 
         verified_mcs match {
-          case Some(trace) =>
-            val mappedTrace = STSSparkPi.removeDeadLetters(trace)
-            val (internalStats, minimized) = RunnerUtils.minimizeInternals(
-              schedulerConfig, mcs, mappedTrace, Seq.empty, violation,
+          case Some(mcsTrace) =>
+            val mappedMCSTrace = STSSparkPi.removeDeadLetters(mcsTrace)
+            val (internalStats, intMinTrace) = RunnerUtils.minimizeInternals(
+              schedulerConfig, mcs, mappedMCSTrace, Seq.empty, violation,
               initializationRoutine=Some(runAndCleanup), preTest=Some(preTest),
               postTest=Some(postTest))
-            // TODO(cs): RunnerUtils.printMinimizationStats
+
+            RunnerUtils.printMinimizationStats(mappedInitTrace, None, mappedMCSTrace,
+              STSSparkPi.removeDeadLetters(inMinTrace), fingerprintFactory)
           case None =>
         }
       case None =>
