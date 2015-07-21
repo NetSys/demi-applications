@@ -36,6 +36,7 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 
 import scala.collection.mutable.SynchronizedQueue
+import scala.collection.mutable.ListBuffer
 
 import org.apache.spark.deploy.DeployMessages
 
@@ -165,6 +166,51 @@ object STSSparkPi {
       doneSubmittingJob = new AtomicBoolean(false)
     }
 
+    // Return: (externals, atomic pairs of externals)
+    def getExternals() : Tuple2[Seq[ExternalEvent], ListBuffer[Tuple2[ExternalEvent,ExternalEvent]]] = {
+      val atomicPairs = new ListBuffer[Tuple2[ExternalEvent,ExternalEvent]]
+
+      val prefix = new ListBuffer[ExternalEvent] ++ Array[ExternalEvent](
+        WaitCondition(() => doneSubmittingJob.get()))
+
+      // External events to fuzz:
+      // -  (1 to 1).map { case i => CodeBlock(() =>
+      //     ActorCreator.createWorker("Worker"+i)) }
+      // -  (1 to 1).map { case i => CodeBlock(() => run(i)) }
+      // -  Kills?
+      // -  HardKills followed by recoveries [spaced apart?]
+
+      prefix ++=
+      (1 to 4).map { case i => CodeBlock(() => ActorCreator.createWorker("Worker"+i)) } ++
+      (1 to 2).map { case i => CodeBlock(() => run(i)) } ++
+      Array[ExternalEvent](WaitCondition(() =>
+        Instrumenter().scheduler.asInstanceOf[RandomScheduler].messagesScheduledSoFar > 400),
+      Kill("Worker1"),
+      Kill("Worker3")) ++
+      (5 to 8).map { case i => CodeBlock(() => ActorCreator.createWorker("Worker"+i)) } ++
+      (3 to 7).map { case i => CodeBlock(() => run(i)) }
+
+      val kill = HardKill("Master")
+      val recover = CodeBlock(() =>
+          ActorCreator.createMaster())
+      atomicPairs += ((kill, recover))
+
+      val knownMCS = Array[ExternalEvent](
+        Send("Master",
+          BasicMessageConstructor(DeployMessages.RequestSubmitDriver(
+            new DriverDescription("", 1, 1, false,
+              Command("", Seq.empty, Map.empty, Seq.empty, Seq.empty, Seq.empty))))),
+        WaitCondition(() => Master.hasSubmittedDriver.get()),
+        kill,
+        recover)
+
+      prefix ++= knownMCS
+      // val finish = WaitCondition(() => future != null && future.isCompleted)
+      val finish = WaitQuiescence()
+      prefix += finish
+      return (prefix, atomicPairs)
+    }
+
     def run(jobId: Int) {
       val firstInvocation = (jobId == 0)
 
@@ -278,33 +324,17 @@ object STSSparkPi {
       messageFingerprinter=fingerprintFactory,
       shouldShutdownActorSystem=false,
       filterKnownAbsents=false,
-      ignoreTimers=true, // XXX
+      ignoreTimers=false, // XXX
       invariant_check=Some(CrashUponRecovery.invariant))
 
     val sched = new RandomScheduler(schedulerConfig,
-      invariant_check_interval=3, randomizationStrategy=new SrcDstFIFO)
+      invariant_check_interval=300, randomizationStrategy=new SrcDstFIFO)
     sched.setMaxMessages(1000)
     Instrumenter().scheduler = sched
 
-    val prefix = Array[ExternalEvent](
-      WaitCondition(() => doneSubmittingJob.get())) ++
-      (1 to 1).map { case i => CodeBlock(() =>
-        ActorCreator.createWorker("Worker"+i)) } ++
-      //(1 to 1).map { case i => CodeBlock(() => run(i)) } ++
-      Array[ExternalEvent](
-      WaitCondition(() => Worker.connected.get() > 0),
-      Send("Master",
-        BasicMessageConstructor(DeployMessages.RequestSubmitDriver(
-          new DriverDescription("", 1, 1, false,
-            Command("", Seq.empty, Map.empty, Seq.empty, Seq.empty, Seq.empty))))),
-      WaitCondition(() => Master.hasSubmittedDriver.get()),
-      HardKill("Master"),
-      CodeBlock(() =>
-        ActorCreator.createMaster()),
-      WaitCondition(() => future != null && future.isCompleted))
-    // XXX modify dag below if you modify prefix
+    val (externals, atomicPairs) = getExternals()
 
-    sched.nonBlockingExplore(prefix, terminationCallback)
+    sched.nonBlockingExplore(externals, terminationCallback)
 
     sched.beginUnignorableEvents
 
@@ -332,7 +362,10 @@ object STSSparkPi {
           case e => Some(e)
         })
         // Conjoin the HardKill and the subsequent recover
-        dag.conjoinAtoms(prefix(5), prefix(6))
+        atomicPairs foreach {
+          case ((e1, e2)) =>
+            dag.conjoinAtoms(e1, e2)
+        }
 
         val (mcs, stats, verified_mcs, _) = RunnerUtils.stsSchedDDMin(false, schedulerConfig,
           mappedInitTrace, violation,
@@ -348,7 +381,7 @@ object STSSparkPi {
               postTest=Some(postTest))
 
             RunnerUtils.printMinimizationStats(mappedInitTrace, None, mappedMCSTrace,
-              STSSparkPi.removeDeadLetters(inMinTrace), fingerprintFactory)
+              STSSparkPi.removeDeadLetters(intMinTrace), fingerprintFactory)
           case None =>
         }
       case None =>
