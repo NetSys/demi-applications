@@ -77,7 +77,8 @@ private[spark] class FileSystemPersistenceEngine(
 
   private def serializeIntoFile(file: File, value: AnyRef) {
     val created = file.createNewFile()
-    if (!created) { throw new IllegalStateException("Could not create file: " + file) }
+    // XXX if (!created) { throw new IllegalStateException("Could not create file: " + file) }
+    if (!created) { return }
 
     val serializer = serialization.findSerializerFor(value)
     val serialized = serializer.toBinary(value)
