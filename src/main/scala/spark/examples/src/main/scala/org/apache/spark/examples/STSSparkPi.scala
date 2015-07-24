@@ -153,6 +153,8 @@ object MyJob {
 /** Computes an approximation to pi */
 object STSSparkPi {
   def main(args: Array[String]) {
+    EventTypes.setExternalMessageFilter(STSSparkPi.externalMessageFilter)
+
     var spark : SparkContext = null
     var future : SimpleFutureAction[Int] = null
     var prematureStopSempahore = new Semaphore(0)
@@ -344,9 +346,7 @@ object STSSparkPi {
       case Some((initTrace, violation)) =>
         println("Violation was found! Trying replay")
 
-        val mappedInitTrace = STSSparkPi.removeDeadLetters(initTrace)
-
-        val sts = new STSScheduler(schedulerConfig, mappedInitTrace, false)
+        val sts = new STSScheduler(schedulerConfig, initTrace, false)
         def preTest() {
           Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].beginUnignorableEvents
         }
@@ -368,20 +368,19 @@ object STSSparkPi {
         }
 
         val (mcs, stats, verified_mcs, _) = RunnerUtils.stsSchedDDMin(false, schedulerConfig,
-          mappedInitTrace, violation,
+          initTrace, violation,
           initializationRoutine=Some(runAndCleanup),
           _sched=Some(sts), dag=Some(dag))
 
         verified_mcs match {
           case Some(mcsTrace) =>
-            val mappedMCSTrace = STSSparkPi.removeDeadLetters(mcsTrace)
             val (internalStats, intMinTrace) = RunnerUtils.minimizeInternals(
-              schedulerConfig, mcs, mappedMCSTrace, Seq.empty, violation,
+              schedulerConfig, mcs, mcsTrace, Seq.empty, violation,
               initializationRoutine=Some(runAndCleanup), preTest=Some(preTest),
               postTest=Some(postTest))
 
-            RunnerUtils.printMinimizationStats(mappedInitTrace, None, mappedMCSTrace,
-              STSSparkPi.removeDeadLetters(intMinTrace), fingerprintFactory)
+            RunnerUtils.printMinimizationStats(initTrace, None, mcsTrace,
+              intMinTrace, fingerprintFactory)
           case None =>
         }
       case None =>
@@ -389,19 +388,10 @@ object STSSparkPi {
     }
   }
 
-  def removeDeadLetters(trace: EventTrace): EventTrace = {
-    // We know that there are no external messages. So, easy way to get around
-    // "deadLetters" duplicate messages send issue: mark all messages as not from "deadLetters"
-    // TODO(cs): find a more principled way to do this.
-    val mappedEvents = new SynchronizedQueue[Event]
-    mappedEvents ++= trace.events.map {
-      case u @ UniqueMsgSend(MsgSend("deadLetters", rcv,
-                             DeployMessages.RequestSubmitDriver(_)), id) =>
-        u
-      case UniqueMsgSend(MsgSend("deadLetters", rcv, msg), id) =>
-         UniqueMsgSend(MsgSend("external", rcv, msg), id)
-      case e => e
+  def externalMessageFilter(msg: Any) = {
+    msg match {
+      case DeployMessages.RequestSubmitDriver(_) => true
+      case _ => false
     }
-    return new EventTrace(mappedEvents, trace.original_externals)
   }
 }
