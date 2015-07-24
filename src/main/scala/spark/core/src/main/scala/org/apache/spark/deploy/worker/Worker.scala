@@ -120,13 +120,13 @@ private[spark] class Worker(
       workDir.mkdirs()
       if ( !workDir.exists() || !workDir.isDirectory) {
         logError("Failed to create work directory " + workDir)
-        System.exit(1)
+        //System.exit(1)
       }
       assert (workDir.isDirectory)
     } catch {
       case e: Exception =>
         logError("Failed to create work directory " + workDir, e)
-        System.exit(1)
+        //System.exit(1)
     }
   }
 
@@ -250,7 +250,7 @@ private[spark] class Worker(
     case RegisterWorkerFailed(message) =>
       if (!registered) {
         logError("Worker registration failed: " + message)
-        System.exit(1)
+        //System.exit(1)
       }
 
     case LaunchExecutor(masterUrl, appId, execId, appDesc, cores_, memory_) =>
