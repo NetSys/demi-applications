@@ -354,7 +354,7 @@ private[spark] class TaskSchedulerImpl(
         // must mean the error is during registration.
         // It might be good to do something smarter here in the future.
         logError("Exiting due to error from cluster scheduler: " + message)
-        System.exit(1)
+        //System.exit(1)
       }
     }
   }
