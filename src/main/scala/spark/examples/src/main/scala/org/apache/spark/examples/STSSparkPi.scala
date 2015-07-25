@@ -182,15 +182,22 @@ object STSSparkPi {
       // -  Kills?
       // -  HardKills followed by recoveries [spaced apart?]
 
-      prefix ++=
-      (1 to 4).map { case i => CodeBlock(() => ActorCreator.createWorker("Worker"+i)) } ++
+      val kill1 = Kill("Worker1")
+      val kill3 = Kill("Worker3")
+
+      val nextSeq =  (1 to 4).map { case i => CodeBlock(() => ActorCreator.createWorker("Worker"+i)) } ++
       (1 to 2).map { case i => CodeBlock(() => run(i)) } ++
       Array[ExternalEvent](WaitCondition(() =>
         Instrumenter().scheduler.asInstanceOf[RandomScheduler].messagesScheduledSoFar > 400),
-      Kill("Worker1"),
-      Kill("Worker3")) ++
+      kill1,
+      kill3) ++
       (5 to 8).map { case i => CodeBlock(() => ActorCreator.createWorker("Worker"+i)) } ++
       (3 to 7).map { case i => CodeBlock(() => run(i)) }
+
+      prefix ++= nextSeq
+
+      atomicPairs += ((nextSeq(0), kill1))
+      atomicPairs += ((nextSeq(2), kill3))
 
       val kill = HardKill("Master")
       val recover = CodeBlock(() =>
