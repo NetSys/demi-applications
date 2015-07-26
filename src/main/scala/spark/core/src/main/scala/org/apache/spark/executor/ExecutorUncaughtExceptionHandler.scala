@@ -36,9 +36,9 @@ private[spark] object ExecutorUncaughtExceptionHandler
       // (If we do, we will deadlock.)
       if (!Utils.inShutdown()) {
         if (exception.isInstanceOf[OutOfMemoryError]) {
-          System.exit(ExecutorExitCode.OOM)
+          //System.exit(ExecutorExitCode.OOM)
         } else {
-          System.exit(ExecutorExitCode.UNCAUGHT_EXCEPTION)
+          //System.exit(ExecutorExitCode.UNCAUGHT_EXCEPTION)
         }
       }
     } catch {

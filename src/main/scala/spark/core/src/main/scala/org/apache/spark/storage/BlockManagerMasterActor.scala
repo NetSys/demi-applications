@@ -61,11 +61,11 @@ class BlockManagerMasterActor(val isLocal: Boolean, conf: SparkConf, listenerBus
   var timeoutCheckingTask: Cancellable = null
 
   override def preStart() {
-    if (!BlockManager.getDisableHeartBeatsForTesting(conf)) {
-      import context.dispatcher
-      timeoutCheckingTask = context.system.scheduler.schedule(0.seconds,
-        checkTimeoutInterval.milliseconds, self, ExpireDeadHosts)
-    }
+    //if (!BlockManager.getDisableHeartBeatsForTesting(conf)) {
+    //  import context.dispatcher
+    //  timeoutCheckingTask = context.system.scheduler.schedule(0.seconds,
+    //    checkTimeoutInterval.milliseconds, self, ExpireDeadHosts)
+    //}
     super.preStart()
   }
 
