@@ -182,22 +182,22 @@ object STSSparkPi {
       // -  Kills?
       // -  HardKills followed by recoveries [spaced apart?]
 
-      val kill1 = Kill("Worker1")
-      val kill3 = Kill("Worker3")
+      //val kill1 = Kill("Worker1")
+      //val kill3 = Kill("Worker3")
 
-      val nextSeq =  (1 to 4).map { case i => CodeBlock(() => ActorCreator.createWorker("Worker"+i)) } ++
-      (1 to 2).map { case i => CodeBlock(() => run(i)) } ++
-      Array[ExternalEvent](WaitCondition(() =>
-        Instrumenter().scheduler.asInstanceOf[RandomScheduler].messagesScheduledSoFar > 400),
-      kill1,
-      kill3) ++
-      (5 to 8).map { case i => CodeBlock(() => ActorCreator.createWorker("Worker"+i)) } ++
-      (3 to 7).map { case i => CodeBlock(() => run(i)) }
+      //val nextSeq =  (1 to 4).map { case i => CodeBlock(() => ActorCreator.createWorker("Worker"+i)) } ++
+      //(1 to 2).map { case i => CodeBlock(() => run(i)) } ++
+      //Array[ExternalEvent](WaitCondition(() =>
+      //  Instrumenter().scheduler.asInstanceOf[RandomScheduler].messagesScheduledSoFar > 400),
+      //kill1,
+      //kill3) ++
+      //(5 to 8).map { case i => CodeBlock(() => ActorCreator.createWorker("Worker"+i)) } ++
+      //(3 to 7).map { case i => CodeBlock(() => run(i)) }
 
-      prefix ++= nextSeq
+      //prefix ++= nextSeq
 
-      atomicPairs += ((nextSeq(0), kill1))
-      atomicPairs += ((nextSeq(2), kill3))
+      //atomicPairs += ((nextSeq(0), kill1))
+      //atomicPairs += ((nextSeq(2), kill3))
 
       val kill = HardKill("Master")
       val recover = CodeBlock(() =>
@@ -214,8 +214,8 @@ object STSSparkPi {
         recover)
 
       prefix ++= knownMCS
-      // val finish = WaitCondition(() => future != null && future.isCompleted)
-      val finish = WaitQuiescence()
+      val finish = WaitCondition(() => future != null && future.isCompleted)
+      //val finish = WaitQuiescence()
       prefix += finish
       return (prefix, atomicPairs)
     }
@@ -333,7 +333,7 @@ object STSSparkPi {
       messageFingerprinter=fingerprintFactory,
       shouldShutdownActorSystem=false,
       filterKnownAbsents=false,
-      ignoreTimers=false, // XXX
+      ignoreTimers=true, // XXX
       invariant_check=Some(CrashUponRecovery.invariant))
 
     val sched = new RandomScheduler(schedulerConfig,
