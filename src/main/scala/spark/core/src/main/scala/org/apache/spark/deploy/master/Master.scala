@@ -194,7 +194,7 @@ private[spark] class Master(
 
     case RevokedLeadership => {
       logError("Leadership has been revoked -- master shutting down.")
-      System.exit(0)
+      //System.exit(0)
     }
 
     case RegisterWorker(id, workerHost, workerPort, cores, memory, workerUiPort, publicAddress) =>

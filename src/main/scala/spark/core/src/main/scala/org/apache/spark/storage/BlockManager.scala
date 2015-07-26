@@ -162,11 +162,11 @@ private[spark] class BlockManager(
   private def initialize(): Unit = {
     master.registerBlockManager(blockManagerId, maxMemory, slaveActor)
     BlockManagerWorker.startBlockManagerWorker(this)
-    if (!BlockManager.getDisableHeartBeatsForTesting(conf)) {
-      heartBeatTask = actorSystem.scheduler.schedule(0.seconds, heartBeatFrequency.milliseconds) {
-        Utils.tryOrExit { heartBeat() }
-      }
-    }
+    //if (!BlockManager.getDisableHeartBeatsForTesting(conf)) {
+    //  heartBeatTask = actorSystem.scheduler.schedule(0.seconds, heartBeatFrequency.milliseconds) {
+    //    Utils.tryOrExit { heartBeat() }
+    //  }
+    //}
   }
 
   /**
