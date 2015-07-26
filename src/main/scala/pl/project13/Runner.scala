@@ -47,8 +47,13 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
   }
 }
 
-// Used for fuzzing:
 class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator {
+  class AppendWordConstuctor(word: String) extends ExternalMessageConstructor {
+    def apply() : Any = {
+      return ClientMessage[AppendWord](Instrumenter().actorSystem.deadLetters, AppendWord(word))
+    }
+  }
+
   val wordsUsedSoFar = new HashSet[String]
   val rand = new Random
   val destinations = new RandomizedHashSet[String]
@@ -65,8 +70,31 @@ class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator
       word = rand.nextInt(10000).toString
     }
     wordsUsedSoFar += word
-    return Send(dst, () =>
-      ClientMessage[AppendWord](Instrumenter().actorSystem.deadLetters, AppendWord(word)))
+    return Send(dst, new AppendWordConstuctor(word))
+  }
+}
+
+case class BootstrapMessageConstructor(maskedIndices: Set[Int]) extends ExternalMessageConstructor {
+  @scala.transient
+  var components : Seq[ActorRef] = Seq.empty
+
+  def apply(): Any = {
+    val all = Instrumenter().actorMappings.filter({
+                case (k,v) => k != "client" && !ActorTypes.systemActor(k)
+              }).values.toSeq.sorted
+
+     // TODO(cs): factor zipWithIndex magic into a static method in ExternalMessageConstructor.
+     components = all.zipWithIndex.filterNot {
+       case (e,i) => maskedIndices contains i
+     }.map { case (e,i) => e }.toSeq
+
+    return ChangeConfiguration(ClusterConfiguration(components))
+  }
+
+  override def getComponents() = components
+
+  override def maskComponents(indices: Set[Int]) : ExternalMessageConstructor = {
+    return new BootstrapMessageConstructor(indices ++ maskedIndices)
   }
 }
 
@@ -115,7 +143,7 @@ object Main extends App {
     members.map(member =>
       Start(Init.actorCtor, member)) ++
     members.map(member =>
-      Send(member, Init.startCtor)) ++
+      Send(member, new BootstrapMessageConstructor(Set[Int]()))) ++
     Array[ExternalEvent](WaitQuiescence()
   )
   // -- --
@@ -126,11 +154,20 @@ object Main extends App {
 
   Instrumenter().registerShutdownCallback(shutdownCallback)
 
+  val schedulerConfig = SchedulerConfig(
+    messageFingerprinter=fingerprintFactory,
+    enableFailureDetector=false,
+    enableCheckpointing=true,
+    shouldShutdownActorSystem=true,
+    filterKnownAbsents=false,
+    invariant_check=Some(raftChecks.invariant),
+    ignoreTimers=false
+  )
+
   val mcs_dir = "experiments/akka-raft-fuzz_2015_04_19_15_35_23_IncDDMin_DPOR"
   var msgDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
 
   println("Trying replay..")
-  RunnerUtils.replayExperiment(mcs_dir, fingerprintFactory, msgDeserializer,
-                               Some(raftChecks.invariant),
+  RunnerUtils.replayExperiment(mcs_dir, schedulerConfig, msgDeserializer,
                                traceFile=ExperimentSerializer.minimizedInternalTrace)
 }
