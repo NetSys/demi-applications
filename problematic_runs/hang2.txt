@@ -1,0 +1,434 @@
+[0m[[0minfo[0m] [0mLoading project definition from /Users/cs/Research/UCB/code/sts2-applications/project/project[0m
+[0m[[0minfo[0m] [0mLoading project definition from /Users/cs/Research/UCB/code/sts2-applications/project[0m
+[0m[[0minfo[0m] [0mSet current project to root (in build file:/Users/cs/Research/UCB/code/sts2-applications/)[0m
+[0m[[0minfo[0m] [0mSet current project to spark-core (in build file:/Users/cs/Research/UCB/code/sts2-applications/)[0m
+[0m[[33mwarn[0m] [0mThere may be incompatibilities among your library dependencies.[0m
+[0m[[33mwarn[0m] [0mHere are some of the libraries that were evicted:[0m
+[0m[[33mwarn[0m] [0m	* commons-net:commons-net:1.4.1 -> 2.2[0m
+[0m[[33mwarn[0m] [0mRun 'evicted' to see detailed eviction warnings[0m
+[0m[[0minfo[0m] [0mRunning org.apache.spark.deploy.SparkSubmit --master local-cluster[2,1,512] --class org.apache.spark.examples.STSSparkPi /Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark/examples/target/scala-2.10/spark-examples-1.1.0-SNAPSHOT-hadoop1.0.4.jar[0m
+[0m[[31merror[0m] [0mSLF4J: Class path contains multiple SLF4J bindings.[0m
+[0m[[31merror[0m] [0mSLF4J: Found binding in [jar:file:/Users/cs/Research/UCB/code/sts2-applications/lib_managed/jars/logback-classic-1.1.2.jar!/org/slf4j/impl/StaticLoggerBinder.class][0m
+[0m[[31merror[0m] [0mSLF4J: Found binding in [jar:file:/Users/cs/Research/UCB/code/sts2-applications/lib_managed/jars/slf4j-log4j12-1.7.5.jar!/org/slf4j/impl/StaticLoggerBinder.class][0m
+[0m[[31merror[0m] [0mSLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.[0m
+[0m[[31merror[0m] [0mSLF4J: Actual binding is of type [ch.qos.logback.classic.util.ContextSelectorStaticBinder][0m
+[0m[[0minfo[0m] [0mInjecting 0/6 WaitCondition(<function0>)[0m
+[0m[[0minfo[0m] [0mwaiting for enqueue_message...[0m
+[0m[[0minfo[0m] [0mStarting SparkPi[0m
+[0m[[0minfo[0m] [0m15:39:24.936 [main] INFO  org.apache.spark.SecurityManager - Changing view acls to: cs[0m
+[0m[[0minfo[0m] [0m15:39:24.940 [main] INFO  org.apache.spark.SecurityManager - SecurityManager: authentication disabled; ui acls disabled; users with view permissions: Set(cs)[0m
+[0m[[0minfo[0m] [0m15:39:24.942 [main] DEBUG org.apache.spark.util.AkkaUtils - In createActorSystem, requireCookie is: off[0m
+[0m[[0minfo[0m] [0m15:39:25.412 [new-system-1-akka.actor.default-dispatcher-4] INFO  akka.event.slf4j.Slf4jLogger - Slf4jLogger started[0m
+[0m[[0minfo[0m] [0m15:39:25.433 [main] DEBUG org.apache.spark.SparkEnv - Using serializer: class org.apache.spark.serializer.JavaSerializer[0m
+[0m[[0minfo[0m] [0m15:39:25.446 [main] INFO  org.apache.spark.SparkEnv - Registering MapOutputTracker[0m
+[0m[[0minfo[0m] [0mSched knows about actor MapOutputTracker[0m
+[0m[[0minfo[0m] [0mSystem has created a new actor: MapOutputTracker[0m
+[0m[[0minfo[0m] [0m15:39:25.452 [main] INFO  org.apache.spark.SparkEnv - Registering BlockManagerMaster[0m
+[0m[[0minfo[0m] [0mSched knows about actor BlockManagerMaster[0m
+[0m[[0minfo[0m] [0mSystem has created a new actor: BlockManagerMaster[0m
+[0m[[0minfo[0m] [0m15:39:25.461 [main] DEBUG o.a.spark.storage.DiskBlockManager - Creating local directories at root dirs '/var/folders/p1/0fb1zp654wl958h_td65c3v80000gn/T/'[0m
+[0m[[0minfo[0m] [0m15:39:25.464 [main] INFO  o.a.spark.storage.DiskBlockManager - Created local directory at /var/folders/p1/0fb1zp654wl958h_td65c3v80000gn/T/spark-local-20150726153925-de37[0m
+[0m[[0minfo[0m] [0m15:39:25.503 [main] INFO  o.a.spark.network.ConnectionManager - Bound socket to port 58172 with id = ConnectionManagerId(localhost,58172)[0m
+[0m[[0minfo[0m] [0m15:39:25.506 [main] INFO  org.apache.spark.storage.MemoryStore - MemoryStore started with capacity 1638.6 MB[0m
+[0m[[0minfo[0m] [0mSched knows about actor BlockManagerActor1[0m
+[0m[[0minfo[0m] [0mSystem has created a new actor: BlockManagerActor1[0m
+[0m[[0minfo[0m] [0m15:39:25.510 [main] INFO  o.a.spark.storage.BlockManagerMaster - Trying to register BlockManager[0m
+[0m[[0minfo[0m] [0mdispatching after enqueue_message[0m
+[0m[[0minfo[0m] [0m15:39:25.515 [main] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-1/temp/dGVsbC1yZWdpc3RlckJsb2NrTWFuYWdlci1pbml0aWFsaXpl] -> Actor[akka://new-system-1/user/BlockManagerMaster#-1566141910] RegisterBlockManager(BlockManagerId(<driver>, localhost, 58172, 0),1718196633,Actor[akka://new-system-1/user/BlockManagerActor1#-1581056878])[0m
+[0m[[0minfo[0m] [0m15:39:25.515 [main] TRACE RandomScheduler - event_produced: dGVsbC1yZWdpc3RlckJsb2NrTWFuYWdlci1pbml0aWFsaXpl -> BlockManagerMaster RegisterBlockManager(BlockManagerId(<driver>, localhost, 58172, 0),1718196633,Actor[akka://new-system-1/user/BlockManagerActor1#-1581056878])[0m
+[0m[[0minfo[0m] [0m15:39:25.533 [main] TRACE RandomScheduler - schedule_new_message(8): dGVsbC1yZWdpc3RlckJsb2NrTWFuYWdlci1pbml0aWFsaXpl -> BlockManagerMaster RegisterBlockManager(BlockManagerId(<driver>, localhost, 58172, 0),1718196633,Actor[akka://new-system-1/user/BlockManagerActor1#-1581056878])[0m
+[0m[[0minfo[0m] [0m15:39:25.540 [new-system-1-akka.actor.default-dispatcher-4] INFO  o.a.spark.storage.BlockManagerInfo - Registering block manager localhost:58172 with 1638.6 MB RAM[0m
+[0m[[0minfo[0m] [0m15:39:25.542 [main] INFO  o.a.spark.storage.BlockManagerMaster - Registered BlockManager[0m
+[0m[[0minfo[0m] [0m15:39:25.543 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - afterMessageReceive: just finished: dGVsbC1yZWdpc3RlckJsb2NrTWFuYWdlci1pbml0aWFsaXpl -> BlockManagerMaster RegisterBlockManager(BlockManagerId(<driver>, localhost, 58172, 0),1718196633,Actor[akka://new-system-1/user/BlockManagerActor1#-1581056878])[0m
+[0m[[0minfo[0m] [0m15:39:25.543 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:25.543 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0mwaiting for enqueue_message...[0m
+[0m[[0minfo[0m] [0m15:39:25.551 [main] INFO  org.apache.spark.HttpServer - Starting HTTP Server[0m
+[0m[[0minfo[0m] [0m15:39:25.607 [main] DEBUG org.apache.spark.HttpServer - HttpServer is not using security[0m
+[0m[[0minfo[0m] [0m15:39:25.626 [main] INFO  o.a.spark.broadcast.HttpBroadcast - Broadcast server started at http://127.0.0.1:58173[0m
+[0m[[0minfo[0m] [0m15:39:25.631 [main] INFO  org.apache.spark.HttpFileServer - HTTP File server directory is /var/folders/p1/0fb1zp654wl958h_td65c3v80000gn/T/spark-63267965-cbde-430d-9cf4-b50630ed126c[0m
+[0m[[0minfo[0m] [0m15:39:25.631 [main] INFO  org.apache.spark.HttpServer - Starting HTTP Server[0m
+[0m[[0minfo[0m] [0m15:39:25.632 [main] DEBUG org.apache.spark.HttpServer - HttpServer is not using security[0m
+[0m[[0minfo[0m] [0m15:39:25.633 [main] DEBUG org.apache.spark.HttpFileServer - HTTP file server started at: http://127.0.0.1:58174[0m
+[0m[[0minfo[0m] [0m15:39:25.791 [main] DEBUG org.apache.hadoop.conf.Configuration - java.io.IOException: config()[0m
+[0m[[0minfo[0m] [0m	at org.apache.hadoop.conf.Configuration.<init>(Configuration.java:227)[0m
+[0m[[0minfo[0m] [0m	at org.apache.hadoop.conf.Configuration.<init>(Configuration.java:214)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.deploy.SparkHadoopUtil.newConfiguration(SparkHadoopUtil.scala:71)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.deploy.SparkHadoopUtil.<init>(SparkHadoopUtil.scala:35)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.deploy.SparkHadoopUtil$.<init>(SparkHadoopUtil.scala:109)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.deploy.SparkHadoopUtil$.<clinit>(SparkHadoopUtil.scala)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.SparkContext.<init>(SparkContext.scala:227)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.examples.STSSparkPi$.run$1(STSSparkPi.scala:234)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.examples.STSSparkPi$.org$apache$spark$examples$STSSparkPi$$runAndCleanup$1(STSSparkPi.scala:316)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.examples.STSSparkPi$.main(STSSparkPi.scala:350)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.examples.STSSparkPi.main(STSSparkPi.scala)[0m
+[0m[[0minfo[0m] [0m	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)[0m
+[0m[[0minfo[0m] [0m	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)[0m
+[0m[[0minfo[0m] [0m	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)[0m
+[0m[[0minfo[0m] [0m	at java.lang.reflect.Method.invoke(Method.java:497)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.deploy.SparkSubmit$.launch(SparkSubmit.scala:311)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.deploy.SparkSubmit$.main(SparkSubmit.scala:73)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.deploy.SparkSubmit.main(SparkSubmit.scala)[0m
+[0m[[0minfo[0m] [0m[0m
+[0m[[0minfo[0m] [0m15:39:25.839 [main] DEBUG org.apache.hadoop.security.Groups -  Creating new Groups object[0m
+[0m[[0minfo[0m] [0m15:39:25.866 [main] DEBUG org.apache.hadoop.security.Groups - Group mapping impl=org.apache.hadoop.security.ShellBasedUnixGroupsMapping; cacheTimeout=300000[0m
+[0m[[0minfo[0m] [0m15:39:26.337 [main] DEBUG org.apache.hadoop.conf.Configuration - java.io.IOException: config()[0m
+[0m[[0minfo[0m] [0m	at org.apache.hadoop.conf.Configuration.<init>(Configuration.java:227)[0m
+[0m[[0minfo[0m] [0m	at org.apache.hadoop.conf.Configuration.<init>(Configuration.java:214)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.deploy.SparkHadoopUtil.newConfiguration(SparkHadoopUtil.scala:71)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.SparkContext.<init>(SparkContext.scala:227)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.examples.STSSparkPi$.run$1(STSSparkPi.scala:234)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.examples.STSSparkPi$.org$apache$spark$examples$STSSparkPi$$runAndCleanup$1(STSSparkPi.scala:316)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.examples.STSSparkPi$.main(STSSparkPi.scala:350)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.examples.STSSparkPi.main(STSSparkPi.scala)[0m
+[0m[[0minfo[0m] [0m	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)[0m
+[0m[[0minfo[0m] [0m	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)[0m
+[0m[[0minfo[0m] [0m	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)[0m
+[0m[[0minfo[0m] [0m	at java.lang.reflect.Method.invoke(Method.java:497)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.deploy.SparkSubmit$.launch(SparkSubmit.scala:311)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.deploy.SparkSubmit$.main(SparkSubmit.scala:73)[0m
+[0m[[0minfo[0m] [0m	at org.apache.spark.deploy.SparkSubmit.main(SparkSubmit.scala)[0m
+[0m[[0minfo[0m] [0m[0m
+[0m[[0minfo[0m] [0m15:39:26.491 [main] INFO  org.apache.spark.SparkContext - Added JAR file:/Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark/examples/target/scala-2.10/spark-examples-1.1.0-SNAPSHOT-hadoop1.0.4.jar at http://127.0.0.1:58174/jars/spark-examples-1.1.0-SNAPSHOT-hadoop1.0.4.jar with timestamp 1437950366490[0m
+[0m[[0minfo[0m] [0m15:39:26.516 [main] INFO  o.a.spark.deploy.LocalSparkCluster - Starting a local Spark cluster with 2 workers.[0m
+[0m[[0minfo[0m] [0m15:39:26.517 [main] INFO  org.apache.spark.SecurityManager - Changing view acls to: cs[0m
+[0m[[0minfo[0m] [0m15:39:26.517 [main] INFO  org.apache.spark.SecurityManager - SecurityManager: authentication disabled; ui acls disabled; users with view permissions: Set(cs)[0m
+[0m[[0minfo[0m] [0mSched knows about actor Master[0m
+[0m[[0minfo[0m] [0mSystem has created a new actor: Master[0m
+[0m[[0minfo[0m] [0m15:39:26.566 [new-system-1-akka.actor.default-dispatcher-4] INFO  o.apache.spark.deploy.master.Master - Starting Spark master at spark://localhost:1[0m
+[0m[[0minfo[0m] [0m15:39:26.575 [new-system-1-akka.actor.default-dispatcher-4] INFO  o.apache.spark.deploy.master.Master - Persisting recovery state to directory: /tmp/spark[0m
+[0m[[0minfo[0m] [0mSched knows about actor leaderElectionAgent[0m
+[0m[[0minfo[0m] [0mSystem has created a new actor: leaderElectionAgent[0m
+[0m[[0minfo[0m] [0mdispatching after enqueue_message[0m
+[0m[[0minfo[0m] [0m15:39:26.617 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/Master#-490842288] CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.617 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - event_produced: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.621 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-1/user/Master/leaderElectionAgent#1629137354] -> Actor[akka://new-system-1/user/Master#-490842288] ElectedLeader[0m
+[0m[[0minfo[0m] [0m15:39:26.622 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - event_produced: leaderElectionAgent -> Master ElectedLeader[0m
+[0m[[0minfo[0m] [0m15:39:26.622 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - schedule_new_message(12): leaderElectionAgent -> Master ElectedLeader[0m
+[0m[[0minfo[0m] [0m15:39:26.625 [new-system-1-akka.actor.default-dispatcher-4] INFO  o.apache.spark.deploy.master.Master - I have been elected leader! New state: ALIVE[0m
+[0m[[0minfo[0m] [0m15:39:26.625 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - afterMessageReceive: just finished: leaderElectionAgent -> Master ElectedLeader[0m
+[0m[[0minfo[0m] [0m15:39:26.625 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.625 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.626 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-1/temp/c3RhcnQtb3JnJGFwYWNoZSRzcGFyayRTcGFya0NvbnRleHQkJGNyZWF0ZVRhc2tTY2hlZHVsZXItPGluaXQ+] -> Actor[akka://new-system-1/user/Master#-490842288] RequestWebUIPort[0m
+[0m[[0minfo[0m] [0m15:39:26.626 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - event_produced: c3RhcnQtb3JnJGFwYWNoZSRzcGFyayRTcGFya0NvbnRleHQkJGNyZWF0ZVRhc2tTY2hlZHVsZXItPGluaXQ+ -> Master RequestWebUIPort[0m
+[0m[[0minfo[0m] [0m15:39:26.626 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - schedule_new_message(10): deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.630 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.630 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.631 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.631 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - schedule_new_message(14): c3RhcnQtb3JnJGFwYWNoZSRzcGFyayRTcGFya0NvbnRleHQkJGNyZWF0ZVRhc2tTY2hlZHVsZXItPGluaXQ+ -> Master RequestWebUIPort[0m
+[0m[[0minfo[0m] [0m15:39:26.632 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - afterMessageReceive: just finished: c3RhcnQtb3JnJGFwYWNoZSRzcGFyayRTcGFya0NvbnRleHQkJGNyZWF0ZVRhc2tTY2hlZHVsZXItPGluaXQ+ -> Master RequestWebUIPort[0m
+[0m[[0minfo[0m] [0m15:39:26.632 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.632 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.632 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/Master#-490842288] CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.632 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - event_produced: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.633 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - schedule_new_message(16): deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.633 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.633 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.633 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0mwaiting for enqueue_message...[0m
+[0m[[0minfo[0m] [0mSched knows about actor DAGSchedulerActorSupervisor[0m
+[0m[[0minfo[0m] [0mSystem has created a new actor: DAGSchedulerActorSupervisor[0m
+[0m[[0minfo[0m] [0mdispatching after enqueue_message[0m
+[0m[[0minfo[0m] [0m15:39:26.649 [main] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-1/temp/aW5pdGlhbGl6ZUV2ZW50UHJvY2Vzc0FjdG9yLTxpbml0Pi08aW5pdD4=] -> Actor[akka://new-system-1/user/DAGSchedulerActorSupervisor#1236183566] Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>))[0m
+[0m[[0minfo[0m] [0m15:39:26.650 [main] TRACE RandomScheduler - event_produced: aW5pdGlhbGl6ZUV2ZW50UHJvY2Vzc0FjdG9yLTxpbml0Pi08aW5pdD4= -> DAGSchedulerActorSupervisor Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>))[0m
+[0m[[0minfo[0m] [0m15:39:26.651 [main] TRACE RandomScheduler - schedule_new_message(18): aW5pdGlhbGl6ZUV2ZW50UHJvY2Vzc0FjdG9yLTxpbml0Pi08aW5pdD4= -> DAGSchedulerActorSupervisor Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>))[0m
+[0m[[0minfo[0m] [0mSched knows about actor $a[0m
+[0m[[0minfo[0m] [0mSystem has created a new actor: $a[0m
+[0m[[0minfo[0m] [0m15:39:26.655 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - afterMessageReceive: just finished: aW5pdGlhbGl6ZUV2ZW50UHJvY2Vzc0FjdG9yLTxpbml0Pi08aW5pdD4= -> DAGSchedulerActorSupervisor Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>))[0m
+[0m[[0minfo[0m] [0m15:39:26.655 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.655 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.655 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/Master#-490842288] CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.655 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - event_produced: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.655 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - schedule_new_message(20): deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.656 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.656 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.656 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0mwaiting for enqueue_message...[0m
+[0m[[0minfo[0m] [0mSched knows about actor CoarseGrainedScheduler[0m
+[0m[[0minfo[0m] [0mSystem has created a new actor: CoarseGrainedScheduler[0m
+[0m[[0minfo[0m] [0mSched knows about actor AppClient[0m
+[0m[[0minfo[0m] [0mSystem has created a new actor: AppClient[0m
+[0m[[0minfo[0m] [0m15:39:26.667 [new-system-1-akka.actor.default-dispatcher-4] INFO  o.a.s.d.client.AppClient$ClientActor - Connecting to master spark://localhost:1...[0m
+[0m[[0minfo[0m] [0mdispatching after enqueue_message[0m
+[0m[[0minfo[0m] [0m15:39:26.670 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/CoarseGrainedScheduler#-932396410] ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.670 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - event_produced: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.671 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-1/user/AppClient#-608660815] -> Actor[akka://new-system-1/user/Master#-490842288] RegisterApplication(ApplicationDescription(Spark Pi))[0m
+[0m[[0minfo[0m] [0m15:39:26.671 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - event_produced: AppClient -> Master RegisterApplication(ApplicationDescription(Spark Pi))[0m
+[0m[[0minfo[0m] [0m15:39:26.671 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - schedule_new_message(22): deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.680 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.680 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.680 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.680 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - event_produced: deadLetters -> ScheduleFunctionPlaceholder ScheduleBlock-AppClient.scala:92-AppClient.scala:69-ActorCell.scala:562[0m
+[0m[[0minfo[0m] [0m15:39:26.681 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - schedule_new_message(24): AppClient -> Master RegisterApplication(ApplicationDescription(Spark Pi))[0m
+[0m[[0minfo[0m] [0m15:39:26.681 [new-system-1-akka.actor.default-dispatcher-4] INFO  o.apache.spark.deploy.master.Master - Registering app Spark Pi[0m
+[0m[[0minfo[0m] [0m15:39:26.683 [new-system-1-akka.actor.default-dispatcher-4] INFO  o.apache.spark.deploy.master.Master - Registered app Spark Pi with ID theOnlyApp[0m
+[0m[[0minfo[0m] [0mSubmitting job[0m
+[0m[[0minfo[0m] [0m15:39:26.715 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-1/user/Master#-490842288] -> Actor[akka://new-system-1/user/AppClient#-608660815] RegisteredApplication(theOnlyApp,spark://localhost:1)[0m
+[0m[[0minfo[0m] [0m15:39:26.715 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - event_produced: Master -> AppClient RegisteredApplication(theOnlyApp,spark://localhost:1)[0m
+[0m[[0minfo[0m] [0m15:39:26.725 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - afterMessageReceive: just finished: AppClient -> Master RegisterApplication(ApplicationDescription(Spark Pi))[0m
+[0m[[0minfo[0m] [0m15:39:26.725 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.725 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.725 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/Master#-490842288] CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.725 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - event_produced: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.726 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/CoarseGrainedScheduler#-932396410] ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.726 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - event_produced: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.726 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - schedule_new_message(32): deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.727 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.727 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.727 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.727 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - schedule_new_message(30): deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.727 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.727 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.727 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.727 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - schedule_new_message(28): Master -> AppClient RegisteredApplication(theOnlyApp,spark://localhost:1)[0m
+[0m[[0minfo[0m] [0m15:39:26.728 [new-system-1-akka.actor.default-dispatcher-3] INFO  o.a.s.s.c.SparkDeploySchedulerBackend - Connected to Spark cluster with app ID theOnlyApp[0m
+[0m[[0minfo[0m] [0m15:39:26.728 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - afterMessageReceive: just finished: Master -> AppClient RegisteredApplication(theOnlyApp,spark://localhost:1)[0m
+[0m[[0minfo[0m] [0m15:39:26.728 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.728 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.729 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/CoarseGrainedScheduler#-932396410] ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.729 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - event_produced: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.729 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/Master#-490842288] CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.729 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - event_produced: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.730 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - schedule_new_message(26): deadLetters -> ScheduleFunctionPlaceholder ScheduleBlock-AppClient.scala:92-AppClient.scala:69-ActorCell.scala:562[0m
+[0m[[0minfo[0m] [0m15:39:26.730 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - schedule_new_message(34): deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.731 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.731 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.731 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.731 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - schedule_new_message(36): deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.758 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.758 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.758 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0mwaiting for enqueue_message...[0m
+[0m[[0minfo[0m] [0mdispatching after enqueue_message[0m
+[0m[[0minfo[0m] [0m15:39:26.766 [main] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/DAGSchedulerActorSupervisor/$a#327564173] JobSubmitted(0,MappedRDD[1] at map at STSSparkPi.scala:247,<function2>,[I@1804f60d,false,CallSite(reduceNonBlocking at STSSparkPi.scala:250,org.apache.spark.rdd.RDD.reduceNonBlocking(RDD.scala:864)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi$.run$1(STSSparkPi.scala:250)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi$.org$apache$spark$examples$STSSparkPi$$runAndCleanup$1(STSSparkPi.scala:316)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi$.main(STSSparkPi.scala:350)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi.main(STSSparkPi.scala)[0m
+[0m[[0minfo[0m] [0msun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)[0m
+[0m[[0minfo[0m] [0msun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)[0m
+[0m[[0minfo[0m] [0msun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)[0m
+[0m[[0minfo[0m] [0mjava.lang.reflect.Method.invoke(Method.java:497)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.deploy.SparkSubmit$.launch(SparkSubmit.scala:311)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.deploy.SparkSubmit$.main(SparkSubmit.scala:73)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.deploy.SparkSubmit.main(SparkSubmit.scala)),org.apache.spark.scheduler.JobWaiter@3a80515c,null)[0m
+[0m[[0minfo[0m] [0m15:39:26.767 [main] TRACE RandomScheduler - event_produced: deadLetters -> $a JobSubmitted(0,MappedRDD[1] at map at STSSparkPi.scala:247,<function2>,[I@1804f60d,false,CallSite(reduceNonBlocking at STSSparkPi.scala:250,org.apache.spark.rdd.RDD.reduceNonBlocking(RDD.scala:864)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi$.run$1(STSSparkPi.scala:250)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi$.org$apache$spark$examples$STSSparkPi$$runAndCleanup$1(STSSparkPi.scala:316)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi$.main(STSSparkPi.scala:350)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi.main(STSSparkPi.scala)[0m
+[0m[[0minfo[0m] [0msun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)[0m
+[0m[[0minfo[0m] [0msun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)[0m
+[0m[[0minfo[0m] [0msun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)[0m
+[0m[[0minfo[0m] [0mjava.lang.reflect.Method.invoke(Method.java:497)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.deploy.SparkSubmit$.launch(SparkSubmit.scala:311)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.deploy.SparkSubmit$.main(SparkSubmit.scala:73)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.deploy.SparkSubmit.main(SparkSubmit.scala)),org.apache.spark.scheduler.JobWaiter@3a80515c,null)[0m
+[0m[[0minfo[0m] [0m15:39:26.768 [main] TRACE RandomScheduler - schedule_new_message(38): deadLetters -> $a JobSubmitted(0,MappedRDD[1] at map at STSSparkPi.scala:247,<function2>,[I@1804f60d,false,CallSite(reduceNonBlocking at STSSparkPi.scala:250,org.apache.spark.rdd.RDD.reduceNonBlocking(RDD.scala:864)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi$.run$1(STSSparkPi.scala:250)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi$.org$apache$spark$examples$STSSparkPi$$runAndCleanup$1(STSSparkPi.scala:316)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi$.main(STSSparkPi.scala:350)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi.main(STSSparkPi.scala)[0m
+[0m[[0minfo[0m] [0msun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)[0m
+[0m[[0minfo[0m] [0msun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)[0m
+[0m[[0minfo[0m] [0msun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)[0m
+[0m[[0minfo[0m] [0mjava.lang.reflect.Method.invoke(Method.java:497)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.deploy.SparkSubmit$.launch(SparkSubmit.scala:311)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.deploy.SparkSubmit$.main(SparkSubmit.scala:73)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.deploy.SparkSubmit.main(SparkSubmit.scala)),org.apache.spark.scheduler.JobWaiter@3a80515c,null)[0m
+[0m[[0minfo[0m] [0m15:39:26.779 [new-system-1-akka.actor.default-dispatcher-4] INFO  o.a.spark.scheduler.DAGScheduler - Got job 0 (reduceNonBlocking at STSSparkPi.scala:250) with 4 output partitions (allowLocal=false)[0m
+[0m[[0minfo[0m] [0m15:39:26.780 [new-system-1-akka.actor.default-dispatcher-4] INFO  o.a.spark.scheduler.DAGScheduler - Final stage: Stage 0(reduceNonBlocking at STSSparkPi.scala:250)[0m
+[0m[[0minfo[0m] [0m15:39:26.780 [new-system-1-akka.actor.default-dispatcher-4] INFO  o.a.spark.scheduler.DAGScheduler - Parents of final stage: List()[0m
+[0m[[0minfo[0m] [0m15:39:26.782 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-1/temp/Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw==] -> Actor[akka://new-system-1/user/BlockManagerMaster#-1566141910] GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@76bc7c3a)[0m
+[0m[[0minfo[0m] [0m15:39:26.782 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - event_produced: Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw== -> BlockManagerMaster GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@76bc7c3a)[0m
+[0m[[0minfo[0m] [0m15:39:26.782 [new-system-1-akka.actor.default-dispatcher-4] WARN  Instrumenter - Actor $a is blocked, yet there are no messages to schedule. new-system-1-akka.actor.default-dispatcher-4[0m
+[0m[[0minfo[0m] [0mInjecting 1/6 Send(Master,BasicMessageConstructor(RequestSubmitDriver(DriverDescription ())))[0m
+[0m[[0minfo[0m] [0mInjecting 2/6 WaitCondition(<function0>)[0m
+[0m[[0minfo[0m] [0m15:39:26.783 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/CoarseGrainedScheduler#-932396410] ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.783 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - event_produced: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.784 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/Master#-490842288] CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.784 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - event_produced: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.785 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/Master#-490842288] RequestSubmitDriver(DriverDescription ())[0m
+[0m[[0minfo[0m] [0m15:39:26.785 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - event_produced: deadLetters -> Master RequestSubmitDriver(DriverDescription ())[0m
+[0m[[0minfo[0m] [0m15:39:26.785 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - schedule_new_message(40): Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw== -> BlockManagerMaster GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@76bc7c3a)[0m
+[0m[[0minfo[0m] [0m15:39:26.787 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - event_produced: BlockManagerMaster -> Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw== ArraySeq(List(), List(), List(), List())[0m
+[0m[[0minfo[0m] [0m15:39:26.787 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - afterMessageReceive: just finished: Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw== -> BlockManagerMaster GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@76bc7c3a)[0m
+[0m[[0minfo[0m] [0m15:39:26.787 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.787 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.787 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - schedule_new_message(48): BlockManagerMaster -> Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw== ArraySeq(List(), List(), List(), List())[0m
+[0m[[0minfo[0m] [0m15:39:26.789 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-1/temp/Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw==] -> Actor[akka://new-system-1/user/BlockManagerMaster#-1566141910] GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@5bcd5aac)[0m
+[0m[[0minfo[0m] [0m15:39:26.790 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - event_produced: Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw== -> BlockManagerMaster GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@5bcd5aac)[0m
+[0m[[0minfo[0m] [0m15:39:26.790 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - schedule_new_message(42): deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.791 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.791 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.791 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.791 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - schedule_new_message(44): deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.791 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.791 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.791 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.791 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - schedule_new_message(46): deadLetters -> Master RequestSubmitDriver(DriverDescription ())[0m
+[0m[[0minfo[0m] [0m15:39:26.792 [new-system-1-akka.actor.default-dispatcher-2] INFO  o.apache.spark.deploy.master.Master - Driver submitted [0m
+[0m[[0minfo[0m] [0m15:39:26.798 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> Master RequestSubmitDriver(DriverDescription ())[0m
+[0m[[0minfo[0m] [0m15:39:26.798 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.798 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0mInjecting 3/6 HardKill(Master)[0m
+[0m[[0minfo[0m] [0mmailboxIdle!: Actor[akka://new-system-1/user/Master#-490842288][0m
+[0m[[0minfo[0m] [0mInjecting 3/6 HardKill(Master)[0m
+[0m[[0minfo[0m] [0m{"Master" : 0000014ecc855450} Master: God is about to hard kill me[0m
+[0m[[0minfo[0m] [0mCleaning up before hard kill...[0m
+[0m[[0minfo[0m] [0mCalling stop() and blocking... Actor[akka://new-system-1/user/Master#-490842288][0m
+[0m[[0minfo[0m] [0mInjecting 4/6 CodeBlock(<function0>)[0m
+[0m[[0minfo[0m] [0m15:39:26.834 [new-system-1-akka.actor.default-dispatcher-2] INFO  org.apache.spark.SecurityManager - Changing view acls to: cs[0m
+[0m[[0minfo[0m] [0m15:39:26.834 [new-system-1-akka.actor.default-dispatcher-2] INFO  org.apache.spark.SecurityManager - SecurityManager: authentication disabled; ui acls disabled; users with view permissions: Set(cs)[0m
+[0m[[0minfo[0m] [0mbeginAtomicBlock: Master[0m
+[0m[[0minfo[0m] [0mSystem has created a new actor: Master[0m
+[0m[[0minfo[0m] [0m15:39:26.836 [new-system-1-akka.actor.default-dispatcher-3] INFO  o.apache.spark.deploy.master.Master - Starting Spark master at spark://localhost:12345[0m
+[0m[[0minfo[0m] [0m15:39:26.837 [new-system-1-akka.actor.default-dispatcher-3] INFO  o.apache.spark.deploy.master.Master - Persisting recovery state to directory: /tmp/spark[0m
+[0m[[0minfo[0m] [0mSystem has created a new actor: leaderElectionAgent[0m
+[0m[[0minfo[0m] [0mendAtomicBlock: Master[0m
+[0m[[0minfo[0m] [0mInjecting 5/6 WaitCondition(<function0>)[0m
+[0m[[0minfo[0m] [0m15:39:26.838 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/CoarseGrainedScheduler#-932396410] ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.838 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - event_produced: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0mDropping message to non-existent receiver: Actor[akka://new-system-1/user/Master#-490842288] CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.839 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/Master#-15053359] CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.839 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - event_produced: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.839 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-1/user/Master/leaderElectionAgent#-1584188403] -> Actor[akka://new-system-1/user/Master#-15053359] ElectedLeader[0m
+[0m[[0minfo[0m] [0m15:39:26.839 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - event_produced: leaderElectionAgent -> Master ElectedLeader[0m
+[0m[[0minfo[0m] [0m15:39:26.840 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - schedule_new_message(55): deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.840 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.840 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.840 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.840 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - schedule_new_message(53): deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.841 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.841 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.841 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.841 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - schedule_new_message(57): leaderElectionAgent -> Master ElectedLeader[0m
+[0m[[0minfo[0m] [0m15:39:26.849 [new-system-1-akka.actor.default-dispatcher-3] INFO  o.apache.spark.deploy.master.Master - I have been elected leader! New state: RECOVERING[0m
+[0m[[0minfo[0m] [0m15:39:26.849 [new-system-1-akka.actor.default-dispatcher-3] INFO  o.apache.spark.deploy.master.Master - Trying to recover app: theOnlyApp[0m
+[0m[[0minfo[0m] [0m15:39:26.850 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-1/user/Master#-15053359] -> Actor[akka://new-system-1/user/AppClient#-608660815] MasterChanged(spark://localhost:12345,http://localhost:-1)[0m
+[0m[[0minfo[0m] [0m15:39:26.850 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - event_produced: Master -> AppClient MasterChanged(spark://localhost:12345,http://localhost:-1)[0m
+[0m[[0minfo[0m] [0m15:39:26.852 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - afterMessageReceive: just finished: leaderElectionAgent -> Master ElectedLeader[0m
+[0m[[0minfo[0m] [0m15:39:26.852 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.852 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.853 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/Master#-15053359] CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.853 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - event_produced: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.853 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/CoarseGrainedScheduler#-932396410] ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.853 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - event_produced: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.854 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/Master#-15053359] CompleteRecovery[0m
+[0m[[0minfo[0m] [0m15:39:26.854 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - event_produced: deadLetters -> Master CompleteRecovery[0m
+[0m[[0minfo[0m] [0m15:39:26.854 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - schedule_new_message(61): deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.854 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.854 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.854 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.855 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - schedule_new_message(59): Master -> AppClient MasterChanged(spark://localhost:12345,http://localhost:-1)[0m
+[0m[[0minfo[0m] [0m15:39:26.855 [new-system-1-akka.actor.default-dispatcher-2] INFO  o.a.s.d.client.AppClient$ClientActor - Master has changed, new master is at spark://localhost:12345[0m
+[0m[[0minfo[0m] [0m15:39:26.856 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.tell(): Actor[akka://new-system-1/user/AppClient#-608660815] -> Actor[akka://new-system-1/user/Master#-15053359] MasterChangeAcknowledged(theOnlyApp)[0m
+[0m[[0minfo[0m] [0m15:39:26.856 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - event_produced: AppClient -> Master MasterChangeAcknowledged(theOnlyApp)[0m
+[0m[[0minfo[0m] [0m15:39:26.856 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - afterMessageReceive: just finished: Master -> AppClient MasterChanged(spark://localhost:12345,http://localhost:-1)[0m
+[0m[[0minfo[0m] [0m15:39:26.856 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.856 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.857 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/Master#-15053359] CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.857 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - event_produced: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.858 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - schedule_new_message(63): deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.858 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.858 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.858 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.858 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - schedule_new_message(65): deadLetters -> Master CompleteRecovery[0m
+[0m[[0minfo[0m] [0mcompleteRecovery[0m
+[0m[[0minfo[0m] [0m15:39:26.860 [new-system-1-akka.actor.default-dispatcher-2] INFO  o.apache.spark.deploy.master.Master - Removing app theOnlyApp[0m
+[0m[[0minfo[0m] [0mDrivers: Set(org.apache.spark.deploy.master.DriverInfo@3744ecb6)[0m
+[0m[[0minfo[0m] [0mMASTER CAUSED NullPointerException. YAY[0m
+[0m[[0minfo[0m] [0m15:39:26.862 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> Master CompleteRecovery[0m
+[0m[[0minfo[0m] [0m15:39:26.862 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.862 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.862 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/CoarseGrainedScheduler#-932396410] ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.862 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - event_produced: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.863 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - schedule_new_message(67): AppClient -> Master MasterChangeAcknowledged(theOnlyApp)[0m
+[0m[[0minfo[0m] [0m15:39:26.863 [new-system-1-akka.actor.default-dispatcher-2] WARN  o.apache.spark.deploy.master.Master - Master change ack from unknown app: theOnlyApp[0m
+[0m[[0minfo[0m] [0mcompleteRecovery[0m
+[0m[[0minfo[0m] [0mstate != RecoveryState.RECOVERING[0m
+[0m[[0minfo[0m] [0m15:39:26.864 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - afterMessageReceive: just finished: AppClient -> Master MasterChangeAcknowledged(theOnlyApp)[0m
+[0m[[0minfo[0m] [0m15:39:26.864 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.864 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.864 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - schedule_new_message(69): deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.865 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.865 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.865 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.865 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - schedule_new_message(71): deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.865 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.865 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.865 [new-system-1-akka.actor.default-dispatcher-3] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.865 [new-system-1-akka.actor.default-dispatcher-3] TRACE RandomScheduler - schedule_new_message(50): Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw== -> BlockManagerMaster GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@5bcd5aac)[0m
+[0m[[0minfo[0m] [0m15:39:26.866 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - event_produced: BlockManagerMaster -> Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw== ArraySeq(List(), List(), List(), List())[0m
+[0m[[0minfo[0m] [0m15:39:26.866 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - afterMessageReceive: just finished: Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw== -> BlockManagerMaster GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@5bcd5aac)[0m
+[0m[[0minfo[0m] [0m15:39:26.866 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.866 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.866 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/Master#-15053359] CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.866 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - event_produced: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.867 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/CoarseGrainedScheduler#-932396410] ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.867 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - event_produced: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.867 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - schedule_new_message(73): BlockManagerMaster -> Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw== ArraySeq(List(), List(), List(), List())[0m
+[0m[[0minfo[0m] [0m15:39:26.868 [new-system-1-akka.actor.default-dispatcher-4] INFO  o.a.spark.scheduler.DAGScheduler - Missing parents: List()[0m
+[0m[[0minfo[0m] [0m15:39:26.869 [new-system-1-akka.actor.default-dispatcher-4] DEBUG o.a.spark.scheduler.DAGScheduler - submitStage(Stage 0)[0m
+[0m[[0minfo[0m] [0m15:39:26.869 [new-system-1-akka.actor.default-dispatcher-4] DEBUG o.a.spark.scheduler.DAGScheduler - missing: List()[0m
+[0m[[0minfo[0m] [0m15:39:26.870 [new-system-1-akka.actor.default-dispatcher-4] INFO  o.a.spark.scheduler.DAGScheduler - Submitting Stage 0 (MappedRDD[1] at map at STSSparkPi.scala:247), which has no missing parents[0m
+[0m[[0minfo[0m] [0m15:39:26.870 [new-system-1-akka.actor.default-dispatcher-4] DEBUG o.a.spark.scheduler.DAGScheduler - submitMissingTasks(Stage 0)[0m
+[0m[[0minfo[0m] [0m15:39:26.891 [new-system-1-akka.actor.default-dispatcher-4] INFO  o.a.spark.scheduler.DAGScheduler - Submitting 4 missing tasks from Stage 0 (MappedRDD[1] at map at STSSparkPi.scala:247)[0m
+[0m[[0minfo[0m] [0m15:39:26.891 [new-system-1-akka.actor.default-dispatcher-4] DEBUG o.a.spark.scheduler.DAGScheduler - New pending tasks: Set(ResultTask(0, 2), ResultTask(0, 1), ResultTask(0, 3), ResultTask(0, 0))[0m
+[0m[[0minfo[0m] [0m15:39:26.892 [new-system-1-akka.actor.default-dispatcher-4] INFO  o.a.s.scheduler.TaskSchedulerImpl - Adding task set 0.0 with 4 tasks[0m
+[0m[[0minfo[0m] [0m15:39:26.898 [new-system-1-akka.actor.default-dispatcher-4] DEBUG o.a.spark.scheduler.TaskSetManager - Epoch for TaskSet 0.0: 0[0m
+[0m[[0minfo[0m] [0m15:39:26.901 [new-system-1-akka.actor.default-dispatcher-4] DEBUG o.a.spark.scheduler.TaskSetManager - Valid locality levels for TaskSet 0.0: ANY[0m
+[0m[[0minfo[0m] [0m15:39:26.902 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.tell(): null -> Actor[akka://new-system-1/user/CoarseGrainedScheduler#-932396410] ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.902 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - event_produced: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.903 [new-system-1-akka.actor.default-dispatcher-4] TRACE o.a.spark.scheduler.DAGScheduler - Checking for newly runnable parent stages[0m
+[0m[[0minfo[0m] [0m15:39:26.903 [new-system-1-akka.actor.default-dispatcher-4] TRACE o.a.spark.scheduler.DAGScheduler - running: Set(Stage 0)[0m
+[0m[[0minfo[0m] [0m15:39:26.903 [new-system-1-akka.actor.default-dispatcher-4] TRACE o.a.spark.scheduler.DAGScheduler - waiting: Set()[0m
+[0m[[0minfo[0m] [0m15:39:26.904 [new-system-1-akka.actor.default-dispatcher-4] TRACE o.a.spark.scheduler.DAGScheduler - failed: Set()[0m
+[0m[[0minfo[0m] [0m15:39:26.904 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> $a JobSubmitted(0,MappedRDD[1] at map at STSSparkPi.scala:247,<function2>,[I@1804f60d,false,CallSite(reduceNonBlocking at STSSparkPi.scala:250,org.apache.spark.rdd.RDD.reduceNonBlocking(RDD.scala:864)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi$.run$1(STSSparkPi.scala:250)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi$.org$apache$spark$examples$STSSparkPi$$runAndCleanup$1(STSSparkPi.scala:316)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi$.main(STSSparkPi.scala:350)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.examples.STSSparkPi.main(STSSparkPi.scala)[0m
+[0m[[0minfo[0m] [0msun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)[0m
+[0m[[0minfo[0m] [0msun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)[0m
+[0m[[0minfo[0m] [0msun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)[0m
+[0m[[0minfo[0m] [0mjava.lang.reflect.Method.invoke(Method.java:497)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.deploy.SparkSubmit$.launch(SparkSubmit.scala:311)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.deploy.SparkSubmit$.main(SparkSubmit.scala:73)[0m
+[0m[[0minfo[0m] [0morg.apache.spark.deploy.SparkSubmit.main(SparkSubmit.scala)),org.apache.spark.scheduler.JobWaiter@3a80515c,null)[0m
+[0m[[0minfo[0m] [0m15:39:26.904 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.905 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.905 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - schedule_new_message(75): deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.905 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> Master CheckForWorkerTimeOut[0m
+[0m[[0minfo[0m] [0m15:39:26.905 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.905 [new-system-1-akka.actor.default-dispatcher-2] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.905 [new-system-1-akka.actor.default-dispatcher-2] TRACE RandomScheduler - schedule_new_message(77): deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.906 [new-system-1-akka.actor.default-dispatcher-4] DEBUG o.a.s.scheduler.TaskSchedulerImpl - parentName: , name: TaskSet_0, runningTasks: 0[0m
+[0m[[0minfo[0m] [0m15:39:26.907 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.907 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.907 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0m15:39:26.907 [new-system-1-akka.actor.default-dispatcher-4] TRACE RandomScheduler - schedule_new_message(79): deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0mRetriggering repeating timer: CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.907 [new-system-1-akka.actor.default-dispatcher-4] DEBUG o.a.s.scheduler.TaskSchedulerImpl - parentName: , name: TaskSet_0, runningTasks: 0[0m
+[0m[[0minfo[0m] [0m15:39:26.907 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - afterMessageReceive: just finished: deadLetters -> CoarseGrainedScheduler ReviveOffers[0m
+[0m[[0minfo[0m] [0m15:39:26.908 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - tellEnqueue.await()...[0m
+[0m[[0minfo[0m] [0m15:39:26.908 [new-system-1-akka.actor.default-dispatcher-4] TRACE Instrumenter - done tellEnqueue.await()[0m
+[0m[[0minfo[0m] [0mwaiting for enqueue_message...[0m
