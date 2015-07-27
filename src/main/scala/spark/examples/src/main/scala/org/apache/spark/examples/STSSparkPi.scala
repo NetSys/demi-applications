@@ -26,6 +26,7 @@ import org.apache.spark.scheduler.TaskLocality
 import org.apache.spark.scheduler.local._
 import org.apache.spark.deploy.worker.Worker
 import org.apache.spark.scheduler.cluster.CoarseGrainedClusterMessages
+import org.apache.spark.deploy._
 
 import akka.dispatch.verification._
 
@@ -34,12 +35,14 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 
 import scala.collection.mutable.SynchronizedQueue
+import scala.collection.mutable.ListBuffer
 
 import org.apache.spark.deploy.DeployMessages
 
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 
+import java.io._
 import akka.actor.Props
 
 class SparkMessageFingerprinter extends MessageFingerprinter {
@@ -130,6 +133,7 @@ object MyJob {
 /** Computes an approximation to pi */
 object STSSparkPi {
   def main(args: Array[String]) {
+    EventTypes.setExternalMessageFilter(STSSparkPi.externalMessageFilter)
     var spark : SparkContext = null
     var future : SimpleFutureAction[Int] = null
     var prematureStopSempahore = new Semaphore(0)
@@ -265,30 +269,56 @@ object STSSparkPi {
     runAndCleanup()
 
     stsReturn match {
-      case Some((trace, violation)) =>
+      case Some((initTrace, violation)) =>
         println("Violation was found! Trying replay")
 
-        // We know that there are no external messages. So, easy way to get around
-        // "deadLetters" duplicate messages send issue: mark all messages as not from "deadLetters"
-        // TODO(cs): find a more principled way to do this.
-        val mappedEvents = new SynchronizedQueue[Event]
-        mappedEvents ++= trace.events.map {
-          case UniqueMsgSend(MsgSend("deadLetters", rcv, msg), id) =>
-             UniqueMsgSend(MsgSend("external", rcv, msg), id)
-          case e => e
+        val sts = new STSScheduler(schedulerConfig, initTrace, false)
+        def preTest() {
+          Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].beginUnignorableEvents
         }
-        val mappedEventTrace = new EventTrace(mappedEvents, trace.original_externals)
+        def postTest() {
+          prematureStopSempahore.release()
+        }
+        sts.setPreTestCallback(preTest)
+        sts.setPostTestCallback(postTest)
 
-        val sts = new STSScheduler(schedulerConfig, mappedEventTrace, false)
-        sts.setPreTestCallback(() => sts.beginUnignorableEvents)
-        sts.setPostTestCallback(() => prematureStopSempahore.release())
+        val dag = new UnmodifiedEventDag(initTrace.original_externals flatMap {
+          case WaitQuiescence() => None
+          case WaitCondition(_) => None
+          case e => Some(e)
+        })
+        // Conjoin the worker starts and failures
+        // atomicPairs foreach {
+        //   case ((e1, e2)) =>
+        //     dag.conjoinAtoms(e1, e2)
+        // }
 
+        val (mcs, stats, verified_mcs, _) =
         RunnerUtils.stsSchedDDMin(false, schedulerConfig,
-          mappedEventTrace, violation,
+          initTrace, violation,
           initializationRoutine=Some(runAndCleanup),
-          _sched=Some(sts))
+          _sched=Some(sts), dag=Some(dag))
+
+        verified_mcs match {
+          case Some(mcsTrace) =>
+            val (internalStats, intMinTrace) = RunnerUtils.minimizeInternals(
+              schedulerConfig, mcs, mcsTrace, Seq.empty, violation,
+              initializationRoutine=Some(runAndCleanup), preTest=Some(preTest),
+              postTest=Some(postTest))
+
+            RunnerUtils.printMinimizationStats(initTrace, None, mcsTrace,
+              intMinTrace, fingerprintFactory)
+          case None =>
+        }
       case None =>
         println("Job finished successfully...")
+    }
+  }
+
+  def externalMessageFilter(msg: Any) = {
+    msg match {
+      case DeployMessages.RequestSubmitDriver(_) => true
+      case _ => false
     }
   }
 }
