@@ -65,9 +65,8 @@ private[spark] class Master(
   val WORKER_TIMEOUT = conf.getLong("spark.worker.timeout", 60) * 1000
   val RETAINED_APPLICATIONS = conf.getInt("spark.deploy.retainedApplications", 200)
   val REAPER_ITERATIONS = conf.getInt("spark.dead.worker.persistence", 15)
-  // XXX Too lazy to figure out why this isn't being read properly from conf
-  val RECOVERY_DIR = conf.get("spark.deploy.recoveryDirectory", "/tmp/spark")
-  val RECOVERY_MODE = conf.get("spark.deploy.recoveryMode", "FILESYSTEM")
+  val RECOVERY_DIR = conf.get("spark.deploy.recoveryDirectory", "")
+  val RECOVERY_MODE = conf.get("spark.deploy.recoveryMode", "")
 
   val workers = new HashSet[WorkerInfo]
   val idToWorker = new HashMap[String, WorkerInfo]
