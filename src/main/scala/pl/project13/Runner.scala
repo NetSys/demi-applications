@@ -156,9 +156,9 @@ object Main extends App {
     members.map(member =>
       Start(Init.actorCtor, member)) ++
     members.map(member =>
-      Send(member, new BootstrapMessageConstructor(Set[Int]()))) ++
-    Array[ExternalEvent](WaitQuiescence()
-  )
+      Send(member, new BootstrapMessageConstructor(Set[Int]()))) // ++
+  //  Array[ExternalEvent](WaitQuiescence()
+  //)
   // -- --
 
   def shutdownCallback() = {
@@ -177,8 +177,8 @@ object Main extends App {
     ignoreTimers=false
   )
 
-  val weights = new FuzzerWeights(kill=0.01, send=0.3, wait_quiescence=0.1,
-                                  partition=0.1, unpartition=0)
+  val weights = new FuzzerWeights(kill=0.00, send=0.3, wait_quiescence=0.0,
+                                  partition=0.0, unpartition=0)
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(500, weights, messageGen, prefix)
 
@@ -194,7 +194,7 @@ object Main extends App {
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  schedulerConfig,
                                  validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(250))
+                                 maxMessages=Some(20000))
     traceFound = tuple._1
     violationFound = tuple._2
   }
