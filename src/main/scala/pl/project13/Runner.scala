@@ -129,9 +129,22 @@ object Init {
         return Some(m)
     }
   }
+
+  def externalMessageFilter(msg: Any) = {
+    msg match {
+      case ChangeConfiguration(_) => true
+      case ClientMessage(_, _) => true
+      case _ => false
+    }
+  }
 }
 
 object Main extends App {
+  EventTypes.setExternalMessageFilter(Init.externalMessageFilter)
+  Instrumenter().setPassthrough
+  Instrumenter().actorSystem
+  Instrumenter().unsetPassthrough
+
   val raftChecks = new RaftChecks
 
   val fingerprintFactory = new FingerprintFactory
@@ -164,10 +177,41 @@ object Main extends App {
     ignoreTimers=false
   )
 
-  val mcs_dir = "experiments/akka-raft-fuzz_2015_04_19_15_35_23_IncDDMin_DPOR"
-  var msgDeserializer = new RaftMessageDeserializer(Instrumenter().actorSystem)
+  val weights = new FuzzerWeights(kill=0.01, send=0.3, wait_quiescence=0.1,
+                                  partition=0.1, unpartition=0)
+  val messageGen = new ClientMessageGenerator(members)
+  val fuzzer = new Fuzzer(500, weights, messageGen, prefix)
 
-  println("Trying replay..")
-  RunnerUtils.replayExperiment(mcs_dir, schedulerConfig, msgDeserializer,
-                               traceFile=ExperimentSerializer.minimizedInternalTrace)
+  val fuzz = true
+
+  var traceFound: EventTrace = null
+  var violationFound: ViolationFingerprint = null
+  if (fuzz) {
+    def replayerCtor() : ReplayScheduler = {
+      val replayer = new ReplayScheduler(schedulerConfig)
+      return replayer
+    }
+    val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
+                                 schedulerConfig,
+                                 validate_replay=Some(replayerCtor),
+                                 maxMessages=Some(250))
+    traceFound = tuple._1
+    violationFound = tuple._2
+  }
+
+  val (mcs, stats, verified_mcs, violation) =
+  RunnerUtils.stsSchedDDMin(false,
+    schedulerConfig,
+    traceFound,
+    violationFound,
+    actorNameProps=Some(ExperimentSerializer.getActorNameProps(traceFound)))
+
+  val (_, intMinTrace) = RunnerUtils.minimizeInternals(schedulerConfig,
+                        mcs,
+                        verified_mcs.get,
+                        ExperimentSerializer.getActorNameProps(traceFound),
+                        violationFound)
+
+  RunnerUtils.printMinimizationStats(
+    traceFound, None, verified_mcs.get, intMinTrace, schedulerConfig.messageFingerprinter)
 }
