@@ -464,32 +464,34 @@ private[spark] object Utils extends Logging {
   lazy val localIpAddressHostname: String = getAddressHostName(localIpAddress)
 
   private def findLocalIpAddress(): String = {
-    val defaultIpOverride = System.getenv("SPARK_LOCAL_IP")
-    if (defaultIpOverride != null) {
-      defaultIpOverride
-    } else {
-      val address = InetAddress.getLocalHost
-      if (address.isLoopbackAddress) {
-        // Address resolves to something like 127.0.1.1, which happens on Debian; try to find
-        // a better address using the local network interfaces
-        for (ni <- NetworkInterface.getNetworkInterfaces) {
-          for (addr <- ni.getInetAddresses if !addr.isLinkLocalAddress &&
-               !addr.isLoopbackAddress && addr.isInstanceOf[Inet4Address]) {
-            // We've found an address that looks reasonable!
-            logWarning("Your hostname, " + InetAddress.getLocalHost.getHostName + " resolves to" +
-              " a loopback address: " + address.getHostAddress + "; using " + addr.getHostAddress +
-              " instead (on interface " + ni.getName + ")")
-            logWarning("Set SPARK_LOCAL_IP if you need to bind to another address")
-            return addr.getHostAddress
-          }
-        }
-        logWarning("Your hostname, " + InetAddress.getLocalHost.getHostName + " resolves to" +
-          " a loopback address: " + address.getHostAddress + ", but we couldn't find any" +
-          " external IP address!")
-        logWarning("Set SPARK_LOCAL_IP if you need to bind to another address")
-      }
-      address.getHostAddress
-    }
+    return "127.0.0.1"
+
+    // val defaultIpOverride = System.getenv("SPARK_LOCAL_IP")
+    // if (defaultIpOverride != null) {
+    //   defaultIpOverride
+    // } else {
+    //   val address = InetAddress.getLocalHost
+    //   if (address.isLoopbackAddress) {
+    //     // Address resolves to something like 127.0.1.1, which happens on Debian; try to find
+    //     // a better address using the local network interfaces
+    //     for (ni <- NetworkInterface.getNetworkInterfaces) {
+    //       for (addr <- ni.getInetAddresses if !addr.isLinkLocalAddress &&
+    //            !addr.isLoopbackAddress && addr.isInstanceOf[Inet4Address]) {
+    //         // We've found an address that looks reasonable!
+    //         logWarning("Your hostname, " + InetAddress.getLocalHost.getHostName + " resolves to" +
+    //           " a loopback address: " + address.getHostAddress + "; using " + addr.getHostAddress +
+    //           " instead (on interface " + ni.getName + ")")
+    //         logWarning("Set SPARK_LOCAL_IP if you need to bind to another address")
+    //         return addr.getHostAddress
+    //       }
+    //     }
+    //     logWarning("Your hostname, " + InetAddress.getLocalHost.getHostName + " resolves to" +
+    //       " a loopback address: " + address.getHostAddress + ", but we couldn't find any" +
+    //       " external IP address!")
+    //     logWarning("Set SPARK_LOCAL_IP if you need to bind to another address")
+    //   }
+    //   address.getHostAddress
+    // }
   }
 
   private var customHostname: Option[String] = None
@@ -1287,4 +1289,12 @@ private[spark] object Utils extends Logging {
     }
   }
 
+  /**
+   * Convert all spark properties set in the given SparkConf to a sequence of java options.
+   */
+  def sparkJavaOpts(conf: SparkConf, filterKey: (String => Boolean) = _ => true): Seq[String] = {
+    conf.getAll
+      .filter { case (k, _) => filterKey(k) }
+      .map { case (k, v) => s"-D$k=$v" }
+  }
 }

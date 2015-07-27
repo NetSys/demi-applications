@@ -79,7 +79,7 @@ private[spark] class Worker(
 
 
   val masterLock: Object = new Object()
-  var master: ActorRef = context.actorFor("../Master")
+  // var master: ActorRef = context.actorFor("../Master")
   var masterAddress: Address = null
   var activeMasterUrl: String = ""
   var activeMasterWebUiUrl : String = ""
@@ -120,14 +120,18 @@ private[spark] class Worker(
       workDir.mkdirs()
       if ( !workDir.exists() || !workDir.isDirectory) {
         logError("Failed to create work directory " + workDir)
-        System.exit(1)
+        //System.exit(1)
       }
       assert (workDir.isDirectory)
     } catch {
       case e: Exception =>
         logError("Failed to create work directory " + workDir, e)
-        System.exit(1)
+        //System.exit(1)
     }
+  }
+
+  def master(): ActorRef = {
+    return context.actorFor("../Master")
   }
 
   override def preStart() {
@@ -170,6 +174,8 @@ private[spark] class Worker(
           throw new SparkException("Invalid spark URL: " + x)
       }
       connected = true
+      // XXX
+      Worker.connected.getAndIncrement()
     }
   }
 
@@ -193,7 +199,7 @@ private[spark] class Worker(
             registrationRetryTimer.foreach(_.cancel())
           } else if (retries >= REGISTRATION_RETRIES) {
             logError("All masters are unresponsive! Giving up.")
-            System.exit(1)
+            //System.exit(1)
           } else {
             tryRegisterAllMasters()
           }
@@ -244,7 +250,7 @@ private[spark] class Worker(
     case RegisterWorkerFailed(message) =>
       if (!registered) {
         logError("Worker registration failed: " + message)
-        System.exit(1)
+        //System.exit(1)
       }
 
     case LaunchExecutor(masterUrl, appId, execId, appDesc, cores_, memory_) =>
@@ -389,6 +395,7 @@ private[spark] class Worker(
 
 object Worker extends Logging {
   val workerId = new AtomicInteger(0)
+  val connected = new AtomicInteger(0)
 
   def main(argStrings: Array[String]) {
     throw new RuntimeException("Worker running as own process")

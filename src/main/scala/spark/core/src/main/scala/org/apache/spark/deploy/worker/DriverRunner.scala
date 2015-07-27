@@ -36,6 +36,7 @@ import org.apache.spark.deploy.master.DriverState.DriverState
 
 /**
  * Manages the execution of one driver, including automatically restarting the driver on failure.
+ * This is currently only used in standalone cluster deploy mode.
  */
 private[spark] class DriverRunner(
     val driverId: String,
@@ -68,43 +69,46 @@ private[spark] class DriverRunner(
   def start() = {
     new Thread("DriverRunner for " + driverId) {
       override def run() {
-        try {
-          val driverDir = createWorkingDirectory()
-          val localJarFilename = downloadUserJar(driverDir)
+        // XXX STS
+        Thread.sleep(999999)
 
-          // Make sure user application jar is on the classpath
-          // TODO: If we add ability to submit multiple jars they should also be added here
-          val classPath = driverDesc.command.classPathEntries ++ Seq(s"$localJarFilename")
-          val newCommand = Command(
-            driverDesc.command.mainClass,
-            driverDesc.command.arguments.map(substituteVariables),
-            driverDesc.command.environment,
-            classPath,
-            driverDesc.command.libraryPathEntries,
-            driverDesc.command.extraJavaOptions)
-          val command = CommandUtils.buildCommandSeq(newCommand, driverDesc.mem,
-            sparkHome.getAbsolutePath)
-          launchDriver(command, driverDesc.command.environment, driverDir, driverDesc.supervise)
-        }
-        catch {
-          case e: Exception => finalException = Some(e)
-        }
+        // try {
+        //   val driverDir = createWorkingDirectory()
+        //   val localJarFilename = downloadUserJar(driverDir)
 
-        val state =
-          if (killed) {
-            DriverState.KILLED
-          } else if (finalException.isDefined) {
-            DriverState.ERROR
-          } else {
-            finalExitCode match {
-              case Some(0) => DriverState.FINISHED
-              case _ => DriverState.FAILED
-            }
-          }
+        //   // Make sure user application jar is on the classpath
+        //   // TODO: If we add ability to submit multiple jars they should also be added here
+        //   val classPath = driverDesc.command.classPathEntries ++ Seq(s"$localJarFilename")
+        //   val newCommand = Command(
+        //     driverDesc.command.mainClass,
+        //     driverDesc.command.arguments.map(substituteVariables),
+        //     driverDesc.command.environment,
+        //     classPath,
+        //     driverDesc.command.libraryPathEntries,
+        //     driverDesc.command.javaOpts)
+        //   val command = CommandUtils.buildCommandSeq(newCommand, driverDesc.mem,
+        //     sparkHome.getAbsolutePath)
+        //   launchDriver(command, driverDesc.command.environment, driverDir, driverDesc.supervise)
+        // }
+        // catch {
+        //   case e: Exception => finalException = Some(e)
+        // }
 
-        finalState = Some(state)
+        // val state =
+        //   if (killed) {
+        //     DriverState.KILLED
+        //   } else if (finalException.isDefined) {
+        //     DriverState.ERROR
+        //   } else {
+        //     finalExitCode match {
+        //       case Some(0) => DriverState.FINISHED
+        //       case _ => DriverState.FAILED
+        //     }
+        //   }
 
-        worker ! DriverStateChanged(driverId, state, finalException)
+        // finalState = Some(state)
+
+        // worker ! DriverStateChanged(driverId, state, finalException)
       }
     }.start()
   }

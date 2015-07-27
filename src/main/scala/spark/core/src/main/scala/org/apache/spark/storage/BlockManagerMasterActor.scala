@@ -332,7 +332,7 @@ class BlockManagerMasterActor(val isLocal: Boolean, conf: SparkConf, listenerBus
           // A block manager of the same executor already exists.
           // This should never happen. Let's just quit.
           logError("Got two different block manager registrations on " + id.executorId)
-          System.exit(1)
+          //System.exit(1)
         case None =>
           blockManagerIdByExecutor(id.executorId) = id
       }

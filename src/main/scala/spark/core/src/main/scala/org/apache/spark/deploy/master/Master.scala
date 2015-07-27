@@ -19,6 +19,8 @@ package org.apache.spark.deploy.master
 
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.concurrent.atomic.AtomicBoolean
+
 
 import scala.collection.mutable.{ArrayBuffer, HashMap, HashSet}
 import scala.concurrent.Await
@@ -51,7 +53,8 @@ private[spark] class Master(
     host: String,
     port: Int,
     webUiPort: Int,
-    val securityMgr: SecurityManager)
+    val securityMgr: SecurityManager,
+    atomicBlock:Boolean=false)
   extends Actor with Logging {
 
   import context.dispatcher   // to use Akka's scheduler.schedule()
@@ -62,8 +65,9 @@ private[spark] class Master(
   val WORKER_TIMEOUT = conf.getLong("spark.worker.timeout", 60) * 1000
   val RETAINED_APPLICATIONS = conf.getInt("spark.deploy.retainedApplications", 200)
   val REAPER_ITERATIONS = conf.getInt("spark.dead.worker.persistence", 15)
-  val RECOVERY_DIR = conf.get("spark.deploy.recoveryDirectory", "")
-  val RECOVERY_MODE = conf.get("spark.deploy.recoveryMode", "NONE")
+  // XXX Too lazy to figure out why this isn't being read properly from conf
+  val RECOVERY_DIR = conf.get("spark.deploy.recoveryDirectory", "/tmp/spark")
+  val RECOVERY_MODE = conf.get("spark.deploy.recoveryMode", "FILESYSTEM")
 
   val workers = new HashSet[WorkerInfo]
   val idToWorker = new HashMap[String, WorkerInfo]
@@ -152,6 +156,13 @@ private[spark] class Master(
           context.actorOf(Props(classOf[MonarchyLeaderAgent], self),
             name="leaderElectionAgent")
       }
+
+    if (atomicBlock &&
+        Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+      val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+      println("endAtomicBlock: Master")
+      sched.endExternalAtomicBlock(-1)
+    }
   }
 
   override def preRestart(reason: Throwable, message: Option[Any]) {
@@ -233,12 +244,13 @@ private[spark] class Master(
         waitingDrivers += driver
         drivers.add(driver)
         schedule()
+        Master.hasSubmittedDriver.set(true)
 
         // TODO: It might be good to instead have the submission client poll the master to determine
         //       the current status of the driver. For now it's simply "fire and forget".
 
         sender ! SubmitDriverResponse(true, Some(driver.id),
-          s"Driver successfully submitted as ${driver.id}")
+            s"Driver successfully submitted as ${driver.id}")
       }
     }
 
@@ -420,7 +432,7 @@ private[spark] class Master(
         app.state = ApplicationState.UNKNOWN
         app.driver ! MasterChanged(masterUrl, masterWebUiUrl)
       } catch {
-        case e: Exception => logInfo("App " + app.id + " had exception on reconnect")
+        case e: Exception => throw e // logInfo("App " + app.id + " had exception on reconnect" + e)
       }
     }
 
@@ -437,37 +449,50 @@ private[spark] class Master(
         worker.state = WorkerState.UNKNOWN
         worker.actor ! MasterChanged(masterUrl, masterWebUiUrl)
       } catch {
-        case e: Exception => logInfo("Worker " + worker.id + " had exception on reconnect")
+        case e: Exception => logInfo("Worker " + worker.id + " had exception on reconnect" + e)
       }
     }
   }
 
   def completeRecovery() {
+    println("completeRecovery")
+
     // Ensure "only-once" recovery semantics using a short synchronization period.
-    synchronized {
-      if (state != RecoveryState.RECOVERING) { return }
-      state = RecoveryState.COMPLETING_RECOVERY
-    }
-
-    // Kill off any workers and apps that didn't respond to us.
-    workers.filter(_.state == WorkerState.UNKNOWN).foreach(removeWorker)
-    apps.filter(_.state == ApplicationState.UNKNOWN).foreach(finishApplication)
-
-    // Reschedule drivers which were not claimed by any workers
-    drivers.filter(_.worker.isEmpty).foreach { d =>
-      logWarning(s"Driver ${d.id} was not found after master recovery")
-      if (d.desc.supervise) {
-        logWarning(s"Re-launching ${d.id}")
-        relaunchDriver(d)
-      } else {
-        removeDriver(d.id, DriverState.ERROR, None)
-        logWarning(s"Did not re-launch ${d.id} because it was not supervised")
+    try {
+      synchronized {
+        if (state != RecoveryState.RECOVERING) {
+          println("state != RecoveryState.RECOVERING")
+          return
+        }
+        state = RecoveryState.COMPLETING_RECOVERY
       }
-    }
 
-    state = RecoveryState.ALIVE
-    schedule()
-    logInfo("Recovery complete - resuming operations!")
+      // Kill off any workers and apps that didn't respond to us.
+      workers.filter(_.state == WorkerState.UNKNOWN).foreach(removeWorker)
+      apps.filter(_.state == ApplicationState.UNKNOWN).foreach(finishApplication)
+
+      // Reschedule drivers which were not claimed by any workers
+      println("Drivers: " + drivers)
+      drivers.filter(_.worker.isEmpty).foreach { d =>
+        logWarning(s"Driver ${d.id} was not found after master recovery")
+        if (d.desc.supervise) {
+          logWarning(s"Re-launching ${d.id}")
+          relaunchDriver(d)
+        } else {
+          removeDriver(d.id, DriverState.ERROR, None)
+          logWarning(s"Did not re-launch ${d.id} because it was not supervised")
+        }
+      }
+
+      state = RecoveryState.ALIVE
+      schedule()
+      logInfo("Recovery complete - resuming operations!")
+    } catch {
+      case npe: NullPointerException =>
+        println("MASTER CAUSED NullPointerException. YAY")
+        Master.hasCausedNPE.set(true)
+        //throw npe
+    }
   }
 
   /**
@@ -729,6 +754,7 @@ private[spark] class Master(
   }
 
   def newDriverId(submitDate: Date): String = {
+    // TODO(cs): make me deterministic?
     val appId = "driver-%s-%04d".format(createDateFormat.format(submitDate), nextDriverNumber)
     nextDriverNumber += 1
     appId
@@ -764,7 +790,10 @@ private[spark] class Master(
   }
 }
 
-private[spark] object Master extends Logging {
+object Master extends Logging {
+  var hasCausedNPE = new AtomicBoolean(false)
+  var hasSubmittedDriver = new AtomicBoolean(false) // XXX
+
   val systemName = "sparkMaster"
   private val actorName = "Master"
   val sparkUrlRegex = "spark://([^:]+):([0-9]+)".r
@@ -797,7 +826,7 @@ private[spark] object Master extends Logging {
     val (actorSystem, boundPort) = AkkaUtils.createActorSystem(systemName, host, port, conf = conf,
       securityManager = securityMgr)
     val actor = actorSystem.actorOf(Props(classOf[Master], host, boundPort, webUiPort,
-      securityMgr), actorName)
+      securityMgr, false), actorName)
     val timeout = AkkaUtils.askTimeout(conf)
     val respFuture = actor.ask(RequestWebUIPort)(timeout)
     Instrumenter().actorBlocked
@@ -816,7 +845,7 @@ private[spark] object Master extends Logging {
     val boundPort = 1
     val actorSystem = Instrumenter()._actorSystem
     val actor = actorSystem.actorOf(Props(classOf[Master], host, boundPort, webUiPort,
-      securityMgr), actorName)
+      securityMgr, false), actorName)
     val timeout = AkkaUtils.askTimeout(conf)
     val respFuture = actor.ask(RequestWebUIPort)(timeout)
     Instrumenter().actorBlocked
