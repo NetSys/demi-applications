@@ -195,6 +195,8 @@ object STSSparkPi {
 
     def cleanup() {
       if (spark != null) {
+        TaskSetManager.decisions.clear
+
         if (Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].unignorableEvents.get()) {
           Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].endUnignorableEvents
         }
@@ -212,7 +214,7 @@ object STSSparkPi {
         // proceeding causes exceptions upon trying to create new actors (even
         // after nulling out Instrumenter()._actorSystem...?). So, we do the
          // worst hack: we sleep for a bit...
-        Thread.sleep(3)
+        Thread.sleep(2)
 
         // So that Spark can start its own actorSystem again
         Instrumenter()._actorSystem = null
@@ -251,6 +253,10 @@ object STSSparkPi {
     val sched = new RandomScheduler(schedulerConfig,
       invariant_check_interval=3, randomizationStrategy=new SrcDstFIFO)
     sched.setMaxMessages(1000)
+    // UNCOMMENT FOR LONG RUN
+    //val sched = new RandomScheduler(schedulerConfig,
+    //  invariant_check_interval=2000, randomizationStrategy=new SrcDstFIFO)
+    //sched.setMaxMessages(1000000)
     Instrumenter().scheduler = sched
 
     val prefix = Array[ExternalEvent](
@@ -258,6 +264,10 @@ object STSSparkPi {
       (1 to 3).map { case i => CodeBlock(() =>
         WorkerCreator.createWorker("Worker"+i)) } ++
       (1 to 3).map { case i => CodeBlock(() => run(i)) } ++
+      // XXX Uncomment for long run:
+      //(4 to 15).map { case i => CodeBlock(() =>
+      //  WorkerCreator.createWorker("Worker"+i)) } ++
+      //(4 to 15).map { case i => CodeBlock(() => run(i)) } ++
       Array[ExternalEvent](
       WaitCondition(() => future != null && future.isCompleted))
 
