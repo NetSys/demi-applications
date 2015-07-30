@@ -23,7 +23,9 @@ object RunnerUtils {
   def countMsgEvents(trace: Iterable[Event]) : Int = {
     return trace.filter {
       case m: MsgEvent => true
+      case u: UniqueMsgEvent => true
       case t: TimerDelivery => true
+      case u: UniqueTimerDelivery => true
       case _ => false
     } size
   }
@@ -649,6 +651,7 @@ object RunnerUtils {
             " ("+intmin_externals + " externals, "+
             intmin_timers + " timers)")
     println("Final messages delivered:") // w/o fingerints
+    // TODO(cs): annotate which events are unignorable.
     intMinTrace foreach {
       case m: MsgEvent => println(m)
       case t: TimerDelivery => println(t)

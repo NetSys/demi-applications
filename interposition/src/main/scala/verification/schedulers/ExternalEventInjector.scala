@@ -150,8 +150,13 @@ trait ExternalEventInjector[E] {
   def endUnignorableEvents() {
     assert(unignorableEvents.get())
     unignorableEvents.set(false)
-    // TODO(cs): should these be placed into messagesToSend too?
-    event_orchestrator.events += EndUnignorableEvents
+
+    // Make sure the marker appears after any currently enqueued external
+    // message sends.
+    messagesToSend.synchronized {
+      messagesToSend += ((None, null, EndUnignorableEvents))
+      messagesToSend.notifyAll()
+    }
   }
 
   /**
@@ -164,13 +169,23 @@ trait ExternalEventInjector[E] {
    * to show up.
    */
   def beginExternalAtomicBlock(taskId: Long) {
+    if (Instrumenter()._passThrough.get()) {
+      return
+    }
+
     // Place the marker into the current place in messagesToSend; any messages
     // already enqueued before this are not part of the
     // beginExternalAtomicBlock
     beganExternalAtomicBlocks.synchronized {
-      beganExternalAtomicBlocks += taskId
+      endedExternalAtomicBlocks.synchronized {
+        assert(!(beganExternalAtomicBlocks contains taskId) ||
+                (endedExternalAtomicBlocks contains taskId))
+        beganExternalAtomicBlocks += taskId
+      }
     }
-    messagesToSend += ((None, null, BeginExternalAtomicBlock(taskId)))
+    messagesToSend.synchronized {
+      messagesToSend += ((None, null, BeginExternalAtomicBlock(taskId)))
+    }
     pendingExternalAtomicBlocks.incrementAndGet()
     // We shouldn't be dispatching while the atomic block executes.
     Instrumenter().stopDispatch.set(true)
@@ -182,12 +197,21 @@ trait ExternalEventInjector[E] {
    * Called by external threads.
    */
   def endExternalAtomicBlock(taskId: Long) {
+    if (Instrumenter()._passThrough.get()) {
+      return
+    }
+
     // Place the marker into the current place in messagesToSend; any messages
     // already enqueued before this are part of the atomic block.
-    messagesToSend += ((None, null, EndExternalAtomicBlock(taskId)))
+    messagesToSend.synchronized {
+      messagesToSend += ((None, null, EndExternalAtomicBlock(taskId)))
+    }
     // Signal that the main thread should invoke send_external_messages
-    endedExternalAtomicBlocks.synchronized {
-      endedExternalAtomicBlocks.notifyAll()
+    beganExternalAtomicBlocks.synchronized {
+      endedExternalAtomicBlocks.synchronized {
+        assert(beganExternalAtomicBlocks contains taskId)
+        endedExternalAtomicBlocks.notifyAll()
+      }
     }
     if (pendingExternalAtomicBlocks.decrementAndGet() == 0) {
       var restartDispatch = false
@@ -268,7 +292,7 @@ trait ExternalEventInjector[E] {
     }
 
     try {
-      assert(started.get)
+      assert(started.get, "!started.get:" + Thread.currentThread.getName)
 
       // Send all pending fd responses
       if (fd != null) {
@@ -280,6 +304,8 @@ trait ExternalEventInjector[E] {
           for ((senderOpt, receiver, msg) <- messagesToSend) {
             // Check if the message is actually a special marker
             msg match {
+              case EndUnignorableEvents =>
+                event_orchestrator.events += EndUnignorableEvents
               case BeginExternalAtomicBlock(taskId) =>
                 event_orchestrator.events += BeginExternalAtomicBlock(taskId)
               case EndExternalAtomicBlock(taskId) =>
@@ -429,12 +455,14 @@ trait ExternalEventInjector[E] {
     val checkpointRequests = checkpointer.prepareRequests(actorRefs)
     // Put our requests at the front of the queue, and any existing requests
     // at the end of the queue.
-    val existingExternals = new Queue[(Option[ActorRef], ActorRef, Any)] ++ messagesToSend
-    messagesToSend.clear
-    for ((actor, request) <- checkpointRequests) {
-      enqueue_message(None, actor, request)
+    messagesToSend.synchronized {
+      val existingExternals = new Queue[(Option[ActorRef], ActorRef, Any)] ++ messagesToSend
+      messagesToSend.clear
+      for ((actor, request) <- checkpointRequests) {
+        enqueue_message(None, actor, request)
+      }
+      messagesToSend ++= existingExternals
     }
-    messagesToSend ++= existingExternals
   }
 
   /**
@@ -548,11 +576,13 @@ trait ExternalEventInjector[E] {
 
   // Return true if we found the timer in our messagesToSend
   def handle_timer_cancel(rcv: String, msg: Any): Boolean = {
-    messagesToSend.dequeueFirst(tuple =>
-      tuple._2 != null &&
-      tuple._2.path.name == rcv && tuple._3 == msg) match {
-      case Some(_) => return true
-      case None => return false
+    messagesToSend.synchronized {
+      messagesToSend.dequeueFirst(tuple =>
+        tuple._2 != null &&
+        tuple._2.path.name == rcv && tuple._3 == msg) match {
+        case Some(_) => return true
+        case None => return false
+      }
     }
   }
 

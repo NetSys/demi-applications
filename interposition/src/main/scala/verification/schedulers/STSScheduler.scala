@@ -17,6 +17,7 @@ import scala.collection.JavaConversions._
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 
+
 import scala.util.control.Breaks._
 
 import org.slf4j.LoggerFactory,
@@ -222,7 +223,7 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
     // Wait until the initialization thread is done. Assumes that it
     // terminates!
     if (initThread != null) {
-      println("Joining on initialization thread")
+      println("Joining on initialization thread " + Thread.currentThread.getName)
       initThread.join
     }
     reset_all_state
@@ -295,6 +296,23 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
     }
   }
 
+  // Check if the event is expected to occur
+  def messagePending(sender: String, receiver: String, msg: Any) : Boolean = {
+    // Make sure to send any external messages that recently got enqueued
+    send_external_messages(false)
+    val key = (sender, receiver,
+               messageFingerprinter.fingerprint(msg))
+
+    return pendingEvents.get(key) match {
+      case Some(queue) =>
+        // The message is pending, but also double check that the
+        // destination isn't currently blocked.
+        !queue.isEmpty && !(Instrumenter().blockedActors contains receiver)
+      case None =>
+        false
+    }
+  }
+
   def advanceReplay() {
     schedSemaphore.acquire
     started.set(true)
@@ -361,6 +379,18 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
           case m @ MsgSend (sender, receiver, message) =>
             if (EventTypes.isExternal(m)) {
               enqueue_message(None, receiver, message)
+            } else if (expectUnignorableEvents && sender == "deadLetters") {
+              // We need to wait until this message is enqueued, since once
+              // UnignorableEvents is over we might proceed directly to
+              // delivering this message.
+              messagesToSend.synchronized {
+                while (!messagePending("deadLetters", m.receiver, m.msg)) {
+                  println("Blocking until enqueue_message... (MsgSend)")
+                  messagesToSend.wait()
+                  println("Checking messagePending..")
+                  // N.B. messagePending(m) invokes send_external_messages
+                }
+              }
             }
           case TimerDelivery(snd, rcv, fingerprint) =>
             send_external_messages(false)
@@ -371,24 +401,7 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
             }
           // MsgEvent is the delivery
           case m: MsgEvent =>
-            // Check if the event is expected to occur
-            def messagePending(m: MsgEvent) : Boolean = {
-              // Make sure to send any external messages that recently got enqueued
-              send_external_messages(false)
-              val key = (m.sender, m.receiver,
-                         messageFingerprinter.fingerprint(m.msg))
-
-              return pendingEvents.get(key) match {
-                case Some(queue) =>
-                  // The message is pending, but also double check that the
-                  // destination isn't currently blocked.
-                  !queue.isEmpty && !(Instrumenter().blockedActors contains m.receiver)
-                case None =>
-                  false
-              }
-            }
-
-            val enabled = messagePending(m)
+            val enabled = messagePending(m.sender, m.receiver, m.msg)
             if (enabled) {
               // Yay, it's already enabled.
               break
@@ -411,7 +424,7 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
               // schedule_new_message will not be invoked while we are
               // blocked here.
               messagesToSend.synchronized {
-                while (!messagePending(m)) {
+                while (!messagePending(m.sender, m.receiver, m.msg)) {
                   println("Blocking until enqueue_message...")
                   messagesToSend.wait()
                   println("Checking messagePending..")
@@ -648,7 +661,7 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
       advanceReplay()
       return
     }
-    assert(started.get)
+    assert(started.get, "!started.get: " + Thread.currentThread.getName)
     started.set(false)
 
     if (blockedOnCheckpoint.get) {

@@ -645,12 +645,6 @@ class FullyRandom extends RandomizationStrategy {
   }
 }
 
-// For each <src, dst> pair, maintain FIFO order. Other than that, fully
-// random.
-// TODO(cs): very strange behavior sometimes: NullPointerExceptions in
-// removeAll, becuase srcDsts apparently contains null tuples. I am baffled as
-// to why it happens, not even synchronized methods everywhere helps it. For
-// now, keep the synchronized methods in...
 class SrcDstFIFO extends RandomizationStrategy {
   private var srcDsts = new ArrayList[(String, String)]
   private val rand = new Random(System.currentTimeMillis())
