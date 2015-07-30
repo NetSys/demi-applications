@@ -168,10 +168,14 @@ object STSSparkPi {
 
       val mapRdds = spark.makeRDD(partitions).map(MyJob.mapFunction)
 
-      if (firstRun) {
-        future = mapRdds.reduceNonBlocking(jobId, MyJob.reduceFunction)
-      } else {
-        mapRdds.reduceNonBlocking(jobId, MyJob.reduceFunction)
+      try {
+        if (firstRun) {
+          future = mapRdds.reduceNonBlocking(jobId, MyJob.reduceFunction)
+        } else {
+          mapRdds.reduceNonBlocking(jobId, MyJob.reduceFunction)
+        }
+      } catch {
+        case e: SparkException => println("WARN Submitting didnt work")
       }
 
       if (firstRun) {
@@ -204,7 +208,13 @@ object STSSparkPi {
 
         // don't pay attention to shutdown messages.
         Instrumenter().setPassthrough
-        spark.stop()
+        Instrumenter().interruptAllScheduleBlocks
+        try {
+          println("invoking spark.stop()")
+          spark.stop()
+        } catch {
+          case e: Exception => println("WARN Exception during spark.stop: " + e)
+        }
 
         // N.B. Requires us to comment out SparkEnv's actorSystem.shutdown()
         // line
@@ -247,16 +257,18 @@ object STSSparkPi {
       messageFingerprinter=fingerprintFactory,
       shouldShutdownActorSystem=false,
       filterKnownAbsents=false,
-      ignoreTimers=false,
+      ignoreTimers=false, // XXX
       invariant_check=Some(LocalityInversion.invariant))
 
-    val sched = new RandomScheduler(schedulerConfig,
-      invariant_check_interval=3, randomizationStrategy=new SrcDstFIFO)
-    sched.setMaxMessages(1000)
-    // UNCOMMENT FOR LONG RUN
+    // UNCOMMENT FOR SHORT RUN
     //val sched = new RandomScheduler(schedulerConfig,
-    //  invariant_check_interval=2000, randomizationStrategy=new SrcDstFIFO)
-    //sched.setMaxMessages(1000000)
+    //  invariant_check_interval=3, randomizationStrategy=new SrcDstFIFO)
+    //sched.setMaxMessages(1000)
+    // UNCOMMENT FOR LONG RUN
+    val sched = new RandomScheduler(schedulerConfig,
+      invariant_check_interval=1000, randomizationStrategy=new SrcDstFIFO)
+    sched.setMaxMessages(1000000)
+
     Instrumenter().scheduler = sched
 
     val prefix = Array[ExternalEvent](
@@ -264,10 +276,9 @@ object STSSparkPi {
       (1 to 3).map { case i => CodeBlock(() =>
         WorkerCreator.createWorker("Worker"+i)) } ++
       (1 to 3).map { case i => CodeBlock(() => run(i)) } ++
-      // XXX Uncomment for long run:
-      //(4 to 15).map { case i => CodeBlock(() =>
-      //  WorkerCreator.createWorker("Worker"+i)) } ++
-      //(4 to 15).map { case i => CodeBlock(() => run(i)) } ++
+      (4 to 15).map { case i => CodeBlock(() =>
+        WorkerCreator.createWorker("Worker"+i)) } ++
+      (4 to 15).map { case i => CodeBlock(() => run(i)) } ++
       Array[ExternalEvent](
       WaitCondition(() => future != null && future.isCompleted))
 
@@ -308,6 +319,8 @@ object STSSparkPi {
           initTrace, violation,
           initializationRoutine=Some(runAndCleanup),
           _sched=Some(sts), dag=Some(dag))
+
+        assert(!verified_mcs.isEmpty)
 
         verified_mcs match {
           case Some(mcsTrace) =>

@@ -1165,6 +1165,10 @@ class SparkContext(config: SparkConf) extends Logging {
       resultFunc: => R,
       jobId:Option[Int]=None): SimpleFutureAction[R] =
   {
+    if (dagScheduler == null) {
+      throw new SparkException("SparkContext has been shutdown")
+    }
+
     val cleanF = clean(processPartition)
     val callSite = getCallSite
     val waiter = dagScheduler.submitJob(

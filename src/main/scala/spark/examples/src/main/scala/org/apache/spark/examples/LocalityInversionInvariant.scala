@@ -24,6 +24,7 @@ object LocalityInversion {
   def invariant(s: Seq[akka.dispatch.verification.ExternalEvent],
                 c: scala.collection.mutable.HashMap[String,Option[akka.dispatch.verification.CheckpointReply]])
               : Option[akka.dispatch.verification.ViolationFingerprint] = {
+    println("Checking LocalityInversion.invariant.")
     while (!TaskSetManager.decisions.isEmpty) {
       val (taskSet,
            executor,
