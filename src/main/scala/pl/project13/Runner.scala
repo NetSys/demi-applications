@@ -136,7 +136,8 @@ object Main extends App {
   Instrumenter().actorSystem
   Instrumenter().unsetPassthrough
 
-  val raftChecks = new RaftChecks
+  // val raftChecks = new RaftChecks XXX
+  val raftChecks = new TwoLeader34
 
   val fingerprintFactory = new FingerprintFactory
   fingerprintFactory.registerFingerprinter(new RaftMessageFingerprinter)
@@ -173,7 +174,7 @@ object Main extends App {
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(0, weights, messageGen, prefix)
 
-  val fuzz = false
+  val fuzz = true
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -189,7 +190,7 @@ object Main extends App {
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  schedulerConfig,
                                  validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(170)) // XXX
+                                 maxMessages=Some(2000)) // XXX
     traceFound = tuple._1
     violationFound = tuple._2
     depGraph = tuple._3
@@ -204,7 +205,7 @@ object Main extends App {
       fingerprintFactory,
       new RaftMessageSerializer)
 
-    val dir = serializer.record_experiment("akka-raft-fuzz4",
+    val dir = serializer.record_experiment("akka-raft-fuzz-long",
       traceFound.filterCheckpointMessages(), violationFound,
       depGraph=Some(depGraph), initialTrace=Some(initialTrace),
       filteredTrace=Some(filteredTrace))
