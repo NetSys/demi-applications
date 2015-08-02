@@ -240,7 +240,7 @@ class ElectionSafetyChecker(parent: RaftChecks) {
       case LeaderMeta(_, term, _) =>
         if ((term2leader contains term) && term2leader(term) != actor) {
           val sorted = List(actor, term2leader(term)).sorted.mkString(":")
-          val fingerprint = "ElectionSafety:" + sorted + ":" + term
+          val fingerprint = "ElectionSafety:" + sorted
           val affected = Set(actor, term2leader(term))
           return Some(new HashMap ++ Seq(fingerprint -> affected))
         }
