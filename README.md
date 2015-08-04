@@ -1,6 +1,6 @@
-Ignore messages if term < currentTerm.
+Fixed:
 
-Issue: nodes forget who they voted for
+- Ignore messages if term < currentTerm.
+- step down / update term if term > currentTerm
 
-TODO(cs): fix bug where nodes don't step down / update term
-if term > currentTerm? Probably still triggerable without that
+Remaining Issue: nodes forget who they voted for
