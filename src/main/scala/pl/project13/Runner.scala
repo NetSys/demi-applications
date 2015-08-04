@@ -136,8 +136,7 @@ object Main extends App {
   Instrumenter().actorSystem
   Instrumenter().unsetPassthrough
 
-  // val raftChecks = new RaftChecks XXX
-  val raftChecks = new TwoLeader34
+  val raftChecks = new RaftChecks
 
   val fingerprintFactory = new FingerprintFactory
   fingerprintFactory.registerFingerprinter(new RaftMessageFingerprinter)
@@ -174,7 +173,7 @@ object Main extends App {
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(0, weights, messageGen, prefix)
 
-  val fuzz = false
+  val fuzz = true
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -229,16 +228,6 @@ object Main extends App {
 
     RunnerUtils.printMinimizationStats(
       traceFound, Some(filteredTrace), verified_mcs.get, intMinTrace, schedulerConfig.messageFingerprinter)
-
-    // Second minimization
-    val (intMinStats2, intMinTrace2) = RunnerUtils.minimizeInternals(schedulerConfig,
-                          mcs,
-                          intMinTrace,
-                          ExperimentSerializer.getActorNameProps(traceFound),
-                          violationFound)
-
-    RunnerUtils.printMinimizationStats(
-      traceFound, Some(filteredTrace), verified_mcs.get, intMinTrace2, schedulerConfig.messageFingerprinter)
 
     serializer.recordMinimizedInternals(mcs_dir, intMinStats2, intMinTrace2)
     println("MCS DIR: " + mcs_dir)
