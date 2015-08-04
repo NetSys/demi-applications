@@ -24,6 +24,19 @@ private[raft] trait Leader {
       sendHeartbeat(m)
       stay()
 
+    // election
+    case Event(RequestVote(term, _, _, _), m: LeaderMeta) if term > m.currentTerm =>
+      log.info("Received newer {}. Current term is {}. Revert to follower state.", term, m.currentTerm)
+      stepDown(m, term)
+
+    case Event(VoteCandidate(term), m: LeaderMeta) if term > m.currentTerm =>
+      log.info("Received newer {}. Current term is {}. Revert to follower state.", term, m.currentTerm)
+      stepDown(m, term)
+
+    case Event(DeclineCandidate(term), m: LeaderMeta) if term > m.currentTerm =>
+      log.info("Received newer {}. Current term is {}. Revert to follower state.", term, m.currentTerm)
+      stepDown(m, term)
+
     // already won election, but votes may still be coming in
     case Event(_: ElectionMessage, _) =>
       stay()
@@ -45,13 +58,13 @@ private[raft] trait Leader {
       if (meta.config.isPartOfNewConfiguration(m.clusterSelf))
         stay() using meta
       else
-        goto(Follower) using meta.forFollower // or maybe goto something else?
+        goto(Follower) using meta.forFollower() // or maybe goto something else?
 
     // rogue Leader handling
     case Event(append: AppendEntries[Command], m: LeaderMeta) if append.term > m.currentTerm =>
       log.info("Leader (@ {}) got AppendEntries from fresher Leader (@ {}), will step down and the Leader will keep being: {}", m.currentTerm, append.term, sender())
       stopHeartbeat()
-      stepDown(m)
+      stepDown(m, append.term)
 
     case Event(append: AppendEntries[Command], m: LeaderMeta) if append.term <= m.currentTerm =>
       log.warning("Leader (@ {}) got AppendEntries from rogue Leader ({} @ {}); It's not fresher than self. Will send entries, to force it to step down.", m.currentTerm, sender(), append.term)
@@ -63,7 +76,7 @@ private[raft] trait Leader {
 
     case Event(AppendRejected(term, index), m: LeaderMeta) if term > m.currentTerm =>
       stopHeartbeat()
-      stepDown(m) // since there seems to be another leader!
+      stepDown(m, term) // since there seems to be another leader!
 
     case Event(msg: AppendRejected, m: LeaderMeta) =>
       registerAppendRejected(follower(), msg, m)
