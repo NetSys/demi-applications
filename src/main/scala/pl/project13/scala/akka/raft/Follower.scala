@@ -39,6 +39,7 @@ private[raft] trait Follower {
     case Event(msg: AppendEntries[Command], m: Meta) =>
       senderIsCurrentLeader()
       appendEntries(msg, m)
+      stay()
 
     // end of take writes
 
