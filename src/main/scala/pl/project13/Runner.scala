@@ -173,7 +173,7 @@ object Main extends App {
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(0, weights, messageGen, prefix)
 
-  val fuzz = false
+  val fuzz = true
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -189,7 +189,8 @@ object Main extends App {
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  schedulerConfig,
                                  validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(2000)) // XXX
+                                 maxMessages=Some(2000),
+                                 invariant_check_interval=30) // XXX
     traceFound = tuple._1
     violationFound = tuple._2
     depGraph = tuple._3
@@ -241,6 +242,5 @@ object Main extends App {
       traceFile=ExperimentSerializer.minimizedInternalTrace)
 
     RunnerUtils.printDeliveries(replayTrace)
-
   }
 }
