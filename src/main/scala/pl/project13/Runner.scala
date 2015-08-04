@@ -174,7 +174,7 @@ object Main extends App {
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(0, weights, messageGen, prefix)
 
-  val fuzz = true
+  val fuzz = false
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -243,192 +243,31 @@ object Main extends App {
     serializer.recordMinimizedInternals(mcs_dir, intMinStats2, intMinTrace2)
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
-    val dir = "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz4_2015_08_01_16_26_01_DDMin_STSSchedNoPeek"
+    val dir =
+    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_01_22_42_57_DDMin_STSSchedNoPeek"
+    // "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz4_2015_08_01_16_26_01_DDMin_STSSchedNoPeek"
 
     val deserializer = new ExperimentDeserializer(dir)
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
-    val replayTrace = RunnerUtils.replayExperiment(dir,
-      schedulerConfig, msgDeserializer, traceFile=ExperimentSerializer.minimizedInternalTrace)
 
-    println("replayTrace:")
-    replayTrace.events.foreach {
-      case e => println(e)
-    }
-    println("---")
-
-    println("initial devlieries:")
-    RunnerUtils.printDeliveries(replayTrace)
-    println("---")
-
-    val reordered = RunnerUtils.reorderDeliveries(replayTrace,
-      Seq(
-        // UniqueMsgSend(MsgSend(deadLetters,raft-member-4,ChangeConfiguration(StableRaftConfiguration(Set(raft-member-1,
-        //   raft-member-2, raft-member-3, raft-member-4)))),3848)
-        3848,
-        // UniqueMsgEvent(MsgEvent(deadLetters,raft-member-3,ChangeConfiguration(StableRaftConfiguration(Set(raft-member-1,
-        // raft-member-2, raft-member-3, raft-member-4)))),3847)
-        3847,
-        // UniqueMsgEvent(MsgEvent(deadLetters,raft-member-2,ChangeConfiguration(StableRaftConfiguration(Set(raft-member-1,
-        //   raft-member-2, raft-member-3, raft-member-4)))),3846)
-        3846,
-        // UniqueMsgEvent(MsgEvent(deadLetters,raft-member-2,Timer(election-timer,ElectionTimeout,false,1)),3851)
-        3851,
-        // UniqueMsgEvent(MsgEvent(deadLetters,raft-member-3,Timer(election-timer,ElectionTimeout,false,1)),3850)
-        3850,
-        // UniqueMsgEvent(MsgEvent(raft-member-3,raft-member-3,BeginElection),3855)
-        3855,
-        // UniqueMsgEvent(MsgEvent(raft-member-3,raft-member-4,RequestVote(Term(1),
-        //  Actor[akka://new-system-0/user/raft-member-3#152274668],Term(0),0)),3861)
-        3861,
-        // UniqueMsgEvent(MsgEvent(deadLetters,raft-member-3,Timer(election-timer,ElectionTimeout,false,3)),3856)
-        3856,
-        // UniqueMsgEvent(MsgEvent(raft-member-4,raft-member-3,VoteCandidate(Term(0))),3862)
-        3862,
-        // UniqueMsgEvent(MsgEvent(raft-member-3,raft-member-3,BeginElection),3863)
-        3863,
-        // UniqueMsgEvent(MsgEvent(raft-member-3,raft-member-4,RequestVote(Term(2),
-        //  Actor[akka://new-system-0/user/raft-member-3#152274668],Term(0),0)),3866)
-        3866,
-        // UniqueMsgEvent(MsgEvent(deadLetters,raft-member-1,ChangeConfiguration(StableRaftConfiguration(Set(raft-member-1,
-        // raft-member-2, raft-member-3, raft-member-4)))),3845)
-        3845,
-        // UniqueMsgEvent(MsgEvent(raft-member-4,raft-member-3,VoteCandidate(Term(0))),3867)
-        3867,
-        // UniqueMsgSend(MsgSend(raft-member-2,raft-member-2,BeginElection),3852)
-        3852))
-
-    // Should have next:
-        // MsgEvent(raft-member-2,raft-member-1,
-        //  RequestVote(Term(2),Actor[akka://new-system-0/user/raft-member-2#469873442],Term(0),0))
-
-    val reorderedReplay = RunnerUtils.replayExperiment(reordered,
-      schedulerConfig, deserializer.get_actors, None)
-
-    println("Resulting Replay:")
-    reorderedReplay.events.foreach {
-      case e => println(e)
-    }
-
-    // Keep the same prefix of deliveries
-    var ids = Seq() ++ reorderedReplay.events.flatMap {
-      case UniqueMsgEvent(m,id) => Some(id)
-      case UniqueTimerDelivery(t,id) => Some(id)
-      case _ => None
-    } ++ Seq(
-      // UniqueMsgSend(MsgSend(raft-member-2,raft-member-1,RequestVote(Term(1),
-      //   Actor[akka://new-system-3/user/raft-member-2#-919221483],Term(0),0)),3907)
-      // (NEW! -- different Term)
-      3907
+   // MCS trace, not minimized internally yet.
+    val mcsTrace = deserializer.get_events(
+      msgDeserializer,
+      Instrumenter()._actorSystem
     )
 
-    val reordered2 = RunnerUtils.reorderDeliveries(reorderedReplay, ids)
+    val mcs = deserializer.get_mcs
+    val actors = deserializer.get_actors
+    val violation =  deserializer.get_violation(msgDeserializer)
 
-    val reorderedReplay2 = RunnerUtils.replayExperiment(reordered2,
-      schedulerConfig, deserializer.get_actors, None)
+    // Re-minimize the internal events, since there was previously a bug in
+    // minimization
+    val (intMinStats, intMinTrace) = RunnerUtils.minimizeInternals(schedulerConfig,
+      mcs, mcsTrace, actors, violation)
 
-    println("Resulting Replay2:")
-    reorderedReplay2.events.foreach {
-      case e => println(e)
-    }
+    RunnerUtils.printMinimizationStats(
+      mcsTrace, None, mcsTrace, intMinTrace, schedulerConfig.messageFingerprinter)
 
-    // Keep the same prefix of deliveries
-    ids = Seq() ++ reorderedReplay2.events.flatMap {
-      case UniqueMsgEvent(m,id) => Some(id)
-      case UniqueTimerDelivery(t,id) => Some(id)
-      case _ => None
-    } ++ Seq(
-      // UniqueMsgSend(MsgSend(Timer,raft-member-2,Timer(election-timer,ElectionTimeout,false,3)),3918)
-      // (Second election timer. MOVED from earlier to here.)
-      3918,
-      // UniqueMsgSend(MsgSend(raft-member-1,raft-member-2,VoteCandidate(Term(0))),3937)
-      3937
-    )
-
-    val reordered3 = RunnerUtils.reorderDeliveries(reorderedReplay2, ids)
-
-    val reorderedReplay3 = RunnerUtils.replayExperiment(reordered3,
-      schedulerConfig, deserializer.get_actors, None)
-
-    println("Resulting Replay3:")
-    reorderedReplay3.events.foreach {
-      case e => println(e)
-    }
-
-    // Should have next:
-
-    // BeginElection -> 2
-
-    // Keep the same prefix of deliveries
-    ids = Seq() ++ reorderedReplay3.events.flatMap {
-      case UniqueMsgEvent(m,id) => Some(id)
-      case UniqueTimerDelivery(t,id) => Some(id)
-      case _ => None
-    } ++ Seq(
-      // UniqueMsgSend(MsgSend(raft-member-2,raft-member-2,BeginElection),3966)
-      3966
-    )
-
-    val reordered4 = RunnerUtils.reorderDeliveries(reorderedReplay3, ids)
-
-    val reorderedReplay4 = RunnerUtils.replayExperiment(reordered4,
-      schedulerConfig, deserializer.get_actors, None)
-
-    println("Resulting Replay4:")
-    reorderedReplay4.events.foreach {
-      case e => println(e)
-    }
-
-    // Should have next:
-
-    // RequestVote 2 -> 1
-
-    // Keep the same prefix of deliveries
-    ids = Seq() ++ reorderedReplay4.events.flatMap {
-      case UniqueMsgEvent(m,id) => Some(id)
-      case UniqueTimerDelivery(t,id) => Some(id)
-      case _ => None
-    } ++ Seq(
-      // UniqueMsgSend(MsgSend(raft-member-2,raft-member-1,RequestVote(Term(2),
-      //  Actor[akka://new-system-12/user/raft-member-2#1273486631],Term(0),0)),3996)
-      3996
-    )
-
-    val reordered5 = RunnerUtils.reorderDeliveries(reorderedReplay4, ids)
-
-    val reorderedReplay5 = RunnerUtils.replayExperiment(reordered5,
-      schedulerConfig, deserializer.get_actors, None)
-
-    println("Resulting Replay5:")
-    reorderedReplay5.events.foreach {
-      case e => println(e)
-    }
-
-    // Should have next:
-
-    // VoteCandidate 1 -> 2
-
-    // Keep the same prefix of deliveries
-    ids = Seq() ++ reorderedReplay5.events.flatMap {
-      case UniqueMsgEvent(m,id) => Some(id)
-      case UniqueTimerDelivery(t,id) => Some(id)
-      case _ => None
-    } ++ Seq(
-      // UniqueMsgSend(MsgSend(raft-member-1,raft-member-2,VoteCandidate(Term(0))),4031)
-      4031
-    )
-
-    val reordered6 = RunnerUtils.reorderDeliveries(reorderedReplay5, ids)
-
-    val reorderedReplay6 = RunnerUtils.replayExperiment(reordered6,
-      schedulerConfig, deserializer.get_actors, None)
-
-    println("Final deliveries")
-    RunnerUtils.printDeliveries(reorderedReplay6)
-
-    val serializer = new ExperimentSerializer(
-      fingerprintFactory,
-      new RaftMessageSerializer)
-
-    serializer.recordHandCraftedTrace(dir, reorderedReplay6)
+    RunnerUtils.visualizeDeliveries(intMinTrace, "/Users/cs/Documents/long_run.txt")
   }
 }
