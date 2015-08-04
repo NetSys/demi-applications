@@ -21,7 +21,7 @@ private[raft] trait Candidate {
     case Event(BeginElection, m: ElectionMeta) =>
       if (m.config.members.isEmpty) {
         log.warning("Tried to initialize election with no members...")
-        goto(Follower) using m.forFollower
+        goto(Follower) using m.forFollower()
       } else {
         log.info("Initializing election (among {} nodes) for {}", m.config.members.size, m.currentTerm)
 
@@ -37,6 +37,10 @@ private[raft] trait Candidate {
         }
       }
 
+    case Event(msg: RequestVote, m: ElectionMeta) if msg.term > m.currentTerm =>
+      log.info("Received newer {}. Current term is {}. Revert to follower state.", msg.term, m.currentTerm)
+      goto(Follower) using m.forFollower(msg.term)
+
     case Event(msg: RequestVote, m: ElectionMeta) if m.canVoteIn(msg.term) =>
       sender ! VoteCandidate(m.currentTerm)
       stay() using m.withVoteFor(msg.term, candidate())
@@ -44,6 +48,10 @@ private[raft] trait Candidate {
     case Event(msg: RequestVote, m: ElectionMeta) =>
       sender ! DeclineCandidate(msg.term)
       stay()
+
+   case Event(VoteCandidate(term), m: ElectionMeta) if term > m.currentTerm =>
+     log.info("Received newer {}. Current term is {}. Revert to follower state.", term, m.currentTerm)
+     goto(Follower) using m.forFollower(term)
 
     case Event(VoteCandidate(term), m: ElectionMeta) =>
       val includingThisVote = m.incVote
@@ -55,6 +63,11 @@ private[raft] trait Candidate {
         log.info("Received vote by {}; Have {} of {} votes", voter(), includingThisVote.votesReceived, m.config.members.size)
         stay() using includingThisVote
       }
+
+    case Event(DeclineCandidate(term), m: ElectionMeta) if term > m.currentTerm =>
+      log.info("Received newer {}. Current term is {}. Revert to follower state.", term, m.currentTerm)
+      goto(Follower) using m.forFollower(term)
+      stay()
 
     case Event(DeclineCandidate(term), m: ElectionMeta) =>
       log.info("Rejected vote by {}, in term {}", voter(), term)
@@ -69,7 +82,7 @@ private[raft] trait Candidate {
       if (leaderIsAhead) {
         log.info("Reverting to Follower, because got AppendEntries from Leader in {}, but am in {}", append.term, m.currentTerm)
         m.clusterSelf forward append
-        goto(Follower) using m.forFollower
+        goto(Follower) using m.forFollower()
       } else {
         stay()
       }
@@ -83,7 +96,7 @@ private[raft] trait Candidate {
     // would like to start election, but I'm all alone! ;-(
     case Event(ElectionTimeout, m: ElectionMeta) =>
       log.info("Voting timeout, unable to start election, don't know enough nodes (members: {})...", m.config.members.size)
-      goto(Follower) using m.forFollower
+      goto(Follower) using m.forFollower()
 
     case Event(AskForState, _) =>
       sender() ! IAmInState(Candidate)

@@ -21,6 +21,11 @@ private[raft] trait Follower {
 
     // election
     case Event(RequestVote(term, candidate, lastLogTerm, lastLogIndex), m: Meta)
+      if term > m.currentTerm =>
+      log.info("Received newer {}. Current term is {}. Revert to follower state.", term, m.currentTerm)
+      stay() using m.withTerm(term)
+
+    case Event(RequestVote(term, candidate, lastLogTerm, lastLogIndex), m: Meta)
       if m.canVoteIn(term) =>
 
       log.info("Voting for {} in {}", candidate, term)
