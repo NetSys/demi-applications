@@ -175,7 +175,6 @@ class RaftChecks {
       actor2log(actor) = replicatedLog
 
       for (entry <- replicatedLog.committedEntries) {
-        assert(!(allCommitted contains ((entry.command, entry.term, entry.index))))
         allCommitted += ((entry.command, entry.term, entry.index))
       }
 
