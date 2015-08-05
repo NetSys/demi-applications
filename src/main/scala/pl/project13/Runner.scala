@@ -238,7 +238,7 @@ object Main extends App {
 
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
-    val replayTrace = RunnerUtils.replayExperiment(dir, schedulerConfig, msgDeserializer)
+    val replayTrace = RunnerUtils.replayExperiment(dir, schedulerConfig, msgDeserializer,
       traceFile=ExperimentSerializer.minimizedInternalTrace)
 
     RunnerUtils.printDeliveries(replayTrace)
