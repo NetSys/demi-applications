@@ -32,7 +32,7 @@ private[raft] trait Candidate {
           // We already voted for ourself this Term!
           stay()
         } else {
-          val includingThisVote = m.incVote
+          val includingThisVote = m.incVote(self)
           stay() using includingThisVote.withVoteFor(m.currentTerm, m.clusterSelf)
         }
       }
@@ -64,8 +64,8 @@ private[raft] trait Candidate {
      log.info("Received newer {}. Current term is {}. Revert to follower state.", term, m.currentTerm)
      goto(Follower) using m.forFollower(term)
 
-    case Event(VoteCandidate(term), m: ElectionMeta) =>
-      val includingThisVote = m.incVote
+   case Event(VoteCandidate(term), m: ElectionMeta) =>
+      val includingThisVote = m.incVote(voter())
 
       if (includingThisVote.hasMajority) {
         log.info("Received vote by {}; Won election with {} of {} votes", voter(), includingThisVote.votesReceived, m.config.members.size)
