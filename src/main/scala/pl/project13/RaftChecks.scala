@@ -84,26 +84,6 @@ case class RaftViolation(val fingerprint2affectedNodes: Map[String, Set[String]]
   }
 }
 
-// Specific violation: raft-member-3 and raft-member-4 are both leaders in the
-// same term
-class TwoLeader34 {
-  val raftChecks = new RaftChecks
-
-  def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,Option[CheckpointReply]]) : Option[ViolationFingerprint] = {
-    val opt = raftChecks.invariant(seq, checkpoint)
-    opt match {
-      case Some(v) =>
-        if (v.asInstanceOf[RaftViolation].fingerprint2affectedNodes contains "ElectionSafety:raft-member-3:raft-member-4") {
-          return opt
-        }
-        return None
-      case None => return None
-    }
-  }
-
-  def clear = raftChecks.clear
-}
-
 class RaftChecks {
   def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,Option[CheckpointReply]]) : Option[ViolationFingerprint] = {
     println("RaftChecks.invariant. Checkpoint: " + checkpoint)
