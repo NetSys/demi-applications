@@ -46,7 +46,8 @@ private[raft] trait Candidate {
       log.info("Received newer {}. Current term is {}. Revert to follower state.", msg.term, m.currentTerm)
       goto(Follower) using m.forFollower(msg.term)
 
-    case Event(msg: RequestVote, m: ElectionMeta) if m.canVoteIn(msg.term) =>
+    case Event(msg: RequestVote, m: ElectionMeta)
+      if m.canVoteIn(msg.term, msg.candidateId) =>
       sender ! VoteCandidate(m.currentTerm)
       stay() using m.withVoteFor(msg.term, candidate())
 
