@@ -50,13 +50,13 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
   }
 }
 
-class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator {
-  class AppendWordConstuctor(word: String) extends ExternalMessageConstructor {
-    def apply() : Any = {
-      return ClientMessage[AppendWord](Instrumenter().actorSystem.deadLetters, AppendWord(word))
-    }
+class AppendWordConstuctor(word: String) extends ExternalMessageConstructor {
+  def apply() : Any = {
+    return ClientMessage[AppendWord](Instrumenter().actorSystem.deadLetters, AppendWord(word))
   }
+}
 
+class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator {
   val wordsUsedSoFar = new HashSet[String]
   val rand = new Random
   val destinations = new RandomizedHashSet[String]
