@@ -42,7 +42,8 @@ private[raft] trait Candidate {
       candidate ! DeclineCandidate(m.currentTerm)
       stay()
 
-    case Event(msg: RequestVote, m: ElectionMeta) if m.canVoteIn(msg.term) =>
+    case Event(msg: RequestVote, m: ElectionMeta)
+      if m.canVoteIn(msg.term, msg.candidateId) =>
       sender ! VoteCandidate(m.currentTerm)
       stay() using m.withVoteFor(msg.term, candidate())
 
