@@ -175,6 +175,7 @@ class RaftChecks {
       actor2log(actor) = replicatedLog
 
       for (entry <- replicatedLog.committedEntries) {
+        assert(!(allCommitted contains ((entry.command, entry.term, entry.index))))
         allCommitted += ((entry.command, entry.term, entry.index))
       }
 
@@ -277,10 +278,6 @@ class ElectionSafetyChecker(parent: RaftChecks) {
 class LogMatchChecker(parent: RaftChecks) {
 
   def checkActor(actor: String) : Option[Map[String, Set[String]]] = {
-    return None
-    // TODO(cs): sort actors in fingerprint string
-    // TODO(cs): return affected nodes
-    /*
     val otherActorLogs = parent.actor2log.filter { case (a,_) => a != actor }
     val log = parent.actor2log(actor)
     for (otherActorLog <- otherActorLogs) {
@@ -288,6 +285,8 @@ class LogMatchChecker(parent: RaftChecks) {
       val otherLog = otherActorLog._2
       // First, find the last entry in both logs that has the same index and
       // term.
+      // N.B. We don't depend on the alleged "index" field, but rather compute
+      // our own indices.
       val otherIdxTerms = otherLog.entries.map(entry => (entry.index, entry.term)).toSet
       val reversed = log.entries.reverse
       val reverseMatchIdx = reversed.indexWhere(
@@ -295,30 +294,29 @@ class LogMatchChecker(parent: RaftChecks) {
       if (reverseMatchIdx != -1) {
         // Now verify that the logs are identical up to the match.
         val matchIdx = (log.length - 1) - reverseMatchIdx
-        if (otherLog.length < matchIdx) {
-          return Some("LogMatch:"+actor+":"+otherActor+":"+matchIdx)
-        }
         var currentIdx = 0
         while (currentIdx <= matchIdx) {
-          // TODO(cs): I think `index` is a misnomer; it doesn't mean index of the
-          // log's array. Hence the stack trace in RaftChecksStackTrace.txt. Either
-          // that, or I've got a bug in my own code.
           if (log.length <= currentIdx || otherLog.length <= currentIdx) {
-            return Some("LogMatch:"+actor+":"+otherActor+":"+currentIdx+"notlongenough")
+            val sorted = List(actor, otherActor).sorted.mkString(":")
+            val fingerprint = "LogMatchNotLongEnough:"+sorted
+            val affected = Set(actor, otherActor)
+            return Some(new HashMap ++ Seq(fingerprint -> affected))
           }
           val myEntry = log(currentIdx)
           val otherEntry = otherLog(currentIdx)
           if (myEntry.command != otherEntry.command ||
               myEntry.term != otherEntry.term ||
               myEntry.index != otherEntry.index) {
-            return Some("LogMatch:"+actor+":"+otherActor+":"+currentIdx)
+            val sorted = List(actor, otherActor).sorted.mkString(":")
+            val fingerprint = "LogMatch:"+sorted
+            val affected = Set(actor, otherActor)
+            return Some(new HashMap ++ Seq(fingerprint -> affected))
           }
           currentIdx += 1
         }
       }
     }
     return None
-    */
   }
 }
 
@@ -329,9 +327,6 @@ class LeaderCompletenessChecker(parent: RaftChecks) {
 
   def check() : Option[Map[String, Set[String]]] = {
     return None
-    // TODO(cs): sort actors in fingerprint string
-    // TODO(cs): return affected nodes
-    /*
     val sortedTerms = parent.term2leader.keys.toArray.sortWith((a,b) => a < b)
     if (sortedTerms.isEmpty) {
       return None
@@ -353,12 +348,13 @@ class LeaderCompletenessChecker(parent: RaftChecks) {
         val term = sortedTerms(termIdx)
         val leader = parent.term2leader(term)
         if (!(parent.actor2AllEntries(leader) contains committed)) {
-          return Some("LeaderCompleteness:"+leader+":"+committed)
+          val fingerprint = "LeaderCompleteness:"+leader
+          val affected = Set(leader)
+          return Some(new HashMap ++ Seq(fingerprint -> affected))
         }
       }
     }
     return None
-    */
   }
 }
 
@@ -371,18 +367,14 @@ class StateMachineChecker(parent: RaftChecks) {
   // time they apply an entry (which, AFAICT, happens immediately after they infer
   // infer that they should commit an given entry)
   def check() : Option[Map[String, Set[String]]] = {
-    return None
-    // TODO(cs): sort actors in fingerprint string
-    // TODO(cs): return affected nodes
-    /*
     val allCommittedIndices = parent.allCommitted.toArray.map(c => c._3)
     if (parent.allCommitted.size != allCommittedIndices.size) {
       val counts = new MultiSet[Int]
       counts ++= allCommittedIndices
       val duplicates = counts.m.filter({case (k, v) => v.length > 1}).keys
-      return Some("StateMachine:"+duplicates.toString)
+      return Some(new HashMap ++
+        Seq("StateMachine:"+duplicates.toSeq.sorted.toString -> Set.empty))
     }
     return None
-    */
   }
 }
