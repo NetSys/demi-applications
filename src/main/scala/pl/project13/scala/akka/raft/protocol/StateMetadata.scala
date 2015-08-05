@@ -34,7 +34,7 @@ private[protocol] trait StateMetadata extends Serializable {
     /** A member can only vote once during one Term */
     def canVoteIn(term: Term, candidate: Candidate) =
       term >= currentTerm &&
-      (votes.get(term).isEmpty || votes.get(term) == candidate)
+      (votes.get(term).isEmpty || votes.get(term).get == candidate)
 
     /** A member can only vote once during one Term */
     def cannotVoteIn(term: Term) = term < currentTerm || votes.get(term).isDefined
