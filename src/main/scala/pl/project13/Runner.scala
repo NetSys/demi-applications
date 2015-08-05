@@ -189,7 +189,8 @@ object Main extends App {
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  schedulerConfig,
                                  validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(2000)) // XXX
+                                 maxMessages=Some(500),
+                                 invariant_check_interval=10) // XXX
     traceFound = tuple._1
     violationFound = tuple._2
     depGraph = tuple._3
