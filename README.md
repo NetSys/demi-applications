@@ -4,6 +4,11 @@ Fixed:
 - step down / update term if term > currentTerm
 - nodes don't forget who they voted for
 - Candidate distinguishes between votes from same follower for the
-  same Term.
+  same Term. [and Candidates are allowed to reissue duplicate votes]
 
-Now try to find bugs in log management.
+Now found:
+  - Leader overwrites nextIndex and matchIndex if ClientMessages are received
+    before ElectedAsLeader
+
+  - Another, orthogonal one?: prevLogIndex has the wrong value for the second
+    log entry
