@@ -31,7 +31,7 @@ object STS2Application extends Build {
       libraryDependencies += "org.scalatest"     %% "scalatest"      % "2.2.1"     % "test",
 
       libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.2",
-      libraryDependencies += "com.assembla.scala-incubator" %% "graph-core" % "1.9.0",
+      libraryDependencies += "com.assembla.scala-incubator" %% "graph-core" % "1.9.4",
       libraryDependencies += "com.assembla.scala-incubator" %% "graph-dot" % "1.9.0",
       libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
       libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.2",
