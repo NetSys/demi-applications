@@ -57,7 +57,7 @@ class AppendWordConstuctor(word: String) extends ExternalMessageConstructor {
 }
 
 class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator {
-  val wordsUsedSoFar = new HashSet[String]
+  var highestWordUsedSoFar = 0
   val rand = new Random
   val destinations = new RandomizedHashSet[String]
   for (dst <- raft_members) {
@@ -66,13 +66,8 @@ class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator
 
   def generateMessage(alive: RandomizedHashSet[String]) : Send = {
     val dst = destinations.getRandomElement()
-    // TODO(cs): 10000 is a bit arbitrary, and this algorithm fails
-    // disastrously as we start to approach 10000 Send events.
-    var word = rand.nextInt(10000).toString
-    while (wordsUsedSoFar contains word) {
-      word = rand.nextInt(10000).toString
-    }
-    wordsUsedSoFar += word
+    var word = highestWordUsedSoFar.toString
+    highestWordUsedSoFar += 1
     return Send(dst, new AppendWordConstuctor(word))
   }
 }
@@ -189,9 +184,9 @@ object Main extends App {
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  schedulerConfig,
                                  validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(5000),  // XXX
+                                 maxMessages=Some(700),  // XXX
                                  invariant_check_interval=10,
-                                 computeProvenance=false)
+                                 computeProvenance=false) // XXX
     traceFound = tuple._1
     violationFound = tuple._2
     depGraph = tuple._3
@@ -200,7 +195,7 @@ object Main extends App {
   }
 
   if (fuzz) {
-    var provenanceTrace = traceFound.intersection(filteredTrace, fingerprintFactory)
+    // XXX var provenanceTrace = traceFound.intersection(filteredTrace, fingerprintFactory)
 
     val serializer = new ExperimentSerializer(
       fingerprintFactory,
@@ -214,7 +209,7 @@ object Main extends App {
     val (mcs, stats, verified_mcs, violation) =
     RunnerUtils.stsSchedDDMin(false,
       schedulerConfig,
-      provenanceTrace,
+      traceFound,
       violationFound,
       actorNameProps=Some(ExperimentSerializer.getActorNameProps(traceFound)))
 
