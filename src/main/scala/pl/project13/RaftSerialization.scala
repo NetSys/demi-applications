@@ -5,7 +5,7 @@ import pl.project13.scala.akka.raft.protocol._
 import pl.project13.scala.akka.raft.example.protocol._
 import pl.project13.scala.akka.raft._
 import pl.project13.scala.akka.raft.model._
-import akka.dispatch.verification.{JavaSerialization, MessageSerializer, MessageDeserializer}
+import akka.dispatch.verification.{JavaSerialization, MessageSerializer, MessageDeserializer, Util}
 import akka.actor.{ActorSystem, ExtendedActorSystem, ActorRef}
 import akka.serialization._
 
