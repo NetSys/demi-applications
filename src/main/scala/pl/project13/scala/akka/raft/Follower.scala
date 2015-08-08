@@ -92,7 +92,7 @@ private[raft] trait Follower {
   def append(entries: immutable.Seq[Entry[Command]], m: Meta): AppendSuccessful = {
     if (!entries.isEmpty) {
       val atIndex = entries.map(_.index).min
-      log.debug("executing: replicatedLog = replicatedLog.append({}, {})", entries, atIndex)
+      log.debug("executing: replicatedLog = replicatedLog.append({}, {})", entries, atIndex-1)
 
       replicatedLog = replicatedLog.append(entries, take=atIndex-1)
     }

@@ -75,7 +75,7 @@ case class LogIndexMap private (private var backing: Map[ActorRef, Int], private
       .toList
 
     indexCountPairs match {
-      case Nil => -1
+      case Nil => 0
       case _ =>
         indexCountPairs.sortBy(- _._2).head // sort by size
         ._1

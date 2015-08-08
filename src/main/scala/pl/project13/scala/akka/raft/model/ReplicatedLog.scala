@@ -36,7 +36,9 @@ case class ReplicatedLog[Command](
    * Determines index of the next Entry that will be inserted into this log.
    * Handles edge cases, use this instead of +1'ing manualy.
    */
-  def nextIndex = entries.size
+  def nextIndex =
+    // First entry gets index 1 (not 0, which indicates empty log)
+    entries.size + 1
 
   // log actions
   def commit(n: Int): ReplicatedLog[Command] =
@@ -50,19 +52,6 @@ case class ReplicatedLog[Command](
 
   def +(newEntry: Entry[Command]): ReplicatedLog[Command] =
     append(List(newEntry), entries.size)
-
-  def putWithDroppingInconsistent(replicatedEntry: Entry[Command]): ReplicatedLog[Command] = {
-    val replicatedIndex = replicatedEntry.index
-    if (entries.isDefinedAt(replicatedIndex)) { // must now use index since we can have snapshots
-      val localEntry = entries(replicatedIndex)
-
-      if (localEntry == replicatedEntry) this // we're consistent with the replicated log
-      else copy(entries = entries.slice(0, replicatedIndex) :+ replicatedEntry) // dropping everything until the entry that does not match
-    } else {
-      // nothing to drop
-      this
-    }
-  }
 
   def compactedWith(snapshot: RaftSnapshot): ReplicatedLog[Command] = {
     val snapshotHasLaterTerm = snapshot.meta.lastIncludedTerm > lastTerm
@@ -79,11 +68,15 @@ case class ReplicatedLog[Command](
 
   // log views
 
-  def apply(idx: Int): Entry[Command] = entries(idx)
-
-  /** @param fromIncluding index from which to start the slice (excluding the entry at that index) */
+  /**
+   * @param fromIncluding index from which to start the slice (including the entry at that index)
+   *
+   * N.B. log entries are 1-indexed.
+   */
   def entriesBatchFrom(fromIncluding: Int, howMany: Int = 5): List[Entry[Command]] = {
-    val toSend = entries.slice(fromIncluding, fromIncluding + howMany)
+    val adjusted = fromIncluding - 1
+    assert(adjusted >= 0)
+    val toSend = entries.slice(adjusted, adjusted + howMany)
     toSend.headOption match {
       case Some(head) =>
         val batchTerm = head.term
@@ -94,14 +87,12 @@ case class ReplicatedLog[Command](
     }
   }
 
+  // fromIndex is exclusive
+  // toIndex is inclusive
+  // N.B. given indices should be 1-indexed
   def between(fromIndex: Int, toIndex: Int): List[Entry[Command]] =
-    entries.slice(fromIndex + 1, toIndex + 1)
-
-  def firstIndexInTerm(term: Term): Int = term.termNr match {
-    case 0 => 0
-    case 1 => 0
-    case _ => entries.zipWithIndex find { case (e, i) => e.term == term } map { _._2 } getOrElse 0
-  }
+    // adjusted of fromIndex: fromIndex - 1. So, fromIndex is exclusive.
+    entries.slice(fromIndex, toIndex)
 
   def termAt(index: Int) =
     if (index <= 0) Term(0)
@@ -112,7 +103,7 @@ case class ReplicatedLog[Command](
   def notCommittedEntries = entries.slice(committedIndex + 1, entries.length)
 }
 
-class EmptyReplicatedLog[T](defaultBatchSize: Int) extends ReplicatedLog[T](List.empty, -1, defaultBatchSize) {
+class EmptyReplicatedLog[T](defaultBatchSize: Int) extends ReplicatedLog[T](List.empty, 0, defaultBatchSize) {
   override def lastTerm = Term(0)
   override def lastIndex = 0
 }
@@ -127,15 +118,13 @@ case class Entry[T](
   index: Int,
   client: Option[ActorRef] = None
 ) {
+  assert(index > 0)
 
   def isSnapshot = false
 
   def prevTerm = term.prev
 
-  def prevIndex = index - 1 match {
-    case -1 => 0
-    case n  => n
-  }
+  def prevIndex = index - 1
 }
 
 trait SnapshotEntry {
