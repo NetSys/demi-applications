@@ -15,11 +15,9 @@ import pl.project13.scala.akka.raft.{StableClusterConfiguration, JointConsensusC
 case class LogIndexMap private (private var backing: Map[ActorRef, Int], private val initializeWith: Int) {
 
   def decrementFor(member: ActorRef): Int = backing(member) match {
-    case 0 => 0
-    case n =>
-      val value = n - 1
-      backing = backing.updated(member, value)
-      value
+    val value = n - 1
+    backing = backing.updated(member, value)
+    value
   }
 
   def incrementFor(member: ActorRef): Int = {

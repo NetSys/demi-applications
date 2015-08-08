@@ -145,7 +145,9 @@ private[raft] trait Leader {
 
     log.info("Follower {} rejected write: {}, back out the first index in this term and retry", follower(), followerTerm)
 
-    nextIndex.decrementFor(follower())
+    if (nextIndex.valueFor(follower()) > 1) {
+      nextIndex.decrementFor(follower())
+    }
 
 //    todo think if we send here or keep in heartbeat
     sendEntries(follower(), m)
