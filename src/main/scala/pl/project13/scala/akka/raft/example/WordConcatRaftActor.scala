@@ -1,6 +1,11 @@
 package pl.project13.scala.akka.raft.example
 
 import protocol._
+import pl.project13.scala.akka.raft._
+import pl.project13.scala.akka.raft.model._
+import pl.project13.scala.akka.raft.protocol._
+
+import akka.dispatch.verification.{CheckpointRequest, CheckpointReply, CheckpointSink, Instrumenter}
 
 import scala.collection.mutable.ListBuffer
 import pl.project13.scala.akka.raft.RaftActor
@@ -23,5 +28,31 @@ class WordConcatRaftActor extends RaftActor {
       log.info("Replying with {}", words.toList)
       words.toList
   }
+
+  // Deal with CheckpointRequests, for checking global invariants.
+  override def receive = {
+    case CheckpointRequest =>
+      val state = List(replicatedLog, nextIndex, matchIndex, stateData)
+      context.actorFor("../" + CheckpointSink.name) ! CheckpointReply(state)
+    case m =>
+      //println("RAFT " + self.path.name + " FSM received " + m + " " + super.getLog.map(_.stateName) + " " +
+      //  isTimerActive(ElectionTimeoutTimerName) )
+      println("BEFORE RECEIVE, LOG: " + replicatedLog)
+      println("BEFORE RECEIVE, STATE: " + stateData)
+      if (stateData.getClass == classOf[LeaderMeta]) {
+        println("BEFORE RECEIVE, nextIndex: " + nextIndex)
+        println("BEFORE RECEIVE, matchIndex: " + matchIndex)
+      }
+      super.receive(m)
+      println("AFTER RECEIVE, LOG: " + replicatedLog)
+      println("AFTER RECEIVE, STATE: " + stateData)
+      if (stateData.getClass == classOf[LeaderMeta]) {
+        println("AFTER RECEIVE, nextIndex: " + nextIndex)
+        println("AFTER RECEIVE, matchIndex: " + matchIndex)
+        println("AFTER RECEIVE, words: " + words)
+      }
+      //println("RAFT " + self.path.name + " Done FSM received " + m + " " + super.getLog.map(_.stateName))
+  }
+
 }
 

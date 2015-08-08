@@ -1,8 +1,9 @@
 package pl.project13.scala.akka.raft
 
-import akka.dispatch.verification.{CheckpointRequest, CheckpointReply, CheckpointSink, Instrumenter}
 import akka.actor.{Actor, ActorRef, LoggingFSM}
 import scala.concurrent.duration._
+
+import akka.dispatch.verification.Instrumenter
 
 import model._
 import protocol._
@@ -41,22 +42,6 @@ abstract class RaftActor extends Actor with LoggingFSM[RaftState, Metadata]
   var matchIndex = LogIndexMap.initialize(Set.empty, -1)
 
   // end of raft member state --------------
-
-  // Deal with CheckpointRequests, for checking global invariants.
-  override def receive = {
-    case CheckpointRequest =>
-      val state = List(replicatedLog, nextIndex, matchIndex, stateData)
-      context.actorFor("../" + CheckpointSink.name) ! CheckpointReply(state)
-    case m =>
-      //println("RAFT " + self.path.name + " FSM received " + m + " " + super.getLog.map(_.stateName) + " " +
-      //  isTimerActive(ElectionTimeoutTimerName) )
-      println("BEFORE RECEIVE, LOG: " + replicatedLog)
-      println("BEFORE RECEIVE, STATE: " + stateData)
-      super.receive(m)
-      println("AFTER RECEIVE, LOG: " + replicatedLog)
-      println("AFTER RECEIVE, STATE: " + stateData)
-      //println("RAFT " + self.path.name + " Done FSM received " + m + " " + super.getLog.map(_.stateName))
-  }
 
   val heartbeatInterval: FiniteDuration = raftConfig.heartbeatInterval
 
