@@ -74,7 +74,7 @@ private[raft] trait Leader {
 
     // append entries response handling
 
-    case Event(AppendRejected(term, index), m: LeaderMeta) if term > m.currentTerm =>
+    case Event(AppendRejected(term), m: LeaderMeta) if term > m.currentTerm =>
       stopHeartbeat()
       stepDown(m, term) // since there seems to be another leader!
 

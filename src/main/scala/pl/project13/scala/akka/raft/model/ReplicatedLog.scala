@@ -19,7 +19,8 @@ case class ReplicatedLog[Command](
    * Performs the "consistency check", which checks if the data that we just got from the
    */
   def containsMatchingEntry(otherPrevTerm: Term, otherPrevIndex: Int): Boolean =
-    (otherPrevTerm == Term(0) && otherPrevIndex == 0) || (lastTerm == otherPrevTerm && lastIndex == otherPrevIndex)
+    (otherPrevTerm == Term(0) && otherPrevIndex == 0) ||
+    (entries.isDefinedAt(otherPrevIndex - 1) && entries(otherPrevIndex - 1).term == otherPrevTerm)
 
   // log state
   def lastTerm  = entries.lastOption map { _.term } getOrElse Term(0)

@@ -43,8 +43,14 @@ private[raft] trait Follower {
 
     // take writes
     case Event(msg: AppendEntries[Command], m: Meta) =>
-      senderIsCurrentLeader()
-      appendEntries(msg, m)
+      // First check the consistency of this request
+      if (!replicatedLog.containsMatchingEntry(msg.prevLogTerm, msg.prevLogIndex)) {
+        log.info("Rejecting write (inconsistent log): {} {} {} ", msg.prevLogIndex, msg.prevLogTerm, replicatedLog)
+        leader ! AppendRejected(m.currentTerm)
+        stay()
+      } else {
+        appendEntries(msg, m)
+      }
 
     // end of take writes
 
@@ -65,11 +71,13 @@ private[raft] trait Follower {
     if (leaderIsLagging(msg, m)) {
       if (msg.isNotHeartbeat) {
         log.info("Rejecting write (Leader is lagging) of: " + msg + "; " + replicatedLog)
-        leader ! AppendRejected(m.currentTerm, replicatedLog.lastIndex) // no need to respond if only heartbeat
+        leader ! AppendRejected(m.currentTerm)
       }
-      stay()
+      return stay()
+    }
 
-    } else if (msg.isHeartbeat) {
+    senderIsCurrentLeader()
+    if (msg.isHeartbeat) {
       acceptHeartbeat()
 
     } else {
