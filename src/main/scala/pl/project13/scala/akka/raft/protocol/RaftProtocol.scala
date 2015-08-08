@@ -34,10 +34,6 @@ private[protocol] trait RaftProtocol extends Serializable {
     entries: immutable.Seq[Entry[T]],
     leaderCommitId: Int
   ) extends RaftMessage {
-
-    def isHeartbeat = entries.isEmpty
-    def isNotHeartbeat = !isHeartbeat
-
     override def toString = s"""AppendEntries(term:$term,prevLog:($prevLogTerm,$prevLogIndex),entries:$entries)"""
   }
 
