@@ -32,6 +32,7 @@ private[raft] trait Follower {
       log.info("Voting for {} in {}", candidate, term)
       sender ! VoteCandidate(m.currentTerm)
 
+      resetElectionDeadline()
       stay() using m.withVote(term, candidate)
 
     case Event(RequestVote(term, candidateId, lastLogTerm, lastLogIndex), m: Meta) =>
