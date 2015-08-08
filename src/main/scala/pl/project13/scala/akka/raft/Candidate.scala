@@ -70,6 +70,7 @@ private[raft] trait Candidate {
 
       if (includingThisVote.hasMajority) {
         log.info("Received vote by {}; Won election with {} of {} votes", voter(), includingThisVote.votesReceived, m.config.members.size)
+        LeaderTest.totalElected.getAndIncrement // XXX STS2 testing
         goto(Leader) using m.forLeader
       } else {
         log.info("Received vote by {}; Have {} of {} votes", voter(), includingThisVote.votesReceived, m.config.members.size)

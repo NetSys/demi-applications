@@ -6,6 +6,8 @@ import model._
 import protocol._
 import config.RaftConfig
 
+import java.util.concurrent.atomic.AtomicInteger // XXX STS2 testing
+
 private[raft] trait Leader {
   this: RaftActor =>
 
@@ -221,4 +223,9 @@ private[raft] trait Leader {
       meta
   }
 
+}
+
+object LeaderTest {
+  // XXX convenience for testing
+  val totalElected = new AtomicInteger(0)
 }

@@ -46,10 +46,10 @@ class WordConcatRaftActor extends RaftActor {
       super.receive(m)
       println("AFTER RECEIVE, LOG: " + replicatedLog)
       println("AFTER RECEIVE, STATE: " + stateData)
+      println("AFTER RECEIVE, words: " + words)
       if (stateData.getClass == classOf[LeaderMeta]) {
         println("AFTER RECEIVE, nextIndex: " + nextIndex)
         println("AFTER RECEIVE, matchIndex: " + matchIndex)
-        println("AFTER RECEIVE, words: " + words)
       }
       //println("RAFT " + self.path.name + " Done FSM received " + m + " " + super.getLog.map(_.stateName))
   }

@@ -34,7 +34,8 @@ private[protocol] trait RaftProtocol extends Serializable {
     entries: immutable.Seq[Entry[T]],
     leaderCommitId: Int
   ) extends RaftMessage {
-    override def toString = s"""AppendEntries(term:$term,prevLog:($prevLogTerm,$prevLogIndex),entries:$entries)"""
+    override def toString =
+    s"""AppendEntries(term:$term,prevLog:($prevLogTerm,$prevLogIndex),entries:$entries,leaderCommit:$leaderCommitId)"""
   }
 
   object AppendEntries {
