@@ -6,6 +6,7 @@ import model._
 import protocol._
 import config.RaftConfig
 
+import scala.collection.mutable.HashMap
 import java.util.concurrent.atomic.AtomicInteger // XXX STS2 testing
 
 private[raft] trait Leader {
@@ -180,6 +181,10 @@ private[raft] trait Leader {
 
     if (willCommit) {
       log.info("Consensus for persisted index: {}. (Comitted index: {}, will commit now: {})", indexOnMajority, replicatedLog.committedIndex, willCommit)
+      LeaderTest.consensusReached.synchronized {
+        LeaderTest.consensusReached(self.path.name) =
+          LeaderTest.consensusReached.getOrElse(self.path.name, 0) + 1
+      }
 
       val entries = replicatedLog.between(replicatedLog.committedIndex, indexOnMajority)
 
@@ -235,4 +240,5 @@ private[raft] trait Leader {
 object LeaderTest {
   // XXX convenience for testing
   val totalElected = new AtomicInteger(0)
+  val consensusReached = new HashMap[String,Int]
 }
