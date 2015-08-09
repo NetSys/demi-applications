@@ -40,7 +40,12 @@ private[protocol] trait RaftProtocol extends Serializable {
 
   object AppendEntries {
     // N.B. fromIndex and leaderCommitIdx should be 1-indexed
+    // Throws IllegalArgumentException if fromIndex > replicatedLog.length
     def apply[T](term: Term, replicatedLog: ReplicatedLog[T], fromIndex: Int,leaderCommitIdx: Int): AppendEntries[T] = {
+      if (fromIndex > replicatedLog.nextIndex) {
+        throw new IllegalArgumentException(s"fromIndex ($fromIndex) > nextIndex (${replicatedLog.nextIndex})")
+      }
+
       val entries = replicatedLog.entriesBatchFrom(fromIndex)
 
       val prevIndex = List(0, fromIndex - 1).max

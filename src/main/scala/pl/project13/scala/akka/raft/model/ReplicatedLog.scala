@@ -94,9 +94,17 @@ case class ReplicatedLog[Command](
     // adjusted of fromIndex: fromIndex - 1. So, fromIndex is exclusive.
     entries.slice(fromIndex, toIndex)
 
-  def termAt(index: Int) =
-    if (index <= 0) Term(0)
-    else entries.find(_.index == index).getOrElse(throw new RuntimeException(s"Unable to find log entry at index $index")).term
+  def containsEntryAt(index: Int) =
+    !entries.find(_.index == index).isEmpty
+
+  // Throws IllegalArgumentException if there is no entry with the given index
+  def termAt(index: Int): Term = {
+    if (index <= 0) return Term(0)
+    if (!containsEntryAt(index)) {
+      throw new IllegalArgumentException(s"Unable to find log entry at index $index.")
+    }
+    return entries.find(_.index == index).get.term
+  }
 
   def committedEntries = entries.slice(0, committedIndex)
 

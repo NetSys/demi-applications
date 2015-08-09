@@ -100,7 +100,7 @@ private[raft] trait Leader {
   }
 
   def initializeLeaderState(members: Set[ActorRef], m: LeaderMeta) {
-    log.info("Preparing nextIndex and matchIndex table for followers, init all to: replicatedLog.lastIndex = {}", replicatedLog.lastIndex)
+    log.info("Preparing nextIndex and matchIndex table for followers.")
     nextIndex = LogIndexMap.initialize(members, replicatedLog.nextIndex)
     matchIndex = LogIndexMap.initialize(members, 0)
     matchIndex.put(m.clusterSelf, replicatedLog.lastIndex)
@@ -165,6 +165,7 @@ private[raft] trait Leader {
     log.info("Follower {} took write in term: {}, next index was: {}", follower(), followerTerm, nextIndex.valueFor(follower()))
 
     // update our tables for this member
+    assert(followerIndex <= replicatedLog.lastIndex)
     nextIndex.put(follower(), followerIndex + 1)
     matchIndex.putIfGreater(follower(), followerIndex)
 
