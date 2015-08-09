@@ -301,8 +301,10 @@ class LogMatchChecker(parent: RaftChecks) {
             val affected = Set(actor, otherActor)
             return Some(new HashMap ++ Seq(fingerprint -> affected))
           }
-          val myEntry = log(currentIdx)
-          val otherEntry = otherLog(currentIdx)
+          // N.B. we're looking at 0-indexed elements of log.entries, even though the
+          // "entries" contained in log are 1-indexed.
+          val myEntry = log.entries(currentIdx)
+          val otherEntry = otherLog.entries(currentIdx)
           if (myEntry.command != otherEntry.command ||
               myEntry.term != otherEntry.term ||
               myEntry.index != otherEntry.index) {
