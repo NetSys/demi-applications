@@ -80,10 +80,14 @@ private[raft] trait Leader {
       stopHeartbeat()
       stepDown(m, term) // since there seems to be another leader!
 
-    case Event(msg: AppendRejected, m: LeaderMeta) =>
+    case Event(msg: AppendRejected, m: LeaderMeta) if msg.term == m.currentTerm =>
       registerAppendRejected(follower(), msg, m)
 
-    case Event(msg: AppendSuccessful, m: LeaderMeta) =>
+    case Event(msg: AppendSuccessful, m: LeaderMeta) if msg.term > m.currentTerm =>
+      stopHeartbeat()
+      stepDown(m, msg.term) // since there seems to be another leader!
+
+    case Event(msg: AppendSuccessful, m: LeaderMeta) if msg.term == m.currentTerm =>
       registerAppendSuccessful(follower(), msg, m)
 
     case Event(RequestConfiguration, m: LeaderMeta) =>
