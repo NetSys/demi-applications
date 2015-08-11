@@ -143,6 +143,7 @@ class RaftChecks {
   // all replicated logs.
   var actor2log = new HashMap[String, ReplicatedLog[Cmnd]]
   var actor2AllEntries = new HashMap[String, HashSet[(Cmnd, Term, Int)]]
+  var actor2Applied = new HashMap[String, Vector[String]]
   var allCommitted = new HashSet[(Cmnd, Term, Int)]
 
   def clear() {
@@ -155,6 +156,7 @@ class RaftChecks {
     term2leader = new HashMap[Term, String]
     actor2log = new HashMap[String, ReplicatedLog[Cmnd]]
     actor2AllEntries = new HashMap[String, HashSet[(Cmnd, Term, Int)]]
+    actor2Applied = new HashMap[String, Vector[String]]
     allCommitted = new HashSet[(Cmnd, Term, Int)]
   }
 
@@ -165,6 +167,7 @@ class RaftChecks {
       val nextIndex = data(1).asInstanceOf[LogIndexMap]
       val matchIndex = data(2).asInstanceOf[LogIndexMap]
       val state = data(3).asInstanceOf[Metadata]
+      val applied = data(4).asInstanceOf[Vector[String]]
 
       state match {
         case LeaderMeta(_, term, _) =>
@@ -185,6 +188,8 @@ class RaftChecks {
       for (entry <- replicatedLog.entries) {
         actor2AllEntries(actor) += ((entry.command, entry.term, entry.index))
       }
+
+      actor2Applied(actor) = applied
     }
   }
 
@@ -327,12 +332,11 @@ class LogMatchChecker(parent: RaftChecks) {
 class LeaderCompletenessChecker(parent: RaftChecks) {
 
   def check() : Option[Map[String, Set[String]]] = {
-    return None
     val sortedTerms = parent.term2leader.keys.toArray.sortWith((a,b) => a < b)
     if (sortedTerms.isEmpty) {
       return None
     }
-    // The index of the first sortedTerm that is > than the current committed
+    // The (0-indexed) index of the first sortedTerm that is > than the current committed
     // entry.
     var termWatermark = 0
     val sortedCommitted = parent.allCommitted.toArray.sortWith((c1, c2) => c1._2 < c2._2)
@@ -363,18 +367,37 @@ class LeaderCompletenessChecker(parent: RaftChecks) {
 //     its state machine, no other server will ever apply a different log entry for
 //     the same index. §5.4.3
 class StateMachineChecker(parent: RaftChecks) {
-  // TODO(cs): for now, we just check committed entries. To get a perfect view
-  // of applied entries, we'd need the RaftActors to send us a message every
-  // time they apply an entry (which, AFAICT, happens immediately after they infer
-  // infer that they should commit an given entry)
   def check() : Option[Map[String, Set[String]]] = {
-    val allCommittedIndices = parent.allCommitted.toArray.map(c => c._3)
-    if (parent.allCommitted.size != allCommittedIndices.size) {
-      val counts = new MultiSet[Int]
-      counts ++= allCommittedIndices
-      val duplicates = counts.m.filter({case (k, v) => v.length > 1}).keys
-      return Some(new HashMap ++
-        Seq("StateMachine:"+duplicates.toSeq.sorted.toString -> Set.empty))
+    // list of vectors
+    if (parent.actor2Applied.size < 2) {
+      return None
+    }
+    // Walk through all vectors, one index at a time. If any of the vectors
+    // differ at any index, we've got a violation.
+    val allVectors = parent.actor2Applied.values
+    val maxIndex = allVectors.map(vec => vec.size - 1).toList.max
+    for (i <- (0 to maxIndex)) {
+      val valuesAti = allVectors flatMap {
+        case vec =>
+          if (vec.isDefinedAt(i)) {
+            Some(vec(i))
+          } else {
+            None
+          }
+      } toSet
+
+      if (valuesAti.size > 1) {
+        // We've got a violation. Figure out which nodes are affected.
+        val affected = parent.actor2Applied flatMap {
+          case (k,v) =>
+            if (v.isDefinedAt(i))
+              Some(k)
+            else
+              None
+        } toSet
+        val fingerprint = "StateMachine:"+affected.toSeq.sorted.mkString("-")
+        return Some(new HashMap ++ Seq(fingerprint -> affected))
+      }
     }
     return None
   }
