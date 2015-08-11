@@ -39,18 +39,15 @@ class WordConcatRaftActor extends RaftActor {
       //  isTimerActive(ElectionTimeoutTimerName) )
       println("BEFORE RECEIVE, LOG: " + replicatedLog)
       println("BEFORE RECEIVE, STATE: " + stateData)
-      if (stateData.getClass == classOf[LeaderMeta]) {
-        println("BEFORE RECEIVE, nextIndex: " + nextIndex)
-        println("BEFORE RECEIVE, matchIndex: " + matchIndex)
-      }
+      println("BEFORE RECEIVE, words: " + words)
+      println("BEFORE RECEIVE, nextIndex: " + nextIndex)
+      println("BEFORE RECEIVE, matchIndex: " + matchIndex)
       super.receive(m)
       println("AFTER RECEIVE, LOG: " + replicatedLog)
       println("AFTER RECEIVE, STATE: " + stateData)
       println("AFTER RECEIVE, words: " + words)
-      if (stateData.getClass == classOf[LeaderMeta]) {
-        println("AFTER RECEIVE, nextIndex: " + nextIndex)
-        println("AFTER RECEIVE, matchIndex: " + matchIndex)
-      }
+      println("AFTER RECEIVE, nextIndex: " + nextIndex)
+      println("AFTER RECEIVE, matchIndex: " + matchIndex)
       //println("RAFT " + self.path.name + " Done FSM received " + m + " " + super.getLog.map(_.stateName))
   }
 
