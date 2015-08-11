@@ -3,6 +3,7 @@ package pl.project13.scala.akka.raft
 import model._
 import protocol._
 import config.RaftConfig
+import akka.actor.ActorRef
 
 
 private[raft] trait Candidate {
@@ -71,7 +72,10 @@ private[raft] trait Candidate {
       if (includingThisVote.hasMajority) {
         log.info("Received vote by {}; Won election with {} of {} votes", voter(), includingThisVote.votesReceived, m.config.members.size)
         LeaderTest.totalElected.getAndIncrement // XXX STS2 testing
-        goto(Leader) using m.forLeader
+
+        val leaderState = m.forLeader
+        initializeLeaderState(leaderState.config.members, leaderState)
+        goto(Leader) using leaderState
       } else {
         log.info("Received vote by {}; Have {} of {} votes", voter(), includingThisVote.votesReceived, m.config.members.size)
         stay() using includingThisVote
@@ -117,4 +121,11 @@ private[raft] trait Candidate {
       stay()
   }
 
+  // Invoked before transitioning to Leader.
+  def initializeLeaderState(members: Set[ActorRef], m: LeaderMeta) {
+    log.info("Preparing nextIndex and matchIndex table for followers.")
+    nextIndex = LogIndexMap.initialize(members, replicatedLog.nextIndex)
+    matchIndex = LogIndexMap.initialize(members, 0)
+    matchIndex.put(m.clusterSelf, replicatedLog.lastIndex)
+  }
 }
