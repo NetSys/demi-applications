@@ -32,7 +32,7 @@ class WordConcatRaftActor extends RaftActor {
   // Deal with CheckpointRequests, for checking global invariants.
   override def receive = {
     case CheckpointRequest =>
-      val state = List(replicatedLog, nextIndex, matchIndex, stateData)
+      val state = List(replicatedLog, nextIndex, matchIndex, stateData, words)
       context.actorFor("../" + CheckpointSink.name) ! CheckpointReply(state)
     case m =>
       //println("RAFT " + self.path.name + " FSM received " + m + " " + super.getLog.map(_.stateName) + " " +
