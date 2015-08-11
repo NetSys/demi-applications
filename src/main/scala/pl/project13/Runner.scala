@@ -1,6 +1,10 @@
+package akka.dispatch.verification
+
 import akka.actor.{ Actor, ActorRef, DeadLetter }
 import akka.actor.{ActorSystem, ExtendedActorSystem}
 import akka.actor.Props
+import akka.actor.FSM
+import akka.actor.FSM.Timer
 import akka.dispatch.verification._
 import scala.collection.mutable.Queue
 import scala.collection.mutable.HashMap
@@ -142,13 +146,65 @@ object Main extends App {
     members.map(member =>
       Start(Init.actorCtor, member)) ++
     members.map(member =>
-      Send(member, new BootstrapMessageConstructor(Set[Int]())))
+      Send(member, new BootstrapMessageConstructor(Set[Int]()))) ++
+    Array[ExternalEvent](
+      WaitCondition(() => LeaderTest.totalElected.get > 0))
+      //Send("raft-member-3", new AppendWordConstuctor("WORD1")),
+      //Send("raft-member-3", new AppendWordConstuctor("WORD2"))
+    //)
     //Array[ExternalEvent](WaitQuiescence()
   //) XXX
   // -- --
 
+  val rand = new Random(0)
+  val toSchedule = new Queue[(String,String,String)]
+  def userDefinedFilter(src: String, dst: String, msg: Any): Boolean = {
+    toSchedule.synchronized {
+      if (toSchedule.isEmpty) {
+        msg match {
+          case Timer("election-timer", _, _, _) =>
+            if (rand.nextDouble < 0.70) {
+              return false
+            }
+            return true
+          case _ => return true
+        }
+      } else {
+        // Force toSchedule to be scheduled
+        val (s,d,m) = toSchedule.head
+        if (src == s && dst == d && msg.toString.contains(m)) {
+          toSchedule.dequeue
+          return true
+        }
+        return false
+      }
+    }
+  }
+  def consensusInterleaving(): Boolean = {
+    LeaderTest.consensusReached.synchronized {
+      if (LeaderTest.consensusReached.size > 0) {
+        toSchedule.synchronized {
+          if (toSchedule.isEmpty) {
+            val nextLeader = Instrumenter().actorMappings.keys.find(
+              a => a != LeaderTest.consensusReached.keys.head &&
+                   !ActorTypes.systemActor(a)).get
+            toSchedule += (("deadLetters", nextLeader, "Timer(election-timer"))
+            // TODO(cs): also add heartbeat from nextLeader -> oldLeader?
+          }
+        }
+        return true
+      }
+    }
+    return false
+  }
+
+  val postfix = Array[ExternalEvent](
+    WaitCondition(consensusInterleaving))
+
   def shutdownCallback() = {
     raftChecks.clear
+    LeaderTest.totalElected.set(0)
+    LeaderTest.consensusReached.clear
   }
 
   Instrumenter().registerShutdownCallback(shutdownCallback)
@@ -166,7 +222,7 @@ object Main extends App {
   val weights = new FuzzerWeights(kill=0.00, send=0.3, wait_quiescence=0.0,
                                   partition=0.0, unpartition=0)
   val messageGen = new ClientMessageGenerator(members)
-  val fuzzer = new Fuzzer(200, weights, messageGen, prefix)
+  val fuzzer = new Fuzzer(60, weights, messageGen, prefix, postfix=postfix)
 
   val fuzz = false
 
@@ -181,12 +237,17 @@ object Main extends App {
       val replayer = new ReplayScheduler(schedulerConfig)
       return replayer
     }
+
+    def randomiziationCtor() : RandomizationStrategy = {
+      return new FullyRandom(userDefinedFilter)
+    }
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  schedulerConfig,
                                  validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(300),  // XXX
-                                 invariant_check_interval=5,
-                                 computeProvenance=false) // XXX
+                                 maxMessages=Some(400),  // XXX
+                                 invariant_check_interval=10,
+                                 randomizationStrategyCtor=randomiziationCtor,
+                                 computeProvenance=true)
     traceFound = tuple._1
     violationFound = tuple._2
     depGraph = tuple._3
@@ -213,10 +274,12 @@ object Main extends App {
       violationFound,
       actorNameProps=Some(ExperimentSerializer.getActorNameProps(traceFound)))
 
+    if (verified_mcs.isEmpty) {
+      throw new RuntimeException("MCS wasn't validated")
+    }
+
     val mcs_dir = serializer.serializeMCS(dir, mcs, stats, verified_mcs, violation, false)
 
-    // Actually try minimizing twice, to make it easier to understand what's
-    // going on during each "Ignoring next" run.
     val (intMinStats, intMinTrace) = RunnerUtils.minimizeInternals(schedulerConfig,
                           mcs,
                           verified_mcs.get,
@@ -230,7 +293,7 @@ object Main extends App {
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_05_20_28_04_DDMin_STSSchedNoPeek"
+    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_10_20_12_21_DDMin_STSSchedNoPeek"
 
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
