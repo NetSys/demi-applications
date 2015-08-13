@@ -339,6 +339,7 @@ class LeaderCompletenessChecker(parent: RaftChecks) {
     // The (0-indexed) index of the first sortedTerm that is > than the current committed
     // entry.
     var termWatermark = 0
+    // Sort by Term
     val sortedCommitted = parent.allCommitted.toArray.sortWith((c1, c2) => c1._2 < c2._2)
     for (committed <- sortedCommitted) {
       // Move the waterMark if necessary

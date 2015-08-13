@@ -224,7 +224,7 @@ object Main extends App {
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(60, weights, messageGen, prefix, postfix=postfix)
 
-  val fuzz = false
+  val fuzz = true
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -239,13 +239,13 @@ object Main extends App {
     }
 
     def randomiziationCtor() : RandomizationStrategy = {
-      return new FullyRandom(userDefinedFilter)
+      return new SrcDstFIFO
     }
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  schedulerConfig,
                                  validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(200),  // XXX
-                                 invariant_check_interval=5,
+                                 maxMessages=Some(1000),  // XXX
+                                 invariant_check_interval=20,
                                  randomizationStrategyCtor=randomiziationCtor,
                                  computeProvenance=true)
     traceFound = tuple._1
@@ -293,7 +293,7 @@ object Main extends App {
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_12_14_26_44_DDMin_STSSchedNoPeek"
+    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_12_23_57_17_DDMin_STSSchedNoPeek"
 
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
