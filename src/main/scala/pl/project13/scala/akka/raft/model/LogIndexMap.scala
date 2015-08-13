@@ -60,27 +60,38 @@ case class LogIndexMap private (private var backing: Map[ActorRef, Int], private
       val oldQuorum = indexOnMajority(oldMembers)
       val newQuorum = indexOnMajority(newMembers)
 
-      if (oldQuorum == -1) newQuorum
-      else if (newQuorum == -1) oldQuorum
+      if (oldQuorum == 0) newQuorum
+      else if (newQuorum == 0) oldQuorum
       else math.min(oldQuorum, newQuorum)
   }
 
   private def indexOnMajority(include: Set[ActorRef]): Int = {
-    val indexCountPairs = backing
-      .filterKeys(include)
-      .groupBy(_._2)
-      .map { case (k, m) => k -> m.size }
-      .toList
+    // Our goal is to find the match index e that has the
+    // following property:
+    //   - a quorum [N / 2 + 1] of the nodes has match index >= e
 
-    indexCountPairs match {
-      case Nil => 0
-      case _ =>
-        indexCountPairs.sortBy(- _._2).head // sort by size
-        ._1
+    // We first sort the match indices
+    val sortedMatchIndices = backing
+      .filterKeys(include)
+      .values
+      .toList
+      .sorted
+
+    if (sortedMatchIndices.isEmpty) {
+      return 0
     }
 
+    assert(sortedMatchIndices.size == include.size)
+
+    // The element e we are looking is now at the (CEILING[N / 2] - 1)st index.
+    // [ consider three examples:
+    //   1,1,1,3,3  => correct value: 1
+    //   1,1,3,3,3  => correct value: 3
+    //   1,1,3,3    => correct value: 1
+    // ]
+    return sortedMatchIndices(LogIndexMap.ceiling(include.size, 2) - 1)
   }
-  
+
   @tailrec final def valueFor(member: ActorRef): Int = backing.get(member) match {
     case None =>
       backing = backing.updated(member, initializeWith)
@@ -88,10 +99,13 @@ case class LogIndexMap private (private var backing: Map[ActorRef, Int], private
     case Some(value) =>
       value
   }
-  
 }
 
 object LogIndexMap {
   def initialize(members: Set[ActorRef], initializeWith: Int) =
     new LogIndexMap(Map(members.toList.map(_ -> initializeWith): _*), initializeWith)
+
+  def ceiling(numerator: Int, divisor: Int): Int = {
+    if (numerator % divisor == 0) numerator / divisor else (numerator / divisor) + 1
+  }
 }
