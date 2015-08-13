@@ -23,17 +23,38 @@ private[raft] trait Follower {
     case Event(r @ RequestVote(term, candidate, lastLogTerm, lastLogIndex), m: Meta)
       if term > m.currentTerm =>
       log.info("Received newer {}. Current term is {}.", term, m.currentTerm)
+      // Let the next case clause deal with it, after we've updated our Term
       m.clusterSelf forward r
       stay() using m.withTerm(term)
 
     case Event(RequestVote(term, candidate, lastLogTerm, lastLogIndex), m: Meta)
       if m.canVoteIn(term, candidate) =>
 
-      log.info("Voting for {} in {}", candidate, term)
-      sender ! VoteCandidate(m.currentTerm)
-
       resetElectionDeadline()
-      stay() using m.withVote(term, candidate)
+      // Check if the log is up-to-date before granting vote.
+      // Raft determines which of two logs is more up-to-date
+      // by comparing the index and term of the last entries in the
+      // logs. If the logs have last entries with different terms, then
+      // the log with the later term is more up-to-date. If the logs
+      // end with the same term, then whichever log is longer is
+      // more up-to-date.
+      if (lastLogTerm < replicatedLog.lastTerm) {
+        log.info("Rejecting vote for {}, and {}. Candidate's lastLogTerm: {} < ours: {}",
+          candidate, term, lastLogTerm, replicatedLog.lastTerm)
+        sender ! DeclineCandidate(m.currentTerm)
+        stay()
+      } else if (lastLogTerm == replicatedLog.lastTerm &&
+                 lastLogIndex < replicatedLog.lastIndex) {
+        log.info("Rejecting vote for {}, and {}. Candidate's lastLogIndex: {} < ours: {}",
+          candidate, term, lastLogIndex, replicatedLog.lastIndex)
+        sender ! DeclineCandidate(m.currentTerm)
+        stay()
+      } else {
+        log.info("Voting for {} in {}", candidate, term)
+        sender ! VoteCandidate(m.currentTerm)
+
+        stay() using m.withVote(term, candidate)
+      }
 
     case Event(RequestVote(term, candidateId, lastLogTerm, lastLogIndex), m: Meta) =>
       log.info("Rejecting vote for {}, and {}, currentTerm: {}, already voted for: {}", candidate(), term, m.currentTerm, m.votes.get(term))
@@ -139,5 +160,4 @@ private[raft] trait Follower {
       // simply ignore applying cluster configurations onto the client state machine,
       // it's an internal thing and the client does not care about cluster config change.
   }
-  
 }

@@ -50,8 +50,10 @@ private[raft] trait Candidate {
 
     case Event(msg: RequestVote, m: ElectionMeta)
       if m.canVoteIn(msg.term, msg.candidateId) =>
-      sender ! VoteCandidate(m.currentTerm)
-      stay() using m.withVoteFor(msg.term, candidate())
+      // If we're going to vote for someone other than ourselves this term,
+      // step down to Follower.
+      m.clusterSelf forward msg
+      goto(Follower) using m.forFollower(msg.term)
 
     case Event(msg: RequestVote, m: ElectionMeta) =>
       sender ! DeclineCandidate(msg.term)
