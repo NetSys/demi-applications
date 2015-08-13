@@ -244,8 +244,8 @@ object Main extends App {
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  schedulerConfig,
                                  validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(400),  // XXX
-                                 invariant_check_interval=10,
+                                 maxMessages=Some(200),  // XXX
+                                 invariant_check_interval=5,
                                  randomizationStrategyCtor=randomiziationCtor,
                                  computeProvenance=true)
     traceFound = tuple._1
@@ -293,7 +293,7 @@ object Main extends App {
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_10_20_12_21_DDMin_STSSchedNoPeek"
+    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_12_14_26_44_DDMin_STSSchedNoPeek"
 
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
