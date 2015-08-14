@@ -38,11 +38,8 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
     val str = msg match {
       case RequestVote(term, ref, lastTerm, lastIdx) =>
         (("RequestVote", term, removeId(ref), lastTerm, lastIdx)).toString
-        //(("RequestVote", removeId(ref))).toString
       case LeaderIs(Some(ref), msg) =>
         ("LeaderIs", removeId(ref)).toString
-      //case VoteCandidate(term) =>
-      //  ("VoteCandidate").toString
       case m =>
         ""
     }
@@ -51,6 +48,38 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
       return Some(BasicFingerprint(str))
     }
     return None
+  }
+
+  // Does this message trigger a logical clock contained in subsequent
+  // messages to be incremented?
+  override def causesClockIncrement(msg: Any) : Boolean = {
+    msg match {
+      case Timer("election-timer", _, _, _) => return true
+      case _ => return false
+    }
+  }
+
+  // Extract a clock value from the contents of this message
+  override def getLogicalClock(msg: Any) : Option[AnyVal] = {
+    msg match {
+      case RequestVote(term, _, _, _) =>
+        return Some(term)
+      case AppendEntries(term, _, _, _, _) =>
+        return Some(term)
+      case VoteCandidate(term) =>
+        return Some(term)
+      case DeclineCandidate(term) =>
+        return Some(term)
+      case a: AppendResponse =>
+        return Some(a.term)
+      case _ => return None
+    }
+  }
+
+  // Given a logical clock AnyVal [extracted with getLogicalClock], decrement
+  // it on our behalf.
+  override def decrementLogicalClock(clock: AnyVal) : AnyVal = {
+    return clock.asInstanceOf[Term].prev
   }
 }
 
