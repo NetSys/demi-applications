@@ -60,26 +60,40 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
   }
 
   // Extract a clock value from the contents of this message
-  override def getLogicalClock(msg: Any) : Option[AnyVal] = {
+  override def getLogicalClock(msg: Any) : Option[Long] = {
     msg match {
       case RequestVote(term, _, _, _) =>
-        return Some(term)
+        return Some(term.termNr)
       case AppendEntries(term, _, _, _, _) =>
-        return Some(term)
+        return Some(term.termNr)
       case VoteCandidate(term) =>
-        return Some(term)
+        return Some(term.termNr)
       case DeclineCandidate(term) =>
-        return Some(term)
+        return Some(term.termNr)
       case a: AppendResponse =>
-        return Some(a.term)
+        return Some(a.term.termNr)
       case _ => return None
     }
   }
 
-  // Given a logical clock AnyVal [extracted with getLogicalClock], decrement
+  // Given a message with a logical clock field, decrement
   // it on our behalf.
-  override def decrementLogicalClock(clock: AnyVal) : AnyVal = {
-    return clock.asInstanceOf[Term].prev
+  override def decrementLogicalClock(msg: Any) : Any = {
+    msg match {
+      case RequestVote(term, f2, f3, f4) =>
+        return RequestVote(Term(term.termNr - 1), f2, f3, f4)
+      case AppendEntries(term, f2, f3, f4, f5) =>
+        return AppendEntries(Term(term.termNr - 1), f2, f3, f4, f5)
+      case VoteCandidate(term) =>
+        return VoteCandidate(Term(term.termNr - 1))
+      case DeclineCandidate(term) =>
+        return DeclineCandidate(Term(term.termNr - 1))
+      case AppendRejected(term: Term) =>
+        return AppendRejected(Term(term.termNr - 1))
+      case AppendSuccessful(term: Term, lastIndex: Int) =>
+        return AppendSuccessful(Term(term.termNr - 1), lastIndex)
+      case _ => return None
+    }
   }
 }
 
