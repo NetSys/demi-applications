@@ -1,3 +1,5 @@
+package akka.dispatch.verification
+
 import akka.actor.{ Actor, ActorRef, DeadLetter }
 import akka.actor.{ActorSystem, ExtendedActorSystem}
 import akka.actor.Props
@@ -16,6 +18,8 @@ import pl.project13.scala.akka.raft.model._
 import runner.raftchecks._
 import runner.raftserialization._
 import java.nio._
+import akka.actor.FSM
+import akka.actor.FSM.Timer
 
 import scalax.collection.mutable.Graph,
        scalax.collection.GraphEdge.DiEdge,
@@ -47,6 +51,32 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
       return Some(BasicFingerprint(str))
     }
     return None
+  }
+
+  // Does this message trigger a logical clock contained in subsequent
+  // messages to be incremented?
+  override def causesClockIncrement(msg: Any) : Boolean = {
+    msg match {
+      case Timer("election-timer", _, _, _) => return true
+      case _ => return false
+    }
+  }
+
+  // Extract a clock value from the contents of this message
+  override def getLogicalClock(msg: Any) : Option[Long] = {
+    msg match {
+      case RequestVote(term, _, _, _) =>
+        return Some(term.termNr)
+      case AppendEntries(term, _, _, _, _) =>
+        return Some(term.termNr)
+      case VoteCandidate(term) =>
+        return Some(term.termNr)
+      case DeclineCandidate(term) =>
+        return Some(term.termNr)
+      case a: AppendResponse =>
+        return Some(a.term.termNr)
+      case _ => return None
+    }
   }
 }
 
@@ -234,14 +264,40 @@ object Main extends App {
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_04_22_02_12_DDMin_STSSchedNoPeek"
+    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_16_21_14_54_DDMin_STSSchedNoPeek"
 
     val deserializer = new ExperimentDeserializer(dir)
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
+    /*
+    // Sched is just used as a dummy here to deserialize ActorRefs.
+    val dummy_sched = new ReplayScheduler(schedulerConfig)
+    val (mcs, trace, violation, actors) = RunnerUtils.deserializeMCS(
+      dir, msgDeserializer, dummy_sched)
+    dummy_sched.shutdown
+    */
+
     val replayTrace = RunnerUtils.replayExperiment(dir, schedulerConfig, msgDeserializer,
       traceFile=ExperimentSerializer.minimizedInternalTrace)
 
-    RunnerUtils.printDeliveries(replayTrace)
+    RunnerUtils.visualizeDeliveries(replayTrace, "/Users/cs/Documents/aug17.txt")
+
+    println("MINIMIZING!")
+    val minimizer = new FungibleClockMinimizer(schedulerConfig, deserializer.get_mcs,
+      replayTrace, deserializer.get_actors, deserializer.get_violation(msgDeserializer))
+    val (stats, minTrace) = minimizer.minimize
+
+    val originalDeliveries = RunnerUtils.countMsgEvents(replayTrace)
+    val removed = originalDeliveries - RunnerUtils.countMsgEvents(minTrace)
+    println("Removed " + removed + " / " + originalDeliveries + " additional deliveries")
+
+    val (_, minTrace2) = RunnerUtils.minimizeInternals(schedulerConfig,
+      deserializer.get_mcs, minTrace, deserializer.get_actors,
+      deserializer.get_violation(msgDeserializer))
+
+    val removed2 = RunnerUtils.countMsgEvents(minTrace) - RunnerUtils.countMsgEvents(minTrace2)
+    println("Removed " + removed2 + " / " + RunnerUtils.countMsgEvents(minTrace) + " additional deliveries")
+
+    RunnerUtils.visualizeDeliveries(minTrace2, "/Users/cs/Documents/aug17_post_clock.txt")
   }
 }
