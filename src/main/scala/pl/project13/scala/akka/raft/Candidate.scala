@@ -49,9 +49,9 @@ private[raft] trait Candidate {
       sender ! DeclineCandidate(msg.term)
       stay()
 
-   case Event(VoteCandidate(term), m: ElectionMeta) if term > m.currentTerm =>
-     log.info("Received newer {}. Current term is {}. Revert to follower state.", term, m.currentTerm)
-     goto(Follower) using m.forFollower(term)
+    case Event(VoteCandidate(term), m: ElectionMeta) if term > m.currentTerm =>
+      log.info("Received newer {}. Current term is {}. Revert to follower state.", term, m.currentTerm)
+      goto(Follower) using m.forFollower(term)
 
     case Event(VoteCandidate(term), m: ElectionMeta) =>
       val includingThisVote = m.incVote
@@ -67,7 +67,6 @@ private[raft] trait Candidate {
     case Event(DeclineCandidate(term), m: ElectionMeta) if term > m.currentTerm =>
       log.info("Received newer {}. Current term is {}. Revert to follower state.", term, m.currentTerm)
       goto(Follower) using m.forFollower(term)
-      stay()
 
     case Event(DeclineCandidate(term), m: ElectionMeta) =>
       log.info("Rejected vote by {}, in term {}", voter(), term)
