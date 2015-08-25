@@ -259,6 +259,10 @@ object Main extends App {
     val mcs_dir =
     "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_24_22_47_54_DDMin_STSSchedNoPeek"
 
+    val serializer = new ExperimentSerializer(
+      fingerprintFactory,
+      new RaftMessageSerializer)
+
     val deserializer = new ExperimentDeserializer(mcs_dir)
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
@@ -272,12 +276,18 @@ object Main extends App {
     val (intMinStats, intMinTrace) = RunnerUtils.minimizeInternals(schedulerConfig,
       mcs, verified_mcs, actors, violationFound, removalStrategyCtor=() => removalStrategy)
 
+    serializer.recordMinimizationStats(mcs_dir, intMinStats,
+            stats_file=ExperimentSerializer.internal_stats)
+
     var additionalTraces = Seq[(String, EventTrace)]()
 
     val minimizer = new FungibleClockMinimizer(schedulerConfig, mcs,
       intMinTrace, actors, violationFound,
       testScheduler=TestScheduler.DPORwHeuristics)
-    val (_, clusterMinTrace) = minimizer.minimize
+    val (wildcard_stats, clusterMinTrace) = minimizer.minimize
+
+    serializer.recordMinimizationStats(mcs_dir, wildcard_stats,
+            stats_file=ExperimentSerializer.wildcard_stats)
 
     additionalTraces = additionalTraces :+ (("FungibleClocks", clusterMinTrace))
 
