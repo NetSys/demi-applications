@@ -216,11 +216,15 @@ object Main extends App {
       val replayer = new ReplayScheduler(schedulerConfig)
       return replayer
     }
+    def randomizationStrategy() : RandomizationStrategy = {
+      return new SrcDstFIFO
+    }
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  schedulerConfig,
                                  validate_replay=Some(replayerCtor),
                                  maxMessages=Some(250),
-                                 invariant_check_interval=10) // XXX
+                                 invariant_check_interval=10, // XXX
+                                 randomizationStrategyCtor=randomizationStrategy)
     traceFound = tuple._1
     violationFound = tuple._2
     depGraph = tuple._3
@@ -248,55 +252,51 @@ object Main extends App {
       actorNameProps=Some(ExperimentSerializer.getActorNameProps(traceFound)))
 
     val mcs_dir = serializer.serializeMCS(dir, mcs, stats, verified_mcs, violation, false)
-
-    // Actually try minimizing twice, to make it easier to understand what's
-    // going on during each "Ignoring next" run.
-    val (intMinStats, intMinTrace) = RunnerUtils.minimizeInternals(schedulerConfig,
-                          mcs,
-                          verified_mcs.get,
-                          ExperimentSerializer.getActorNameProps(traceFound),
-                          violationFound)
-
-    RunnerUtils.printMinimizationStats(
-      traceFound, Some(filteredTrace), verified_mcs.get, intMinTrace, schedulerConfig.messageFingerprinter)
-
-    serializer.recordMinimizedInternals(mcs_dir, intMinStats, intMinTrace)
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_16_21_14_54_DDMin_STSSchedNoPeek"
+    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_21_16_28_53"
+    val mcs_dir =
+    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_21_16_28_53_DDMin_STSSchedNoPeek"
 
-    val deserializer = new ExperimentDeserializer(dir)
+    val deserializer = new ExperimentDeserializer(mcs_dir)
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
-    /*
-    // Sched is just used as a dummy here to deserialize ActorRefs.
-    val dummy_sched = new ReplayScheduler(schedulerConfig)
-    val (mcs, trace, violation, actors) = RunnerUtils.deserializeMCS(
-      dir, msgDeserializer, dummy_sched)
-    dummy_sched.shutdown
-    */
+    val mcs = deserializer.get_mcs
+    val actors = deserializer.get_actors
+    val (verified_mcs, violationFound, _) = RunnerUtils.deserializeExperiment(mcs_dir, msgDeserializer)
 
-    val replayTrace = RunnerUtils.replayExperiment(dir, schedulerConfig, msgDeserializer,
-      traceFile=ExperimentSerializer.minimizedInternalTrace)
+    var removalStrategy = new SrcDstFIFORemoval(verified_mcs,
+      schedulerConfig.messageFingerprinter)
 
-    RunnerUtils.visualizeDeliveries(replayTrace, "/Users/cs/Documents/aug17.txt")
+    val (intMinStats, intMinTrace) = RunnerUtils.minimizeInternals(schedulerConfig,
+      mcs, verified_mcs, actors, violationFound, removalStrategyCtor=() => removalStrategy)
 
-    println("MINIMIZING!")
-    val minimizer = new FungibleClockMinimizer(schedulerConfig, deserializer.get_mcs,
-      replayTrace, deserializer.get_actors, deserializer.get_violation(msgDeserializer))
-    val (stats, minTrace) = minimizer.minimize
+    var additionalTraces = Seq[(String, EventTrace)]()
 
-    val originalDeliveries = RunnerUtils.countMsgEvents(replayTrace)
-    val removed = originalDeliveries - RunnerUtils.countMsgEvents(minTrace)
-    println("Removed " + removed + " / " + originalDeliveries + " additional deliveries")
+    val minimizer = new FungibleClockMinimizer(schedulerConfig, mcs,
+      intMinTrace, actors, violationFound,
+      testScheduler=TestScheduler.DPORwHeuristics)
+    val (_, clusterMinTrace) = minimizer.minimize
+
+    additionalTraces = additionalTraces :+ (("FungibleClocks", clusterMinTrace))
+
+    removalStrategy = new SrcDstFIFORemoval(clusterMinTrace,
+      schedulerConfig.messageFingerprinter)
 
     val (_, minTrace2) = RunnerUtils.minimizeInternals(schedulerConfig,
-      deserializer.get_mcs, minTrace, deserializer.get_actors,
-      deserializer.get_violation(msgDeserializer))
+      mcs, clusterMinTrace, actors, violationFound,
+      removalStrategyCtor=() => removalStrategy)
 
-    val removed2 = RunnerUtils.countMsgEvents(minTrace) - RunnerUtils.countMsgEvents(minTrace2)
-    println("Removed " + removed2 + " / " + RunnerUtils.countMsgEvents(minTrace) + " additional deliveries")
+    additionalTraces = additionalTraces :+ (("2nd intMin", minTrace2))
+
+    val (traceFound, _, _) = RunnerUtils.deserializeExperiment(dir, msgDeserializer)
+    val origDeserializer = new ExperimentDeserializer(dir)
+    val filteredTrace = origDeserializer.get_filtered_initial_trace
+
+    RunnerUtils.printMinimizationStats(
+      traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
+      additionalTraces)
 
     RunnerUtils.visualizeDeliveries(minTrace2, "/Users/cs/Documents/aug17_post_clock.txt")
   }
