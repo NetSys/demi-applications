@@ -7,6 +7,7 @@ import akka.serialization._
 import scala.sys.process._
 import scala.sys.process.BasicIO
 import scala.collection.mutable.Queue
+import scala.collection.mutable.HashMap
 import scala.collection.mutable.SynchronizedQueue
 
 import scalax.collection.mutable.Graph,
@@ -57,10 +58,13 @@ object ExperimentSerializer {
   val original_externals = "/original_externals.bin"
   val violation = "/violation.bin"
   val mcs = "/mcs.bin"
-  val stats = "/minimization_stats.json"
+  val stats = "/minimization_stats.json" // DDMin
   // Stats when minimizing internal events.
   val internal_stats = "/internal_minimization_stats.json"
-  val depGraph = "/depGraph.bin"
+  // Stats when minimizing with wildcards
+  val wildcard_stats = "/wildcard_minimization_stats.json"
+  val depGraphEdges = "/depGraphEdges.bin"
+  val depGraphNodes = "/depGraphNodes.bin"
   // trace of Unique(MsgEvent)s
   val initialTrace = "/initialTrace.bin"
   // initialTrace minus all events that were concurrent with the violation.
@@ -179,15 +183,34 @@ class ExperimentSerializer(message_fingerprinter: FingerprintFactory, message_se
                                   violationBuf)
 
     // Serialize the external events.
-    val externalBuf = message_serializer.serialize(trace.original_externals)
+    val externalsAsArray : Array[ExternalEvent] = trace.original_externals.toArray
+    val externalBuf = JavaSerialization.serialize(externalsAsArray)
     JavaSerialization.writeToFile(output_dir + ExperimentSerializer.original_externals,
                                   externalBuf)
 
     depGraph match {
       case Some(graph) =>
-        val graphBuf = message_serializer.serialize(graph)
-        JavaSerialization.writeToFile(output_dir + ExperimentSerializer.depGraph,
-                                      graphBuf)
+        // We serialize edges and nodes separately, to avoid StackOverFlow.
+        val nodes = graph.nodes
+        val nodesArray = new Array[Unique](nodes.size)
+        nodes.zipWithIndex.foreach {
+          case (e,i) =>
+            nodesArray(i) = e
+        }
+        val nodesBuf = JavaSerialization.serialize(nodesArray)
+        JavaSerialization.writeToFile(
+          output_dir + ExperimentSerializer.depGraphNodes, nodesBuf)
+
+        val edges = graph.edges
+        // Tuples of (src id, dst id)
+        val edgeArray = new Array[Tuple2[Int,Int]](edges.size)
+        edges.zipWithIndex.foreach {
+          case (e,i) =>
+            edgeArray(i) = ((e._1.id, e._2.id))
+        }
+        val edgesBuf = JavaSerialization.serialize(edgeArray)
+        JavaSerialization.writeToFile(
+          output_dir + ExperimentSerializer.depGraphEdges, edgesBuf)
       case None =>
         None
     }
@@ -197,7 +220,8 @@ class ExperimentSerializer(message_fingerprinter: FingerprintFactory, message_se
          (filteredTrace, ExperimentSerializer.filteredTrace))) {
       dporTrace match {
         case Some(t) =>
-          val traceBuf = message_serializer.serialize(t)
+          val tAsArray : Array[Unique] = t.toArray
+          val traceBuf = JavaSerialization.serialize(tAsArray)
           JavaSerialization.writeToFile(output_dir + outputFile, traceBuf)
         case None =>
           None
@@ -243,17 +267,20 @@ class ExperimentSerializer(message_fingerprinter: FingerprintFactory, message_se
 
   def recordMinimizedInternals(output_dir: String,
         internalStats: MinimizationStats, minimized: EventTrace) {
-    val statsJson = internalStats.toJson()
-    JavaSerialization.withPrintWriter(output_dir,
-                                      ExperimentSerializer.internal_stats) { pw =>
-      pw.write(statsJson)
-    }
-
+    recordMinimizationStats(output_dir, internalStats, stats_file=ExperimentSerializer.internal_stats)
     val sanitized = sanitize_trace(minimized.events)
     val asArray : Array[Event] = sanitized.toArray
     val sanitizedBuf = JavaSerialization.serialize(asArray)
     JavaSerialization.writeToFile(output_dir + ExperimentSerializer.minimizedInternalTrace,
                                   sanitizedBuf)
+  }
+
+  def recordMinimizationStats(output_dir: String,
+      internalStats: MinimizationStats, stats_file:String=ExperimentSerializer.internal_stats) {
+    val statsJson = internalStats.toJson()
+    JavaSerialization.withPrintWriter(output_dir, stats_file) { pw =>
+      pw.write(statsJson)
+    }
   }
 
   def recordHandCraftedTrace(output_dir: String, minimized: EventTrace) {
@@ -299,15 +326,44 @@ class ExperimentDeserializer(results_dir: String) {
   }
 
   def get_dep_graph(): Option[Graph[Unique, DiEdge]] = {
-    return readIfFileExists[Graph[Unique, DiEdge]](results_dir + ExperimentSerializer.depGraph)
+    val nodesOpt = readIfFileExists[Array[Unique]](
+      results_dir + ExperimentSerializer.depGraphNodes)
+    nodesOpt match {
+      case Some(nodes) =>
+        val id2node = new HashMap[Int,Unique]
+        val graph = Graph[Unique,DiEdge]()
+        nodes.foreach {
+          case u =>
+            id2node(u.id) = u
+            graph.add(u)
+        }
+        val edges = readIfFileExists[Array[Tuple2[Int,Int]]](
+          results_dir + ExperimentSerializer.depGraphEdges).get
+        edges.foreach {
+          case (s,d) =>
+            graph.addEdge(id2node(s), id2node(d))(DiEdge)
+        }
+        return Some(graph)
+      case None => return None
+    }
   }
 
   def get_initial_trace(): Option[Queue[Unique]] = {
-    return readIfFileExists[Queue[Unique]](results_dir + ExperimentSerializer.initialTrace)
+    val arrayOpt = readIfFileExists[Array[Unique]](results_dir + ExperimentSerializer.initialTrace)
+    arrayOpt match {
+      case Some(array) =>
+        return Some(new Queue[Unique] ++ array)
+      case None => return None
+    }
   }
 
   def get_filtered_initial_trace(): Option[Queue[Unique]] = {
-    return readIfFileExists[Queue[Unique]](results_dir + ExperimentSerializer.filteredTrace)
+    val arrayOpt = readIfFileExists[Array[Unique]](results_dir + ExperimentSerializer.filteredTrace)
+    arrayOpt match {
+      case Some(array) =>
+        return Some(new Queue[Unique] ++ array)
+      case None => return None
+    }
   }
 
   def get_events(message_deserializer: MessageDeserializer,
@@ -334,7 +390,7 @@ class ExperimentDeserializer(results_dir: String) {
     // N.B. sbt does some strange things with the class path, and sometimes
     // fails on this line. One way of fixing this: rather than running
     // `sbt run`, invoke `sbt assembly; java -cp /path/to/assembledjar Main`
-    val originalExternals = JavaSerialization.deserialize[Seq[ExternalEvent]](originalExternalBuf)
+    val originalExternals = JavaSerialization.deserialize[Array[ExternalEvent]](originalExternalBuf)
 
     val queue = new SynchronizedQueue[Event]
     queue ++= events

@@ -105,12 +105,12 @@ class MultiSet[E] extends Set[E] {
 }
 
 // Provides O(1) insert and removeRandomElement
-class RandomizedHashSet[E] extends Set[E] {
+class RandomizedHashSet[E](seed:Long=System.currentTimeMillis()) extends Set[E] {
   // We store a counter along with each element E to ensure uniqueness
   var arr = new ArrayBuffer[(E,Int)]
   // Value is index into array
   var hash = new HashMap[(E,Int),Int]
-  val rand = new Random(System.currentTimeMillis());
+  val rand = new Random(seed)
   // This multiset is only used for .contains().. can't use hash's keys since
   // we ensure that they're unique.
   var multiset = new MultiSet[E]
@@ -428,9 +428,9 @@ object Util {
   val logger = new VCLogger()
 
   def getStackTrace (t: Throwable): String = {
-      val sw = new StringWriter()
-      t.printStackTrace(new PrintWriter(sw));
-      return sw.toString()
+    val sw = new StringWriter()
+    t.printStackTrace(new PrintWriter(sw));
+    return sw.toString()
   }
 
 
@@ -501,11 +501,11 @@ object Util {
   def dequeueOne[T1, T2](outer : HashMap[T1, Queue[T2]]) : Option[T2] =
     
     outer.headOption match {
-        case Some((receiver, queue)) =>
+        case Some((outerKey, queue)) =>
 
           if (queue.isEmpty == true) {
             
-            outer.remove(receiver) match {
+            outer.remove(outerKey) match {
               case Some(key) => dequeueOne(outer)
               case None => throw new Exception("internal error")
             }
@@ -606,7 +606,6 @@ object Util {
       case Unique(m :MsgEvent, id) => println("\t " + id + " " + m.sender + " -> " + m.receiver + " " + m.msg)
       case Unique(s: SpawnEvent, id) => println("\t " + id + " " + s.name)
     }
-  
   
   
   def urlses(cl: ClassLoader): Array[java.net.URL] = cl match {
