@@ -1,3 +1,5 @@
+package akka.dispatch.verification
+
 import akka.actor.{ Actor, ActorRef, DeadLetter }
 import akka.actor.{ActorSystem, ExtendedActorSystem}
 import akka.actor.Props
@@ -16,6 +18,8 @@ import pl.project13.scala.akka.raft.model._
 import runner.raftchecks._
 import runner.raftserialization._
 import java.nio._
+import akka.actor.FSM
+import akka.actor.FSM.Timer
 
 import scalax.collection.mutable.Graph,
        scalax.collection.GraphEdge.DiEdge,
@@ -47,6 +51,32 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
       return Some(BasicFingerprint(str))
     }
     return None
+  }
+
+  // Does this message trigger a logical clock contained in subsequent
+  // messages to be incremented?
+  override def causesClockIncrement(msg: Any) : Boolean = {
+    msg match {
+      case Timer("election-timer", _, _, _) => return true
+      case _ => return false
+    }
+  }
+
+  // Extract a clock value from the contents of this message
+  override def getLogicalClock(msg: Any) : Option[Long] = {
+    msg match {
+      case RequestVote(term, _, _, _) =>
+        return Some(term.termNr)
+      case AppendEntries(term, _, _, _, _) =>
+        return Some(term.termNr)
+      case VoteCandidate(term) =>
+        return Some(term.termNr)
+      case DeclineCandidate(term) =>
+        return Some(term.termNr)
+      case a: AppendResponse =>
+        return Some(a.term.termNr)
+      case _ => return None
+    }
   }
 }
 
@@ -186,10 +216,15 @@ object Main extends App {
       val replayer = new ReplayScheduler(schedulerConfig)
       return replayer
     }
+    def randomizationStrategy() : RandomizationStrategy = {
+      return new SrcDstFIFO
+    }
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  schedulerConfig,
                                  validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(2000)) // XXX
+                                 maxMessages=Some(3000), // XXX
+                                 invariant_check_interval=30,
+                                 randomizationStrategyCtor=randomizationStrategy)
     traceFound = tuple._1
     violationFound = tuple._2
     depGraph = tuple._3
@@ -217,30 +252,60 @@ object Main extends App {
       actorNameProps=Some(ExperimentSerializer.getActorNameProps(traceFound)))
 
     val mcs_dir = serializer.serializeMCS(dir, mcs, stats, verified_mcs, violation, false)
-
-    // Actually try minimizing twice, to make it easier to understand what's
-    // going on during each "Ignoring next" run.
-    val (intMinStats, intMinTrace) = RunnerUtils.minimizeInternals(schedulerConfig,
-                          mcs,
-                          verified_mcs.get,
-                          ExperimentSerializer.getActorNameProps(traceFound),
-                          violationFound)
-
-    RunnerUtils.printMinimizationStats(
-      traceFound, Some(filteredTrace), verified_mcs.get, intMinTrace, schedulerConfig.messageFingerprinter)
-
-    serializer.recordMinimizedInternals(mcs_dir, intMinStats, intMinTrace)
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_03_21_50_13_DDMin_STSSchedNoPeek"
+    "experiments/akka-raft-fuzz-long_2015_08_25_18_53_17"
+    val mcs_dir =
+    "experiments/akka-raft-fuzz-long_2015_08_25_18_53_17_DDMin_STSSchedNoPeek"
 
+    val serializer = new ExperimentSerializer(
+      fingerprintFactory,
+      new RaftMessageSerializer)
+
+    val deserializer = new ExperimentDeserializer(mcs_dir)
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
-    val replayTrace = RunnerUtils.replayExperiment(dir, schedulerConfig, msgDeserializer,
-      traceFile=ExperimentSerializer.minimizedInternalTrace)
+    val mcs = deserializer.get_mcs
+    val actors = deserializer.get_actors
+    val (verified_mcs, violationFound, _) = RunnerUtils.deserializeExperiment(mcs_dir, msgDeserializer)
 
-    RunnerUtils.printDeliveries(replayTrace)
+    var removalStrategy = new SrcDstFIFORemoval(verified_mcs,
+      schedulerConfig.messageFingerprinter)
 
+    val (intMinStats, intMinTrace) = RunnerUtils.minimizeInternals(schedulerConfig,
+      mcs, verified_mcs, actors, violationFound, removalStrategyCtor=() => removalStrategy)
+
+    serializer.recordMinimizationStats(mcs_dir, intMinStats,
+            stats_file=ExperimentSerializer.internal_stats)
+
+    var additionalTraces = Seq[(String, EventTrace)]()
+
+    val minimizer = new FungibleClockMinimizer(schedulerConfig, mcs,
+      intMinTrace, actors, violationFound,
+      testScheduler=TestScheduler.DPORwHeuristics)
+    val (wildcard_stats, clusterMinTrace) = minimizer.minimize
+
+    serializer.recordMinimizationStats(mcs_dir, wildcard_stats,
+            stats_file=ExperimentSerializer.wildcard_stats)
+
+    additionalTraces = additionalTraces :+ (("FungibleClocks", clusterMinTrace))
+
+    removalStrategy = new SrcDstFIFORemoval(clusterMinTrace,
+      schedulerConfig.messageFingerprinter)
+
+    val (_, minTrace2) = RunnerUtils.minimizeInternals(schedulerConfig,
+      mcs, clusterMinTrace, actors, violationFound,
+      removalStrategyCtor=() => removalStrategy)
+
+    additionalTraces = additionalTraces :+ (("2nd intMin", minTrace2))
+
+    val (traceFound, _, _) = RunnerUtils.deserializeExperiment(dir, msgDeserializer)
+    val origDeserializer = new ExperimentDeserializer(dir)
+    val filteredTrace = origDeserializer.get_filtered_initial_trace
+
+    RunnerUtils.printMinimizationStats(
+      traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
+      additionalTraces)
   }
 }
