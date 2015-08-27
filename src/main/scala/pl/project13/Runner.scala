@@ -203,7 +203,7 @@ object Main extends App {
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(0, weights, messageGen, prefix)
 
-  val fuzz = true
+  val fuzz = false
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -255,9 +255,9 @@ object Main extends App {
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
-    "experiments/akka-raft-fuzz-long_2015_08_25_18_53_17"
+    "experiments/akka-raft-fuzz-long_2015_08_25_22_35_55"
     val mcs_dir =
-    "experiments/akka-raft-fuzz-long_2015_08_25_18_53_17_DDMin_STSSchedNoPeek"
+    "experiments/akka-raft-fuzz-long_2015_08_25_22_35_55_DDMin_STSSchedNoPeek"
 
     val serializer = new ExperimentSerializer(
       fingerprintFactory,
