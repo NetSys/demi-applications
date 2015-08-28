@@ -10,7 +10,14 @@ git remote add interposition git@github.com:NetSys/sts2-interposition.git
 git subtree pull --prefix=interposition interposition master
 ```
 
-sbt and most of the other goodies are set up correctly
+sbt and most of the other goodies are set up correctly.
+
+An unfortunate side-effect of this setup is that there are often merge conflicts when you push to the subtree on one branch and pull in the changes to the other. The way I workaround this is to run the following for each file with a merge conflict:
+
+```
+$ git checkout --theirs $CONFLICT_FILE
+$ git add $CONFLICT_FILE
+```
 
 Branches:
 
