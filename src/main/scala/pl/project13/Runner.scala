@@ -244,14 +244,14 @@ object Main extends App {
       depGraph=Some(depGraph), initialTrace=Some(initialTrace),
       filteredTrace=Some(filteredTrace))
 
-    val (mcs, stats, verified_mcs, violation) =
+    val (mcs, stats1, verified_mcs, violation) =
     RunnerUtils.stsSchedDDMin(false,
       schedulerConfig,
       provenanceTrace,
       violationFound,
       actorNameProps=Some(ExperimentSerializer.getActorNameProps(traceFound)))
 
-    val mcs_dir = serializer.serializeMCS(dir, mcs, stats, verified_mcs, violation, false)
+    val mcs_dir = serializer.serializeMCS(dir, mcs, stats1, verified_mcs, violation, false)
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
@@ -266,9 +266,10 @@ object Main extends App {
     val deserializer = new ExperimentDeserializer(mcs_dir)
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
-    val mcs = deserializer.get_mcs
-    val actors = deserializer.get_actors
-    val (verified_mcs, violationFound, _) = RunnerUtils.deserializeExperiment(mcs_dir, msgDeserializer)
+    // TODO(cs): rerun the fuzz run, so that we can reuse stats. [currently
+    // legacy format]
+    val (mcs, verified_mcs, violationFound, actors, _) =
+      RunnerUtils.deserializeMCS(mcs_dir, msgDeserializer)
 
     var removalStrategy = new SrcDstFIFORemoval(verified_mcs,
       schedulerConfig.messageFingerprinter)
@@ -276,27 +277,31 @@ object Main extends App {
     val (intMinStats, intMinTrace) = RunnerUtils.minimizeInternals(schedulerConfig,
       mcs, verified_mcs, actors, violationFound, removalStrategyCtor=() => removalStrategy)
 
-    serializer.recordMinimizationStats(mcs_dir, intMinStats,
-            stats_file=ExperimentSerializer.internal_stats)
-
     var additionalTraces = Seq[(String, EventTrace)]()
 
-    val minimizer = new FungibleClockMinimizer(schedulerConfig, mcs,
+    // First run without backtracks
+    var minimizer = new FungibleClockMinimizer(schedulerConfig, mcs,
       intMinTrace, actors, violationFound,
-      testScheduler=TestScheduler.DPORwHeuristics)
-    val (wildcard_stats, clusterMinTrace) = minimizer.minimize
+      //testScheduler=TestScheduler.DPORwHeuristics,
+      stats=Some(intMinStats))
+    val (wildcard_stats1, clusterMinTrace1) = minimizer.minimize
 
-    serializer.recordMinimizationStats(mcs_dir, wildcard_stats,
-            stats_file=ExperimentSerializer.wildcard_stats)
+    additionalTraces = additionalTraces :+ (("FungibleClocksNoBacktracks", clusterMinTrace1))
 
-    additionalTraces = additionalTraces :+ (("FungibleClocks", clusterMinTrace))
+    // Now with backtracks
+    minimizer = new FungibleClockMinimizer(schedulerConfig, mcs,
+      clusterMinTrace1, actors, violationFound,
+      testScheduler=TestScheduler.DPORwHeuristics,
+      stats=Some(wildcard_stats1))
+    val (wildcard_stats2, clusterMinTrace2) = minimizer.minimize
 
-    removalStrategy = new SrcDstFIFORemoval(clusterMinTrace,
+    removalStrategy = new SrcDstFIFORemoval(clusterMinTrace2,
       schedulerConfig.messageFingerprinter)
 
-    val (_, minTrace2) = RunnerUtils.minimizeInternals(schedulerConfig,
-      mcs, clusterMinTrace, actors, violationFound,
-      removalStrategyCtor=() => removalStrategy)
+    val (minStats2, minTrace2) = RunnerUtils.minimizeInternals(schedulerConfig,
+      mcs, clusterMinTrace2, actors, violationFound,
+      removalStrategyCtor=() => removalStrategy,
+      stats=Some(wildcard_stats2))
 
     additionalTraces = additionalTraces :+ (("2nd intMin", minTrace2))
 
@@ -307,7 +312,5 @@ object Main extends App {
     RunnerUtils.printMinimizationStats(
       traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
       additionalTraces)
-
-    RunnerUtils.visualizeDeliveries(minTrace2, "/Users/cs/Documents/aug17_post_clock.txt")
   }
 }
