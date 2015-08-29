@@ -348,6 +348,10 @@ object Main extends App {
 
     additionalTraces = additionalTraces :+ (("FungibleClocksNoBackTracks", clusterMinTrace1))
 
+    // N.B. will be overwritten
+    serializer.recordMinimizedInternals(mcs_dir,
+       wildcard_stats1, clusterMinTrace1)
+
     RunnerUtils.printMinimizationStats(
       traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
       additionalTraces)
@@ -369,7 +373,9 @@ object Main extends App {
       removalStrategyCtor=() => removalStrategy,
       stats=Some(wildcard_stats2))
 
-    serializer.recordMinimizationStats(mcs_dir, intMinStats2)
+    // N.B. overwrite
+    serializer.recordMinimizedInternals(mcs_dir,
+       intMinStats2, minTrace2)
 
     additionalTraces = additionalTraces :+ (("2nd intMin", minTrace2))
 
