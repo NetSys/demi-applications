@@ -270,8 +270,8 @@ object Main extends App {
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  schedulerConfig,
                                  validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(400),  // XXX
-                                 invariant_check_interval=10,
+                                 maxMessages=Some(3000),  // XXX
+                                 invariant_check_interval=30,
                                  randomizationStrategyCtor=randomiziationCtor,
                                  computeProvenance=true)
     traceFound = tuple._1
@@ -308,9 +308,11 @@ object Main extends App {
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_28_12_34_49"
+    "experiments/akka-raft-fuzz-long_2015_08_28_19_01_08"
     val mcs_dir =
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_28_12_34_49_DDMin_STSSchedNoPeek"
+    "experiments/akka-raft-fuzz-long_2015_08_28_19_01_08_DDMin_STSSchedNoPeek"
+
+    // TODO(cs): big TODO: run FungibleClocksDDMin
 
     val serializer = new ExperimentSerializer(
       fingerprintFactory,
@@ -318,6 +320,12 @@ object Main extends App {
 
     val deserializer = new ExperimentDeserializer(mcs_dir)
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
+
+    // -- purely for printing stats --
+    val (traceFound, _, _) = RunnerUtils.deserializeExperiment(dir, msgDeserializer)
+    val origDeserializer = new ExperimentDeserializer(dir)
+    val filteredTrace = origDeserializer.get_filtered_initial_trace
+    // -- --
 
     val (mcs, verified_mcs, violationFound, actors, stats) =
       RunnerUtils.deserializeMCS(mcs_dir, msgDeserializer)
@@ -340,6 +348,10 @@ object Main extends App {
 
     additionalTraces = additionalTraces :+ (("FungibleClocksNoBackTracks", clusterMinTrace1))
 
+    RunnerUtils.printMinimizationStats(
+      traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
+      additionalTraces)
+
     // Now with backtracks
     minimizer = new FungibleClockMinimizer(schedulerConfig, mcs,
       clusterMinTrace1, actors, violationFound,
@@ -360,10 +372,6 @@ object Main extends App {
     serializer.recordMinimizationStats(mcs_dir, intMinStats2)
 
     additionalTraces = additionalTraces :+ (("2nd intMin", minTrace2))
-
-    val (traceFound, _, _) = RunnerUtils.deserializeExperiment(dir, msgDeserializer)
-    val origDeserializer = new ExperimentDeserializer(dir)
-    val filteredTrace = origDeserializer.get_filtered_initial_trace
 
     RunnerUtils.printMinimizationStats(
       traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
