@@ -308,9 +308,9 @@ object Main extends App {
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
-    "experiments/akka-raft-fuzz-long_2015_08_28_12_34_49"
+    "experiments/akka-raft-fuzz-long_2015_08_28_19_01_08"
     val mcs_dir =
-    "experiments/akka-raft-fuzz-long_2015_08_28_12_34_49_DDMin_STSSchedNoPeek"
+    "experiments/akka-raft-fuzz-long_2015_08_28_19_01_08_DDMin_STSSchedNoPeek"
 
     val serializer = new ExperimentSerializer(
       fingerprintFactory,
