@@ -308,11 +308,9 @@ object Main extends App {
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
-    "experiments/akka-raft-fuzz-long_2015_08_28_19_01_08"
+    "experiments/akka-raft-fuzz-long_2015_08_28_12_34_49"
     val mcs_dir =
-    "experiments/akka-raft-fuzz-long_2015_08_28_19_01_08_DDMin_STSSchedNoPeek"
-
-    // TODO(cs): big TODO: run FungibleClocksDDMin
+    "experiments/akka-raft-fuzz-long_2015_08_28_12_34_49_DDMin_STSSchedNoPeek"
 
     val serializer = new ExperimentSerializer(
       fingerprintFactory,
@@ -330,57 +328,113 @@ object Main extends App {
     val (mcs, verified_mcs, violationFound, actors, stats) =
       RunnerUtils.deserializeMCS(mcs_dir, msgDeserializer)
 
-    var removalStrategy = new SrcDstFIFORemoval(verified_mcs,
+    var currentExternals = mcs
+    var currentTrace = verified_mcs
+    var currentStats = stats
+
+    var removalStrategy = new SrcDstFIFORemoval(currentTrace,
       schedulerConfig.messageFingerprinter)
 
     val (intMinStats, intMinTrace) = RunnerUtils.minimizeInternals(schedulerConfig,
-      mcs, verified_mcs, actors, violationFound,
-      removalStrategyCtor=() => removalStrategy, stats=Some(stats))
+      currentExternals, currentTrace, actors, violationFound,
+      removalStrategyCtor=() => removalStrategy, stats=Some(currentStats))
+
+    currentTrace = intMinTrace
+    currentStats = intMinStats
 
     var additionalTraces = Seq[(String, EventTrace)]()
 
+    // fungibleClocks DDMin without backtracks.
+    val (newMCS, clocksDDMinStats, clockDDMinTrace, _) =
+      RunnerUtils.fungibleClocksDDMin(schedulerConfig,
+        currentTrace,
+        violationFound,
+        actors,
+        stats=Some(currentStats))
+
+    currentTrace = clockDDMinTrace.get
+    currentStats = clocksDDMinStats
+    currentExternals = newMCS
+
+    additionalTraces = additionalTraces :+ (("WildcardDDMinNoBacktracks", clockDDMinTrace.get))
+
     // Without backtracks first
-    var minimizer = new FungibleClockMinimizer(schedulerConfig, mcs,
-      intMinTrace, actors, violationFound,
+    var minimizer = new FungibleClockMinimizer(schedulerConfig,
+      currentExternals,
+      currentTrace, actors, violationFound,
       //testScheduler=TestScheduler.DPORwHeuristics,
-      stats=Some(intMinStats))
+      stats=Some(currentStats))
     val (wildcard_stats1, clusterMinTrace1) = minimizer.minimize
+
+    currentTrace = clusterMinTrace1
+    currentStats = wildcard_stats1
 
     additionalTraces = additionalTraces :+ (("FungibleClocksNoBackTracks", clusterMinTrace1))
 
     // N.B. will be overwritten
     serializer.recordMinimizedInternals(mcs_dir,
-       wildcard_stats1, clusterMinTrace1)
+       currentStats, currentTrace)
 
     RunnerUtils.printMinimizationStats(
       traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
       additionalTraces)
 
     // Now with backtracks
-    minimizer = new FungibleClockMinimizer(schedulerConfig, mcs,
-      clusterMinTrace1, actors, violationFound,
+    minimizer = new FungibleClockMinimizer(schedulerConfig, currentExternals,
+      currentTrace, actors, violationFound,
       testScheduler=TestScheduler.DPORwHeuristics,
-      stats=Some(wildcard_stats1))
+      stats=Some(currentStats))
     val (wildcard_stats2, clusterMinTrace2) = minimizer.minimize
+
+    currentStats = wildcard_stats2
+    currentTrace = clusterMinTrace2
 
     additionalTraces = additionalTraces :+ (("FungibleClocks", clusterMinTrace2))
 
-    removalStrategy = new SrcDstFIFORemoval(clusterMinTrace2,
+    removalStrategy = new SrcDstFIFORemoval(currentTrace,
       schedulerConfig.messageFingerprinter)
 
-    val (intMinStats2, minTrace2) = RunnerUtils.minimizeInternals(schedulerConfig,
-      mcs, clusterMinTrace2, actors, violationFound,
-      removalStrategyCtor=() => removalStrategy,
-      stats=Some(wildcard_stats2))
+     val (intMinStats2, minTrace2) = RunnerUtils.minimizeInternals(schedulerConfig,
+       currentExternals, currentTrace, actors, violationFound,
+       removalStrategyCtor=() => removalStrategy,
+       stats=Some(currentStats))
+
+     currentStats = intMinStats2
+     currentTrace = minTrace2
+
+     additionalTraces = additionalTraces :+ (("2nd intMin", minTrace2))
 
     // N.B. overwrite
     serializer.recordMinimizedInternals(mcs_dir,
-       intMinStats2, minTrace2)
-
-    additionalTraces = additionalTraces :+ (("2nd intMin", minTrace2))
+       currentStats, currentTrace)
 
     RunnerUtils.printMinimizationStats(
       traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
       additionalTraces)
+
+    /*
+    // fungibleClocks DDMin with backtracks.
+    val (newMCS2, clocksDDMinStats2, clockDDMinTrace2, _) =
+      RunnerUtils.fungibleClocksDDMin(schedulerConfig,
+        clusterMinTrace2,
+        violationFound,
+        actors,
+        testScheduler=TestScheduler.DPORwHeuristics,
+        stats=Some(wildcard_stats2))
+
+    currentExternals= newMCS2
+    currentStats = clocksDDMinStats2
+    currentTrace = clockDDMinTrace2.get
+
+    // N.B. overwrite
+    serializer.recordMinimizedInternals(mcs_dir,
+       clocksDDMinStats2, clockDDMinTrace2.get)
+
+    additionalTraces = additionalTraces :+ (("WildcardDDMinNoBacktracks", clockDDMinTrace2.get))
+
+    RunnerUtils.printMinimizationStats(
+      traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
+      additionalTraces)
+    */
   }
 }
