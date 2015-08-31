@@ -198,7 +198,7 @@ object Main extends App {
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(200, weights, messageGen, prefix)
 
-  val fuzz = true
+  val fuzz = false
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -218,8 +218,8 @@ object Main extends App {
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  schedulerConfig,
                                  validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(300),  // XXX
-                                 invariant_check_interval=5,
+                                 maxMessages=Some(3000),  // XXX
+                                 invariant_check_interval=30,
                                  randomizationStrategyCtor=randomiziationCtor)
     traceFound = tuple._1
     violationFound = tuple._2
@@ -254,9 +254,9 @@ object Main extends App {
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
-    "experiments/akka-raft-fuzz-long_2015_08_28_19_01_08"
+    "experiments/akka-raft-fuzz-long_2015_08_30_20_59_21"
     val mcs_dir =
-    "experiments/akka-raft-fuzz-long_2015_08_28_19_01_08_DDMin_STSSchedNoPeek"
+    "experiments/akka-raft-fuzz-long_2015_08_30_20_59_21_DDMin_STSSchedNoPeek"
 
     val serializer = new ExperimentSerializer(
       fingerprintFactory,
