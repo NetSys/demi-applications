@@ -37,6 +37,9 @@ import org.slf4j.LoggerFactory,
 object STSScheduler {
   type PreTestCallback = () => Unit
   type PostTestCallback = () => Unit
+  // When we ignore an absent expected message, we'll signal to this
+  // callback that we just ignored the event at the given index.
+  type IgnoreAbsentCallback = (Int) => Unit
 
   // The maximum number of unexpected messages to try in a Peek() run before
   // giving up.
@@ -80,7 +83,7 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
 
   def getName: String = if (allowPeek) "STSSched" else "STSSchedNoPeek"
 
-  val logger = LoggerFactory.getLogger("STSScheduler")
+  override val logger = LoggerFactory.getLogger("STSScheduler")
 
   val messageFingerprinter = schedulerConfig.messageFingerprinter
   val shouldShutdownActorSystem = schedulerConfig.shouldShutdownActorSystem
@@ -96,9 +99,10 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
 
   // Current set of enabled events. Includes external messages, but not
   // failure detector messages, which are always sent in FIFO order.
-  // (snd, rcv, msg) => Queue(rcv's cell, envelope of message)
-  val pendingEvents = new HashMap[(String, String, MessageFingerprint),
-                                  Queue[Uniq[(Cell, Envelope)]]]
+  // { (snd, rcv) -> { msg fingerprint => Queue(rcv's cell, envelope of message) } }
+  val pendingEvents = new HashMap[(String, String),
+                                  HashMap[MessageFingerprint,
+                                          Queue[Uniq[(Cell, Envelope)]]]]
 
   // Current set of failure detector or CheckpointRequest messages destined for
   // actors, to be delivered in the order they arrive.
@@ -129,6 +133,13 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
   // An optional callback that will be invoked after we execute the trace.
   var postTestCallback : STSScheduler.PostTestCallback = () => None
   def setPostTestCallback(c: STSScheduler.PostTestCallback) { postTestCallback = c }
+
+  // When we ignore an absent expected message, we'll signal to this
+  // callback that we just ignored the event at the given index.
+  var ignoreAbsentCallback : STSScheduler.IgnoreAbsentCallback = (i: Int) => None
+  def setIgnoreAbsentCallback(c: STSScheduler.IgnoreAbsentCallback) {
+    ignoreAbsentCallback = c
+  }
 
   // Pre: there is a SpawnEvent for every sender and recipient of every SendEvent
   // Pre: subseq is not empty.
@@ -177,9 +188,9 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
     event_orchestrator.set_trace(updatedEvents)
 
     if (logger.isTraceEnabled()) {
-      println("events:----")
-      updatedEvents.zipWithIndex.foreach { case (e,i) => println(i + " " + e) }
-      println("----")
+      logger.trace("events:----")
+      updatedEvents.zipWithIndex.foreach { case (e,i) => logger.trace(i + " " + e) }
+      logger.trace("----")
     }
 
     // Bad method name. "reset recorded events"
@@ -193,7 +204,7 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
     var initThread : Thread = null
     initializationRoutine match {
       case Some(f) =>
-        println("Running initializationRoutine...")
+        logger.trace("Running initializationRoutine...")
         initThread = new Thread(
           new Runnable { def run() = { f() } },
           "initializationRoutine")
@@ -217,14 +228,17 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
       case _ => None
     }
     val ret = violationFound match {
-      case true => Some(event_orchestrator.events)
+      case true =>
+        event_orchestrator.events.
+          setOriginalExternalEvents(original_trace.original_externals)
+        Some(event_orchestrator.events)
       case false => None
     }
     postTestCallback()
     // Wait until the initialization thread is done. Assumes that it
     // terminates!
     if (initThread != null) {
-      println("Joining on initialization thread " + Thread.currentThread.getName)
+      logger.debug("Joining on initialization thread " + Thread.currentThread.getName)
       initThread.join
     }
     reset_all_state
@@ -251,11 +265,11 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
 
     // Optimization: if no unexpected events to schedule, give up early.
     val unexpected = IntervalPeekScheduler.unexpected(
-        IntervalPeekScheduler.flattenedEnabled(pendingEvents), expected,
+        IntervalPeekScheduler.flattenedEnabledNested(pendingEvents), expected,
         messageFingerprinter)
 
     if (unexpected.isEmpty) {
-      println("No unexpected messages. Ignoring message" + msgEvent)
+      logger.debug("No unexpected messages. Ignoring message" + msgEvent)
       event_orchestrator.trace_advanced
       return
     }
@@ -271,28 +285,28 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
     // opposed to a checkpoint of the applications state for checking
     // invariants
     val checkpoint = Instrumenter().checkpoint()
-    println("Peek()'ing")
+    logger.debug("Peek()'ing")
     // Make sure to create all actors, not just those with Start events.
     // Prevents tellEnqueue issues.
     val spawns = original_trace.getEvents flatMap {
-       case SpawnEvent(_,props,name,_) => Some((props, name))
-       case _ => None
+      case SpawnEvent(_,props,name,_) => Some((props, name))
+      case _ => None
     }
     assert(spawns.toSet.size == spawns.length)
     peeker.populateActorSystem(spawns)
     val prefix = peeker.peek(event_orchestrator.events)
     peeker.shutdown
-    println("Restoring checkpoint")
+    logger.debug("Restoring checkpoint")
     Instrumenter().scheduler = this
     Instrumenter().restoreCheckpoint(checkpoint)
     prefix match {
       case Some(lst) =>
         // Prepend the prefix onto expected events so that
         // schedule_new_message() correctly schedules the prefix.
-        println("Found prefix!")
+        logger.debug("Found prefix!")
         event_orchestrator.prepend(lst)
       case None =>
-        println("No prefix found. Ignoring message" + msgEvent)
+        logger.debug("No prefix found. Ignoring message" + msgEvent)
         event_orchestrator.trace_advanced
     }
   }
@@ -301,14 +315,22 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
   def messagePending(sender: String, receiver: String, msg: Any) : Boolean = {
     // Make sure to send any external messages that recently got enqueued
     send_external_messages(false)
-    val key = (sender, receiver,
-               messageFingerprinter.fingerprint(msg))
-
-    return pendingEvents.get(key) match {
+    val queueOpt = pendingEvents.get((sender, receiver)) match {
+      case Some(hash) =>
+        msg match {
+          case WildCardMatch(msgSelector,_) =>
+            msgSelector(hash.values.flatten.toSeq.sortBy(uniq => uniq.id).
+              map(uniq => uniq.element._2.message), (i: Int) => None)
+          case _ =>
+            hash.get(messageFingerprinter.fingerprint(msg))
+        }
+      case None => None
+    }
+    queueOpt match {
       case Some(queue) =>
         // The message is pending, but also double check that the
         // destination isn't currently blocked.
-        !queue.isEmpty && !(Instrumenter().blockedActors contains receiver)
+        !(Instrumenter().blockedActors contains receiver)
       case None =>
         false
     }
@@ -339,7 +361,7 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
                 endedExternalAtomicBlocks.synchronized {
                   send_external_messages(false)
                   while (!(endedExternalAtomicBlocks contains id)) {
-                    println("Blocking until endExternalAtomicBlock("+id+")")
+                    logger.debug("Blocking until endExternalAtomicBlock("+id+")")
                     // (Releases lock)
                     endedExternalAtomicBlocks.wait()
                     send_external_messages(false)
@@ -348,7 +370,7 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
                   beganExternalAtomicBlocks -= id
                 }
               } else {
-                println("Ignoring externalAtomicBlock("+id+")")
+                logger.info("Ignoring externalAtomicBlock("+id+")")
               }
             }
           case EndExternalAtomicBlock(id) =>
@@ -386,9 +408,9 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
               // delivering this message.
               messagesToSend.synchronized {
                 while (!messagePending("deadLetters", m.receiver, m.msg)) {
-                  println("Blocking until enqueue_message... (MsgSend)")
+                  logger.trace("Blocking until enqueue_message... (MsgSend)")
                   messagesToSend.wait()
-                  println("Checking messagePending..")
+                  logger.trace("Checking messagePending..")
                   // N.B. messagePending(m) invokes send_external_messages
                 }
               }
@@ -397,7 +419,8 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
             send_external_messages(false)
             // Check that it was previously delivered, and that it wasn't
             // destined for a dead actor (i.e. dropped by event_produced)
-            if (pendingEvents contains (snd, rcv, fingerprint)) {
+            if ((pendingEvents contains (snd, rcv)) &&
+                (pendingEvents((snd,rcv)) contains fingerprint)) {
               break
             }
           // MsgEvent is the delivery
@@ -410,7 +433,7 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
             if (allowPeek) {
               // If it isn't enabled yet, let's try Peek()'ing for it.
               // First, we need to pause the ActorSystem.
-              println("Pausing")
+              logger.debug("Pausing")
               pausing.set(true)
               break
             }
@@ -426,9 +449,9 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
               // blocked here.
               messagesToSend.synchronized {
                 while (!messagePending(m.sender, m.receiver, m.msg)) {
-                  println("Blocking until enqueue_message...")
+                  logger.trace("Blocking until enqueue_message...")
                   messagesToSend.wait()
-                  println("Checking messagePending..")
+                  logger.trace("Checking messagePending..")
                   // N.B. messagePending(m) invokes send_external_messages
                 }
               }
@@ -436,14 +459,17 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
               break
             }
 
-            println("Ignoring message " + m)
+            logger.info("Ignoring message " + m)
+            ignoreAbsentCallback(event_orchestrator.traceIdx)
           case Quiescence =>
             // This is just a nop. Do nothing
             event_orchestrator.events += Quiescence
           case BeginWaitQuiescence =>
             event_orchestrator.events += BeginWaitQuiescence
-            event_orchestrator.trace_advanced
-            break
+            // TODO(cs): these were needed for FailureDetector I think, but
+            // they now cause problems. Figure out why:
+            // event_orchestrator.trace_advanced
+            // break
           case c @ CodeBlock(block) =>
             event_orchestrator.events += c // keep the id the same
             // Since the block might send messages, make sure that we treat the
@@ -486,9 +512,12 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
             MessageTypes.fromCheckpointCollector(msg)) {
           pendingSystemMessages += uniq
         } else {
-          val msgs = pendingEvents.getOrElse((snd, rcv, fingerprint),
-                              new Queue[Uniq[(Cell, Envelope)]])
-          pendingEvents((snd, rcv, fingerprint)) = msgs += uniq
+          val innerHash = pendingEvents.getOrElse((snd, rcv),
+              new HashMap[MessageFingerprint, Queue[Uniq[(Cell, Envelope)]]])
+          val msgs = innerHash.getOrElse(fingerprint,
+              new Queue[Uniq[(Cell, Envelope)]])
+          innerHash(fingerprint) = msgs += uniq
+          pendingEvents((snd, rcv)) = innerHash
         }
       }
       case InternalMessage => {
@@ -497,9 +526,12 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
         }
         // Drop any messages that crosses a partition.
         if (!event_orchestrator.crosses_partition(snd, rcv)) {
-          val msgs = pendingEvents.getOrElse((snd, rcv, fingerprint),
-                              new Queue[Uniq[(Cell, Envelope)]])
-          pendingEvents((snd, rcv, fingerprint)) = msgs += uniq
+          val innerHash = pendingEvents.getOrElse((snd, rcv),
+              new HashMap[MessageFingerprint, Queue[Uniq[(Cell, Envelope)]]])
+          val msgs = innerHash.getOrElse(fingerprint,
+              new Queue[Uniq[(Cell, Envelope)]])
+          innerHash(fingerprint) = msgs += uniq
+          pendingEvents((snd, rcv)) = innerHash
         }
       }
       case _ => None
@@ -581,11 +613,21 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
     schedSemaphore.acquire
 
     // Pick next message based on trace.
-    val key = event_orchestrator.current_event match {
+    val (outerKey, innerKey) = event_orchestrator.current_event match {
+      case MsgEvent(snd, rcv, WildCardMatch(messageSelector,_)) =>
+        val outerKey = ((snd, rcv))
+        val pendingKeyValues = pendingEvents(outerKey).
+          toIndexedSeq.sortBy(keyValue => keyValue._2.head.id)
+        // Assume that all messages within the same Queue are
+        // indistinguishable from the perspect of messageSelector.
+        val pendingValues = pendingKeyValues.map(pair => pair._2.head.element._2.message)
+        val selectedMsgIdx = messageSelector(pendingValues, (i: Int) => None).get
+        val innerKey = pendingKeyValues(selectedMsgIdx)._1
+        (outerKey, innerKey)
       case MsgEvent(snd, rcv, msg) =>
-        (snd, rcv, messageFingerprinter.fingerprint(msg))
+        ((snd, rcv), messageFingerprinter.fingerprint(msg))
       case TimerDelivery(snd, rcv, timer_fingerprint) =>
-        (snd, rcv, timer_fingerprint)
+        ((snd, rcv), timer_fingerprint)
       case _ =>
         // We've broken out of advanceReplay() because of a
         // BeginWaitQuiescence event, but there were no pendingSystemMessages to
@@ -596,16 +638,18 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
     }
 
     // Both check if expected message exists, and dequeue() it if it does.
-    val expectedMessage = pendingEvents.get(key) match {
+    val expectedMessage = pendingEvents(outerKey).get(innerKey) match {
       case Some(queue) =>
         if (queue.isEmpty) {
           // Should never really happen..
-          pendingEvents.remove(key)
-          None
+          throw new IllegalStateException("Shouldnt be empty")
         } else {
           val willRet = queue.dequeue()
           if (queue.isEmpty) {
-            pendingEvents.remove(key)
+            pendingEvents(outerKey).remove(innerKey)
+            if (pendingEvents(outerKey).isEmpty) {
+              pendingEvents.remove(outerKey)
+            }
           }
           Some(willRet)
         }
@@ -634,7 +678,7 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
 
         // If execution ended, don't schedule!
         if (Instrumenter()._passThrough.get) {
-          println("Execution ended! Not proceeding with schedule_new_message")
+          logger.warn("Execution ended! Not proceeding with schedule_new_message")
           schedSemaphore.release()
           traceSem.release()
           return None
@@ -643,7 +687,7 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
         schedSemaphore.release
         return Some(uniq.element)
       case None =>
-        throw new RuntimeException("We expected " + key + " to be enabled..")
+        throw new RuntimeException("We expected " + innerKey + " " + outerKey + "to be enabled..")
     }
   }
 
@@ -690,7 +734,7 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
 
   // Notification that the system has been reset
   override def start_trace() : Unit = {
-    println("start_trace")
+    logger.info("start_trace")
     handle_start_trace
   }
 
@@ -713,14 +757,22 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
     if (handle_timer_cancel(rcv, msg)) {
       return
     }
-    val key = ("deadLetters", rcv, messageFingerprinter.fingerprint(msg))
-    pendingEvents.get(key) match {
-      case Some(queue) =>
-        queue.dequeueFirst(t => t.element._2.message == msg)
-        if (queue.isEmpty) {
-          pendingEvents.remove(key)
+    val outerKey = ("deadLetters", rcv)
+    val innerKey = messageFingerprinter.fingerprint(msg)
+    pendingEvents.get(outerKey) match {
+      case Some(hash) =>
+        hash.get(innerKey) match {
+          case Some(queue) =>
+            queue.dequeueFirst(t => t.element._2.message == msg)
+            if (queue.isEmpty) {
+              hash.remove(innerKey)
+              if (hash.isEmpty) {
+                pendingEvents.remove(outerKey)
+              }
+            }
+          case None =>
         }
-      case None => None
+      case None =>
     }
   }
 
@@ -733,13 +785,14 @@ class STSScheduler(val schedulerConfig: SchedulerConfig,
   override def actorTerminated(name: String): Seq[(String, Any)] = {
     val result = new Queue[(String, Any)]
     // TODO(cs): also deal with pendingSystemMessages
-    for ((snd,rcv,fingerprint) <- pendingEvents.keys) {
+    for ((snd,rcv) <- pendingEvents.keys) {
       if (rcv == name) {
-        val queue = pendingEvents((snd,rcv,fingerprint))
-        for (e <- queue) {
-          result += ((snd, e.element._2.message))
+        for ((fingerprint,queue) <- pendingEvents((snd,rcv))) {
+          for (e <- queue) {
+            result += ((snd, e.element._2.message))
+          }
         }
-        pendingEvents -= ((snd,rcv,fingerprint))
+        pendingEvents -= ((snd,rcv))
       }
     }
     return result

@@ -39,7 +39,7 @@ class ReplayScheduler(val schedulerConfig: SchedulerConfig,
 
   val messageFingerprinter = schedulerConfig.messageFingerprinter
 
-  val logger = LoggerFactory.getLogger("ReplaySched")
+  override val logger = LoggerFactory.getLogger("ReplaySched")
 
   // Have we started off the execution yet?
   private[this] var firstMessage = true
@@ -61,6 +61,8 @@ class ReplayScheduler(val schedulerConfig: SchedulerConfig,
   // If != "", there was non-determinism. Have the main thread throw an
   // exception, so that it can be caught by the caller.
   private[this] var nonDeterministicErrorMsg = ""
+
+  var violationAtEnd : Option[ViolationFingerprint] = None
 
   // Given an event trace, try to replay it exactly. Return the events
   // observed in *this* execution, which should in theory be the same as the
@@ -122,9 +124,8 @@ class ReplayScheduler(val schedulerConfig: SchedulerConfig,
     schedulerConfig.invariant_check match {
       case Some(check) =>
         val checkpoint = takeCheckpoint()
-        val violation = check(List.empty, checkpoint)
-        // TODO(cs): actually return this rather than printing it
-        println("Violation?: " + violation)
+        violationAtEnd = check(List.empty, checkpoint)
+        logger.info("Violation?: " + violationAtEnd)
       case None =>
     }
     event_orchestrator.events.setOriginalExternalEvents(_trace.original_externals)
@@ -137,8 +138,8 @@ class ReplayScheduler(val schedulerConfig: SchedulerConfig,
     var loop = true
     breakable {
       while (loop && !event_orchestrator.trace_finished) {
-        // println("Replaying " + event_orchestrator.traceIdx + "/" +
-        //   event_orchestrator.trace.length + " " + event_orchestrator.current_event)
+        logger.trace("Replaying " + event_orchestrator.traceIdx + "/" +
+          event_orchestrator.trace.length + " " + event_orchestrator.current_event)
         event_orchestrator.current_event match {
           case SpawnEvent (_, _, name, _) =>
             event_orchestrator.trigger_start(name)
@@ -288,7 +289,7 @@ class ReplayScheduler(val schedulerConfig: SchedulerConfig,
       val nextMessage = pendingEvents.get(key) match {
         case Some(queue) =>
           if (queue.isEmpty) {
-            println("queue.isEmpty")
+            logger.debug("queue.isEmpty")
             // Message not enabled
             pendingEvents.remove(key)
             None
@@ -300,16 +301,16 @@ class ReplayScheduler(val schedulerConfig: SchedulerConfig,
             Some(willRet)
           }
         case None =>
-          println("key not found")
+          logger.debug("key not found")
           // Message not enabled
           None
       }
 
       nextMessage match {
         case None =>
-          println("pending keys:")
+          logger.debug("pending keys:")
           for (pending <- pendingEvents.keys) {
-            println(pending)
+            logger.debug("" + pending)
           }
           // Have the main thread crash on our behalf
           nonDeterministicErrorMsg = "Expected event " + key
