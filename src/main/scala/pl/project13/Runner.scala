@@ -52,6 +52,32 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
     }
     return None
   }
+
+  // Does this message trigger a logical clock contained in subsequent
+  // messages to be incremented?
+  override def causesClockIncrement(msg: Any) : Boolean = {
+    msg match {
+      case Timer("election-timer", _, _, _) => return true
+      case _ => return false
+    }
+  }
+
+  // Extract a clock value from the contents of this message
+  override def getLogicalClock(msg: Any) : Option[Long] = {
+    msg match {
+      case RequestVote(term, _, _, _) =>
+        return Some(term.termNr)
+      case AppendEntries(term, _, _, _, _) =>
+        return Some(term.termNr)
+      case VoteCandidate(term) =>
+        return Some(term.termNr)
+      case DeclineCandidate(term) =>
+        return Some(term.termNr)
+      case a: AppendResponse =>
+        return Some(a.term.termNr)
+      case _ => return None
+    }
+  }
 }
 
 class AppendWordConstuctor(word: String) extends ExternalMessageConstructor {
@@ -130,6 +156,7 @@ object Init {
 }
 
 object Main extends App {
+  Instrumenter().setLogLevel("ERROR")
   EventTypes.setExternalMessageFilter(Init.externalMessageFilter)
   Instrumenter().setPassthrough
   Instrumenter().actorSystem
@@ -222,7 +249,7 @@ object Main extends App {
   val weights = new FuzzerWeights(kill=0.00, send=0.3, wait_quiescence=0.0,
                                   partition=0.0, unpartition=0)
   val messageGen = new ClientMessageGenerator(members)
-  val fuzzer = new Fuzzer(60, weights, messageGen, prefix, postfix=postfix)
+  val fuzzer = new Fuzzer(200, weights, messageGen, prefix, postfix=postfix)
 
   val fuzz = false
 
@@ -239,13 +266,14 @@ object Main extends App {
     }
 
     def randomiziationCtor() : RandomizationStrategy = {
-      return new FullyRandom(userDefinedFilter)
+      //return new FullyRandom(userDefinedFilter)
+      return new SrcDstFIFO(userDefinedFilter)
     }
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  schedulerConfig,
                                  validate_replay=Some(replayerCtor),
-                                 maxMessages=Some(200),  // XXX
-                                 invariant_check_interval=5,
+                                 maxMessages=Some(3000),  // XXX
+                                 invariant_check_interval=30,
                                  randomizationStrategyCtor=randomiziationCtor,
                                  computeProvenance=true)
     traceFound = tuple._1
@@ -267,7 +295,7 @@ object Main extends App {
       depGraph=Some(depGraph), initialTrace=Some(initialTrace),
       filteredTrace=Some(filteredTrace))
 
-    val (mcs, stats, verified_mcs, violation) =
+    val (mcs, stats1, verified_mcs, violation) =
     RunnerUtils.stsSchedDDMin(false,
       schedulerConfig,
       traceFound,
@@ -278,28 +306,232 @@ object Main extends App {
       throw new RuntimeException("MCS wasn't validated")
     }
 
-    val mcs_dir = serializer.serializeMCS(dir, mcs, stats, verified_mcs, violation, false)
-
-    val (intMinStats, intMinTrace) = RunnerUtils.minimizeInternals(schedulerConfig,
-                          mcs,
-                          verified_mcs.get,
-                          ExperimentSerializer.getActorNameProps(traceFound),
-                          violationFound)
-
-    RunnerUtils.printMinimizationStats(
-      traceFound, Some(filteredTrace), verified_mcs.get, intMinTrace, schedulerConfig.messageFingerprinter)
-
-    serializer.recordMinimizedInternals(mcs_dir, intMinStats, intMinTrace)
+    val mcs_dir = serializer.serializeMCS(dir, mcs, stats1, verified_mcs, violation, false)
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_12_14_26_44_DDMin_STSSchedNoPeek"
+    "experiments/akka-raft-fuzz-long_2015_08_30_21_57_21"
+    val mcs_dir =
+    "experiments/akka-raft-fuzz-long_2015_08_30_21_57_21_DDMin_STSSchedNoPeek"
 
+    val serializer = new ExperimentSerializer(
+      fingerprintFactory,
+      new RaftMessageSerializer)
+
+    val deserializer = new ExperimentDeserializer(mcs_dir)
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
-    val replayTrace = RunnerUtils.replayExperiment(dir, schedulerConfig, msgDeserializer,
-      traceFile=ExperimentSerializer.minimizedInternalTrace)
+    // -- purely for printing stats --
+    val (traceFound, _, _) = RunnerUtils.deserializeExperiment(dir, msgDeserializer)
+    val origDeserializer = new ExperimentDeserializer(dir)
+    val filteredTrace = origDeserializer.get_filtered_initial_trace
+    // -- --
 
-    RunnerUtils.printDeliveries(replayTrace)
+    val (mcs, verified_mcs, violationFound, actors, _) =
+      RunnerUtils.deserializeMCS(mcs_dir, msgDeserializer, skipStats=true)
+
+    var currentExternals = mcs
+    var currentTrace = verified_mcs
+    //var currentStats = stats
+
+    var removalStrategy = new SrcDstFIFORemoval(currentTrace,
+      schedulerConfig.messageFingerprinter)
+
+    val (intMinStats, intMinTrace) = RunnerUtils.minimizeInternals(schedulerConfig,
+      currentExternals, currentTrace, actors, violationFound,
+      removalStrategyCtor=() => removalStrategy) //stats=Some(currentStats))
+
+    currentTrace = intMinTrace
+    var currentStats = intMinStats
+
+    // N.B. will be overwritten
+    serializer.recordMinimizedInternals(mcs_dir,
+       currentStats, currentTrace)
+
+    var additionalTraces = Seq[(String, EventTrace)]()
+
+    // fungibleClocks DDMin without backtracks.
+    val (newMCS, clocksDDMinStats, clockDDMinTrace, _) =
+      RunnerUtils.fungibleClocksDDMin(schedulerConfig,
+        currentTrace,
+        violationFound,
+        actors,
+        stats=Some(currentStats))
+
+    currentTrace = clockDDMinTrace.get
+    currentStats = clocksDDMinStats
+    currentExternals = newMCS
+
+    additionalTraces = additionalTraces :+ (("WildcardDDMinNoBacktracks", clockDDMinTrace.get))
+
+    RunnerUtils.printMinimizationStats(
+      traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
+      additionalTraces)
+
+    // fungibleClocks DDMin without backtracks, but focus on the last item
+    // first.
+    val (newMCS3, clocksDDMinStats3, clockDDMinTrace3, _) =
+      RunnerUtils.fungibleClocksDDMin(schedulerConfig,
+        currentTrace,
+        violationFound,
+        actors,
+        resolutionStrategy=new LastOnlyStrategy,
+        stats=Some(currentStats))
+
+    currentTrace = clockDDMinTrace3.get
+    currentStats = clocksDDMinStats3
+    currentExternals = newMCS3
+
+    additionalTraces = additionalTraces :+ (("WildcardDDMinLastOnly",
+      clockDDMinTrace3.get))
+
+    RunnerUtils.printMinimizationStats(
+      traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
+      additionalTraces)
+
+    // Without backtracks first
+    var minimizer = new FungibleClockMinimizer(schedulerConfig,
+      currentExternals,
+      currentTrace, actors, violationFound,
+      //testScheduler=TestScheduler.DPORwHeuristics,
+      stats=Some(currentStats))
+    val (wildcard_stats1, clusterMinTrace1) = minimizer.minimize
+
+    currentTrace = clusterMinTrace1
+    currentStats = wildcard_stats1
+
+    additionalTraces = additionalTraces :+ (("FungibleClocksNoBackTracks", clusterMinTrace1))
+
+    // N.B. will be overwritten
+    serializer.recordMinimizedInternals(mcs_dir,
+       currentStats, currentTrace)
+
+    RunnerUtils.printMinimizationStats(
+      traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
+      additionalTraces)
+
+    // Without backtracks, but focus on the last match.
+    minimizer = new FungibleClockMinimizer(schedulerConfig,
+      currentExternals,
+      currentTrace, actors, violationFound,
+      //testScheduler=TestScheduler.DPORwHeuristics,
+      resolutionStrategy=new LastOnlyStrategy,
+      stats=Some(currentStats))
+    val (wildcard_stats4, clusterMinTrace4) = minimizer.minimize
+
+    currentTrace = clusterMinTrace4
+    currentStats = wildcard_stats4
+
+    additionalTraces = additionalTraces :+ (("FungibleClocksLastOnly", clusterMinTrace4))
+
+    RunnerUtils.printMinimizationStats(
+      traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
+      additionalTraces)
+
+    // Now with "First and Last" backtracks
+    minimizer = new FungibleClockMinimizer(schedulerConfig, currentExternals,
+      currentTrace, actors, violationFound,
+      testScheduler=TestScheduler.DPORwHeuristics,
+      resolutionStrategy=new FirstAndLastBacktrack,
+      stats=Some(currentStats))
+    val (wildcard_stats5, clusterMinTrace5) = minimizer.minimize
+
+    currentStats = wildcard_stats5
+    currentTrace = clusterMinTrace5
+
+    additionalTraces = additionalTraces :+ (("FungibleClocksFirstLast", clusterMinTrace5))
+
+    RunnerUtils.printMinimizationStats(
+      traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
+      additionalTraces)
+
+    removalStrategy = new SrcDstFIFORemoval(currentTrace,
+      schedulerConfig.messageFingerprinter)
+
+    val (intMinStats2, minTrace2) = RunnerUtils.minimizeInternals(schedulerConfig,
+      currentExternals, currentTrace, actors, violationFound,
+      removalStrategyCtor=() => removalStrategy,
+      stats=Some(currentStats))
+
+    currentStats = intMinStats2
+    currentTrace = minTrace2
+
+    additionalTraces = additionalTraces :+ (("2nd intMin", minTrace2))
+
+    // N.B. overwrite
+    serializer.recordMinimizedInternals(mcs_dir,
+       currentStats, currentTrace)
+
+    RunnerUtils.printMinimizationStats(
+      traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
+      additionalTraces)
+
+    // fungibleClocks DDMin with only "First and Last" backtracks.
+    val (newMCS2, clocksDDMinStats2, clockDDMinTrace2, _) =
+      RunnerUtils.fungibleClocksDDMin(schedulerConfig,
+        currentTrace,
+        violationFound,
+        actors,
+        testScheduler=TestScheduler.DPORwHeuristics,
+        resolutionStrategy=new FirstAndLastBacktrack,
+        stats=Some(currentStats))
+
+    currentExternals= newMCS2
+    currentStats = clocksDDMinStats2
+    currentTrace = clockDDMinTrace2.get
+
+    // N.B. overwrite
+    serializer.recordMinimizedInternals(mcs_dir,
+       currentStats, currentTrace)
+
+    additionalTraces = additionalTraces :+ (("WildcardDDMinFirstLast", clockDDMinTrace2.get))
+
+    RunnerUtils.printMinimizationStats(
+      traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
+      additionalTraces)
+
+    // internal clocks with full backtracks
+    minimizer = new FungibleClockMinimizer(schedulerConfig, currentExternals,
+      currentTrace, actors, violationFound,
+      testScheduler=TestScheduler.DPORwHeuristics,
+      stats=Some(currentStats))
+    val (wildcard_stats6, clusterMinTrace6) = minimizer.minimize
+
+    currentStats = wildcard_stats6
+    currentTrace = clusterMinTrace6
+
+    additionalTraces = additionalTraces :+ (("FungibleClocks", clusterMinTrace6))
+
+    RunnerUtils.printMinimizationStats(
+      traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
+      additionalTraces)
+
+    // N.B. overwrite
+    serializer.recordMinimizedInternals(mcs_dir,
+       currentStats, currentTrace)
+
+    // fungibleClocks DDMin with full backtracks
+    val (newMCS7, clocksDDMinStats7, clockDDMinTrace7, _) =
+      RunnerUtils.fungibleClocksDDMin(schedulerConfig,
+        currentTrace,
+        violationFound,
+        actors,
+        testScheduler=TestScheduler.DPORwHeuristics,
+        resolutionStrategy=new FirstAndLastBacktrack,
+        stats=Some(currentStats))
+
+    currentExternals= newMCS7
+    currentStats = clocksDDMinStats7
+    currentTrace = clockDDMinTrace7.get
+
+    // N.B. overwrite
+    serializer.recordMinimizedInternals(mcs_dir,
+       currentStats, currentTrace)
+
+    additionalTraces = additionalTraces :+ (("WildcardDDMin", clockDDMinTrace2.get))
+
+    RunnerUtils.printMinimizationStats(
+      traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
+      additionalTraces)
   }
 }
