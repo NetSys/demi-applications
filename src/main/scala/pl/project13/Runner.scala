@@ -75,26 +75,6 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
       case _ => return None
     }
   }
-
-  // Given a message with a logical clock field, decrement
-  // it on our behalf.
-  override def decrementLogicalClock(msg: Any) : Any = {
-    msg match {
-      case RequestVote(term, f2, f3, f4) =>
-        return RequestVote(Term(term.termNr - 1), f2, f3, f4)
-      case AppendEntries(term, f2, f3, f4, f5) =>
-        return AppendEntries(Term(term.termNr - 1), f2, f3, f4, f5)
-      case VoteCandidate(term) =>
-        return VoteCandidate(Term(term.termNr - 1))
-      case DeclineCandidate(term) =>
-        return DeclineCandidate(Term(term.termNr - 1))
-      case AppendRejected(term: Term) =>
-        return AppendRejected(Term(term.termNr - 1))
-      case AppendSuccessful(term: Term, lastIndex: Int) =>
-        return AppendSuccessful(Term(term.termNr - 1), lastIndex)
-      case _ => return None
-    }
-  }
 }
 
 class AppendWordConstuctor(word: String) extends ExternalMessageConstructor {
@@ -267,7 +247,7 @@ object Main extends App {
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(60, weights, messageGen, prefix, postfix=postfix)
 
-  val fuzz = true
+  val fuzz = false
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -310,7 +290,7 @@ object Main extends App {
       depGraph=Some(depGraph), initialTrace=Some(initialTrace),
       filteredTrace=Some(filteredTrace))
 
-    val (mcs, stats, verified_mcs, violation) =
+    val (mcs, stats1, verified_mcs, violation) =
     RunnerUtils.stsSchedDDMin(false,
       schedulerConfig,
       traceFound,
@@ -321,28 +301,24 @@ object Main extends App {
       throw new RuntimeException("MCS wasn't validated")
     }
 
-    val mcs_dir = serializer.serializeMCS(dir, mcs, stats, verified_mcs, violation, false)
-
-    val (intMinStats, intMinTrace) = RunnerUtils.minimizeInternals(schedulerConfig,
-                          mcs,
-                          verified_mcs.get,
-                          ExperimentSerializer.getActorNameProps(traceFound),
-                          violationFound)
-
-    RunnerUtils.printMinimizationStats(
-      traceFound, Some(filteredTrace), verified_mcs.get, intMinTrace, schedulerConfig.messageFingerprinter)
-
-    serializer.recordMinimizedInternals(mcs_dir, intMinStats, intMinTrace)
+    val mcs_dir = serializer.serializeMCS(dir, mcs, stats1, verified_mcs, violation, false)
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_12_23_57_17_DDMin_STSSchedNoPeek"
+    "experiments/akka-raft-fuzz-long_2015_08_12_23_55_04"
+    val mcs_dir =
+    "experiments/akka-raft-fuzz-long_2015_08_12_23_55_04_DDMin_STSSchedNoPeek"
 
+    val msgSerializer = new RaftMessageSerializer
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
-    val replayTrace = RunnerUtils.replayExperiment(dir, schedulerConfig, msgDeserializer,
-      traceFile=ExperimentSerializer.minimizedInternalTrace)
+    def shouldRerunDDMin(externals: Seq[ExternalEvent]) =
+      externals.exists({
+        case s: Send => s.messageCtor.isInstanceOf[AppendWordConstuctor]
+        case _ => false
+      })
 
-    RunnerUtils.printDeliveries(replayTrace)
+    RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
+      msgDeserializer, paranoid=true, shouldRerunDDMin=shouldRerunDDMin)
   }
 }
