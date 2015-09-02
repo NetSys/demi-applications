@@ -80,14 +80,14 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
   }
 }
 
-class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator {
-  class AppendWordConstuctor(word: String) extends ExternalMessageConstructor {
-    def apply() : Any = {
-      return ClientMessage[AppendWord](Instrumenter().actorSystem.deadLetters, AppendWord(word))
-    }
+class AppendWordConstuctor(word: String) extends ExternalMessageConstructor {
+  def apply() : Any = {
+    return ClientMessage[AppendWord](Instrumenter().actorSystem.deadLetters, AppendWord(word))
   }
+}
 
-  val wordsUsedSoFar = new HashSet[String]
+class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator {
+  var highestWordUsedSoFar = 0
   val rand = new Random
   val destinations = new RandomizedHashSet[String]
   for (dst <- raft_members) {
@@ -96,13 +96,8 @@ class ClientMessageGenerator(raft_members: Seq[String]) extends MessageGenerator
 
   def generateMessage(alive: RandomizedHashSet[String]) : Send = {
     val dst = destinations.getRandomElement()
-    // TODO(cs): 10000 is a bit arbitrary, and this algorithm fails
-    // disastrously as we start to approach 10000 Send events.
-    var word = rand.nextInt(10000).toString
-    while (wordsUsedSoFar contains word) {
-      word = rand.nextInt(10000).toString
-    }
-    wordsUsedSoFar += word
+    var word = highestWordUsedSoFar.toString
+    highestWordUsedSoFar += 1
     return Send(dst, new AppendWordConstuctor(word))
   }
 }
@@ -201,7 +196,7 @@ object Main extends App {
   val weights = new FuzzerWeights(kill=0.00, send=0.3, wait_quiescence=0.0,
                                   partition=0.0, unpartition=0)
   val messageGen = new ClientMessageGenerator(members)
-  val fuzzer = new Fuzzer(0, weights, messageGen, prefix)
+  val fuzzer = new Fuzzer(100, weights, messageGen, prefix)
 
   val fuzz = false
 
@@ -244,68 +239,36 @@ object Main extends App {
       depGraph=Some(depGraph), initialTrace=Some(initialTrace),
       filteredTrace=Some(filteredTrace))
 
-    val (mcs, stats, verified_mcs, violation) =
+    val (mcs, stats1, verified_mcs, violation) =
     RunnerUtils.stsSchedDDMin(false,
       schedulerConfig,
       provenanceTrace,
       violationFound,
       actorNameProps=Some(ExperimentSerializer.getActorNameProps(traceFound)))
 
-    val mcs_dir = serializer.serializeMCS(dir, mcs, stats, verified_mcs, violation, false)
+    if (verified_mcs.isEmpty) {
+      throw new RuntimeException("MCS wasn't validated")
+    }
+    val mcs_dir = serializer.serializeMCS(dir, mcs, stats1, verified_mcs, violation, false)
+    println("verified_mcs.size: " +
+      RunnerUtils.getDeliveries(verified_mcs.get).size)
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_27_13_40_59"
+    "experiments/akka-raft-fuzz-long_2015_09_02_12_48_32"
     val mcs_dir =
-    "/Users/cs/Research/UCB/code/sts2-applications/experiments/akka-raft-fuzz-long_2015_08_27_13_40_59_DDMin_STSSchedNoPeek"
+    "experiments/akka-raft-fuzz-long_2015_09_02_12_48_32_DDMin_STSSchedNoPeek"
 
-    val serializer = new ExperimentSerializer(
-      fingerprintFactory,
-      new RaftMessageSerializer)
-
-    val deserializer = new ExperimentDeserializer(mcs_dir)
+    val msgSerializer = new RaftMessageSerializer
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
-    val mcs = deserializer.get_mcs
-    val actors = deserializer.get_actors
-    val (verified_mcs, violationFound, _) = RunnerUtils.deserializeExperiment(mcs_dir, msgDeserializer)
+    def shouldRerunDDMin(externals: Seq[ExternalEvent]) =
+      externals.exists({
+        case s: Send => s.messageCtor.isInstanceOf[AppendWordConstuctor]
+        case _ => false
+      })
 
-    var removalStrategy = new SrcDstFIFORemoval(verified_mcs,
-      schedulerConfig.messageFingerprinter)
-
-    val (intMinStats, intMinTrace) = RunnerUtils.minimizeInternals(schedulerConfig,
-      mcs, verified_mcs, actors, violationFound, removalStrategyCtor=() => removalStrategy)
-
-    serializer.recordMinimizationStats(mcs_dir, intMinStats,
-            stats_file=ExperimentSerializer.internal_stats)
-
-    var additionalTraces = Seq[(String, EventTrace)]()
-
-    val minimizer = new FungibleClockMinimizer(schedulerConfig, mcs,
-      intMinTrace, actors, violationFound)
-      //testScheduler=TestScheduler.DPORwHeuristics)
-    val (wildcard_stats, clusterMinTrace) = minimizer.minimize
-
-    serializer.recordMinimizationStats(mcs_dir, wildcard_stats,
-            stats_file=ExperimentSerializer.wildcard_stats)
-
-    additionalTraces = additionalTraces :+ (("FungibleClocks", clusterMinTrace))
-
-    removalStrategy = new SrcDstFIFORemoval(clusterMinTrace,
-      schedulerConfig.messageFingerprinter)
-
-    val (_, minTrace2) = RunnerUtils.minimizeInternals(schedulerConfig,
-      mcs, clusterMinTrace, actors, violationFound,
-      removalStrategyCtor=() => removalStrategy)
-
-    additionalTraces = additionalTraces :+ (("2nd intMin", minTrace2))
-
-    val (traceFound, _, _) = RunnerUtils.deserializeExperiment(dir, msgDeserializer)
-    val origDeserializer = new ExperimentDeserializer(dir)
-    val filteredTrace = origDeserializer.get_filtered_initial_trace
-
-    RunnerUtils.printMinimizationStats(
-      traceFound, filteredTrace, verified_mcs, intMinTrace, schedulerConfig.messageFingerprinter,
-      additionalTraces)
+    RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
+      msgDeserializer, paranoid=false, shouldRerunDDMin=shouldRerunDDMin)
   }
 }
