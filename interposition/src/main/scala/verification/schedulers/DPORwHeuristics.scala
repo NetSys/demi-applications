@@ -75,8 +75,7 @@ class DPORwHeuristics(schedulerConfig: SchedulerConfig,
   stopIfViolationFound:Boolean=true,
   startFromBackTrackPoints:Boolean=true,
   skipBacktrackComputation:Boolean=false,
-  stopAfterNextTrace:Boolean=false,
-  injectedBacktracks:Boolean=false) extends Scheduler with TestOracle {
+  stopAfterNextTrace:Boolean=false) extends Scheduler with TestOracle {
 
   val log = LoggerFactory.getLogger("DPOR")
 
@@ -152,7 +151,7 @@ class DPORwHeuristics(schedulerConfig: SchedulerConfig,
 
   implicit def orderedBacktrackKey(t: DPORwHeuristics.BacktrackKey) = backtrackHeuristic.getOrdered(t)
   val backTrack = new PriorityQueue[DPORwHeuristics.BacktrackKey]()
-  var exploredTracker = ExploredTacker()
+  var exploredTracker = new ExploredTacker()
 
   private[this] var currentRoot = getRootEvent
 
@@ -473,8 +472,10 @@ class DPORwHeuristics(schedulerConfig: SchedulerConfig,
               val pending = queue.toIndexedSeq
               def backtrackSetter(idx: Int) {
                 val priorEvent = currentTrace.last
-                val branchI = currentTrace.length - 1
                 val toPlayNext = pending(idx)._1
+                val commonPrefix = getCommonPrefix(priorEvent, toPlayNext)
+                val lastElement = commonPrefix.last
+                val branchI = currentTrace.indexWhere { e => (e == lastElement.value) }
                 log.trace(s"Setting backtrack@${branchI} ${priorEvent} ${toPlayNext}")
                 // TODO(cs): too specific to FungibleClockClustering.. we abuse
                 // the last tuple item to include our remaining WildCards [nextTrace.clone]
@@ -855,22 +856,28 @@ class DPORwHeuristics(schedulerConfig: SchedulerConfig,
   def getMessage(cell: Cell, envelope: Envelope) : Unique = {
     val snd = envelope.sender.path.name
     val rcv = cell.self.path.name
-    val msg = new MsgEvent(snd, rcv, schedulerConfig.messageFingerprinter.fingerprint(envelope.message))
+    val msgEvent = new MsgEvent(snd, rcv, envelope.message)
+    val fingerprinted = schedulerConfig.messageFingerprinter.fingerprint(envelope.message)
+
     // Who cares if the parentEvent is in fact a message, as long as it is a parent.
     val parent = parentEvent
 
     def matchMessage (event: Event) : Boolean = {
-      return event == msg
+      event match {
+        case MsgEvent(s,r,m) => (s == snd && r == rcv &&
+          schedulerConfig.messageFingerprinter.fingerprint(m) == fingerprinted)
+        case e => throw new IllegalStateException("Not a MsgEvent: " + e)
+      }
     }
 
     val inNeighs = depGraph.get(parent).inNeighbors
     inNeighs.find { x => matchMessage(x.value.event) } match {
       case Some(x) => return x.value
       case None =>
-        val newMsg = Unique( MsgEvent(msg.sender, msg.receiver, msg.msg) )
+        val newMsg = Unique(msgEvent)
         log.trace(
             Console.YELLOW + "Not seen: " + newMsg.id +
-            " (" + msg.sender + " -> " + msg.receiver + ") " + msg.msg + Console.RESET)
+            " (" + msgEvent.sender + " -> " + msgEvent.receiver + ") " + msgEvent.msg + Console.RESET)
         return newMsg
       case _ => throw new Exception("wrong type")
     }
@@ -1289,10 +1296,12 @@ class DPORwHeuristics(schedulerConfig: SchedulerConfig,
            e1 + " and " + e2  + " at index " + maxIndex + Console.RESET)
 
         exploredTracker.setExplored(maxIndex, (e1, e2))
-        exploredTracker.trimExplored(maxIndex)
+        // TODO(cs): the following optimization is not correct if we don't
+        // explore in depth-first order. Figure out how to make it correct.
+        //exploredTracker.trimExplored(maxIndex)
         //exploredTracker.printExplored()
 
-        if (injectedBacktracks) {
+        if (skipBacktrackComputation) {
           return Some(new Queue[Unique] ++ replayThis)
         } else {
           return Some(trace.take(maxIndex + 1) ++ replayThis)
@@ -1368,15 +1377,14 @@ object DPORwHeuristicsUtil {
     events foreach {
       case Start(propCtor, name) =>
         toReplay += SpawnEvent("", propCtor(), name, null)
-      case Send(rcv, msgCtor) =>
-        toReplay += MsgSend("deadLetters", rcv, msgCtor())
       case _ => None
     }
-    // Then, convert Unique(MsgEvents) to MsgEvents.
+    // Then, convert Unique(MsgEvents) to UniqueMsgEvents.
     trace foreach {
       case Unique(m : MsgEvent, id) =>
         if (id != 0) { // Not root
-          toReplay += m
+          toReplay += UniqueMsgSend(MsgSend(m.sender,m.receiver,m.msg), id)
+          toReplay += UniqueMsgEvent(m, id)
         }
       case _ =>
         // Probably no need to consider Kills or Partitions
