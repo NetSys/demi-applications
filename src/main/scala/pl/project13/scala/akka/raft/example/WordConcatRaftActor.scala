@@ -37,17 +37,17 @@ class WordConcatRaftActor extends RaftActor {
     case m =>
       //println("RAFT " + self.path.name + " FSM received " + m + " " + super.getLog.map(_.stateName) + " " +
       //  isTimerActive(ElectionTimeoutTimerName) )
-      println("BEFORE RECEIVE, LOG: " + replicatedLog)
-      println("BEFORE RECEIVE, STATE: " + stateData)
-      println("BEFORE RECEIVE, words: " + words)
-      println("BEFORE RECEIVE, nextIndex: " + nextIndex)
-      println("BEFORE RECEIVE, matchIndex: " + matchIndex)
+      //println("BEFORE RECEIVE, LOG: " + replicatedLog)
+      //println("BEFORE RECEIVE, STATE: " + stateData)
+      //println("BEFORE RECEIVE, words: " + words)
+      //println("BEFORE RECEIVE, nextIndex: " + nextIndex)
+      //println("BEFORE RECEIVE, matchIndex: " + matchIndex)
       super.receive(m)
-      println("AFTER RECEIVE, LOG: " + replicatedLog)
-      println("AFTER RECEIVE, STATE: " + stateData)
-      println("AFTER RECEIVE, words: " + words)
-      println("AFTER RECEIVE, nextIndex: " + nextIndex)
-      println("AFTER RECEIVE, matchIndex: " + matchIndex)
+      //println("AFTER RECEIVE, LOG: " + replicatedLog)
+      //println("AFTER RECEIVE, STATE: " + stateData)
+      //println("AFTER RECEIVE, words: " + words)
+      //println("AFTER RECEIVE, nextIndex: " + nextIndex)
+      //println("AFTER RECEIVE, matchIndex: " + matchIndex)
       //println("RAFT " + self.path.name + " Done FSM received " + m + " " + super.getLog.map(_.stateName))
   }
 
