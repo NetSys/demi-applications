@@ -268,6 +268,6 @@ object Main extends App {
       })
 
     RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
-      msgDeserializer, paranoid=true, shouldRerunDDMin=shouldRerunDDMin)
+      msgDeserializer, shouldRerunDDMin=shouldRerunDDMin)
   }
 }
