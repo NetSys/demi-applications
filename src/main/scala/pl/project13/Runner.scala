@@ -153,6 +153,8 @@ object Init {
 }
 
 object Main extends App {
+  Instrumenter().setLogLevel("ERROR")
+
   EventTypes.setExternalMessageFilter(Init.externalMessageFilter)
   Instrumenter().setPassthrough
   Instrumenter().actorSystem
