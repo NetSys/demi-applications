@@ -50,11 +50,11 @@ abstract class RaftActor extends Actor with LoggingFSM[RaftState, Metadata]
     case m =>
       //println("RAFT " + self.path.name + " FSM received " + m + " " + super.getLog.map(_.stateName) + " " +
       //  isTimerActive(ElectionTimeoutTimerName) )
-      println("BEFORE RECEIVE, LOG: " + replicatedLog)
-      println("BEFORE RECEIVE, STATE: " + stateData)
+      //println("BEFORE RECEIVE, LOG: " + replicatedLog)
+      //println("BEFORE RECEIVE, STATE: " + stateData)
       super.receive(m)
-      println("AFTER RECEIVE, LOG: " + replicatedLog)
-      println("AFTER RECEIVE, STATE: " + stateData)
+      //println("AFTER RECEIVE, LOG: " + replicatedLog)
+      //println("AFTER RECEIVE, STATE: " + stateData)
       //println("RAFT " + self.path.name + " Done FSM received " + m + " " + super.getLog.map(_.stateName))
   }
 
