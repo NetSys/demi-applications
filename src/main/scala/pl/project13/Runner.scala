@@ -38,11 +38,10 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
     val str = msg match {
       case RequestVote(term, ref, lastTerm, lastIdx) =>
         (("RequestVote", term, removeId(ref), lastTerm, lastIdx)).toString
-        //(("RequestVote", removeId(ref))).toString
       case LeaderIs(Some(ref), msg) =>
         ("LeaderIs", removeId(ref)).toString
-      //case VoteCandidate(term) =>
-      //  ("VoteCandidate").toString
+      case ClientMessage(deadLetters,cmd) =>
+        ("ClientMessage", cmd).toString
       case m =>
         ""
     }
