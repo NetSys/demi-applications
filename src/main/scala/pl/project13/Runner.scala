@@ -40,6 +40,8 @@ class RaftMessageFingerprinter extends MessageFingerprinter {
         (("RequestVote", term, removeId(ref), lastTerm, lastIdx)).toString
       case LeaderIs(Some(ref), msg) =>
         ("LeaderIs", removeId(ref)).toString
+      case ClientMessage(deadLetters,cmd) =>
+        ("ClientMessage", cmd).toString
       case m =>
         ""
     }
