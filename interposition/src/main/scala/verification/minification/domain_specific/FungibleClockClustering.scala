@@ -164,7 +164,7 @@ class FungibleClockMinimizer(
                    resetCallback: DPORwHeuristics.ResetCallback,
                    dporBudgetSeconds: Long): Option[EventTrace] = {
     val uniques = new Queue[Unique] ++ nextTrace.events.flatMap {
-      case UniqueMsgEvent(m @ MsgEvent(snd,rcv,wildcard), id) =>
+      case UniqueMsgEvent(m @ MsgEvent(snd,rcv,msg), id) =>
         Some(Unique(m,id=(-1)))
       case s: SpawnEvent => None // DPOR ignores SpawnEvents
       case m: UniqueMsgSend => None // DPOR ignores MsgEvents
@@ -382,6 +382,8 @@ class ClockClusterizer(
 
     val events = new SynchronizedQueue[Event]
     events ++= originalTrace.events.flatMap {
+      case u @ UniqueMsgEvent(MsgEvent(snd,rcv,msg), id) if EventTypes.isExternal(u) =>
+        Some(u)
       case UniqueMsgEvent(MsgEvent(snd,rcv,msg), id) =>
         if (currentTimers contains id) {
           Some(UniqueMsgEvent(MsgEvent(snd,rcv,
