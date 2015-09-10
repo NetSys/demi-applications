@@ -43,12 +43,12 @@ private[protocol] trait RaftProtocol extends Serializable {
 
   object AppendEntries {
     def apply[T](term: Term, replicatedLog: ReplicatedLog[T], fromIndex: Int, leaderCommitId: Int): AppendEntries[T] = {
-      println("fromIndex: " + fromIndex)
+      //println("fromIndex: " + fromIndex)
       val entries = replicatedLog.entriesBatchFrom(fromIndex)
 
       entries.headOption match {
         case Some(head) =>
-          println("HEAD: " + head + " " + head.prevIndex)
+          //println("HEAD: " + head + " " + head.prevIndex)
           new AppendEntries[T](term, replicatedLog.termAt(head.prevIndex), head.prevIndex, entries, leaderCommitId)
         case _          => new AppendEntries[T](term, Term(1), 1, entries, leaderCommitId)
       }
