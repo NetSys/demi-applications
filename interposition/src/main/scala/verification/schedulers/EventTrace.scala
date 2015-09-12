@@ -29,6 +29,7 @@ case class EventTrace(val events: SynchronizedQueue[Event], var original_externa
   // Optional: if you have the original external events, that helps us with
   // filtering.
   def setOriginalExternalEvents(_original_externals: Seq[ExternalEvent]) = {
+    println("Setting originalExternalEvents: " + _original_externals.size)
     original_externals = _original_externals
   }
 
@@ -220,9 +221,34 @@ case class EventTrace(val events: SynchronizedQueue[Event], var original_externa
       return getEvents
     }
     val sendsQueue = Queue(sends: _*)
+
+    // ---- Check an assertion: ----
+    val sendsSet = new HashSet[UniqueMsgSend]
+    events.foreach {
+      case u @ UniqueMsgSend(MsgSend(snd, receiver, msg), id) =>
+        if (sendsSet contains u) {
+          throw new AssertionError("Duplicate UniqueMsgSend " + u + " " + events.mkString("\n"))
+        }
+        sendsSet += u
+      case _ =>
+    }
+    // ----------------------
+
     return getEvents(events map {
       case u @ UniqueMsgSend(MsgSend(snd, receiver, msg), id) =>
         if (EventTypes.isExternal(u)) {
+          if (sendsQueue.isEmpty) {
+            // XXX
+            // Problem seems to be some of the Send events that were actually
+            // sent, don't appear in externals. Truncated somehow?
+            println("events:---")
+            events.foreach { case e => println(e) }
+            println("---")
+            println("externals:---")
+            externals.foreach { case e => println(e) }
+            println("---")
+            throw new IllegalStateException("sendsQueue is empty, yet " + u)
+          }
           val send = sendsQueue.dequeue
           val new_msg = send.messageCtor()
           UniqueMsgSend(MsgSend(snd, receiver, new_msg), id)

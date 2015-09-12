@@ -46,7 +46,9 @@ import java.util.Random
 import java.io.StringWriter
 import java.io.PrintWriter
 
-
+import org.slf4j.LoggerFactory,
+       ch.qos.logback.classic.Level,
+       ch.qos.logback.classic.Logger
 
 // Provides O(1) lookup, but allows multiple distinct elements
 class MultiSet[E] extends Set[E] {
@@ -86,15 +88,31 @@ class MultiSet[E] extends Set[E] {
   def iterator: Iterator[E] = {
     return m.values.flatten.iterator
   }
+
+  // Return values in this set not present in the other set.
+  def setDifference(other: MultiSet[E]) : MultiSet[E] = {
+    val setDiff = new MultiSet[E]
+    m.keys.foreach {
+      case k =>
+        if (!(other.m contains k)) {
+          setDiff ++= m(k)
+        } else {
+          val elt = m(k)(0)
+          val count = m(k).size - other.m(k).size
+          (1 to count) foreach { case _ => setDiff += elt }
+        }
+    }
+    return setDiff
+  }
 }
 
 // Provides O(1) insert and removeRandomElement
-class RandomizedHashSet[E] extends Set[E] {
+class RandomizedHashSet[E](seed:Long=System.currentTimeMillis()) extends Set[E] {
   // We store a counter along with each element E to ensure uniqueness
   var arr = new ArrayBuffer[(E,Int)]
   // Value is index into array
   var hash = new HashMap[(E,Int),Int]
-  val rand = new Random(System.currentTimeMillis());
+  val rand = new Random(seed)
   // This multiset is only used for .contains().. can't use hash's keys since
   // we ensure that they're unique.
   var multiset = new MultiSet[E]
@@ -166,9 +184,22 @@ class RandomizedHashSet[E] extends Set[E] {
   }
 }
 
+class Stopwatch(budgetSeconds: Long) {
+  var startTime = System.currentTimeMillis
+  var elapsedTimeMs: Long = 0
+
+  def start = { startTime = System.currentTimeMillis; elapsedTimeMs = 0 }
+  def anyTimeLeft : Boolean = {
+    elapsedTimeMs = System.currentTimeMillis - startTime
+    return (elapsedTimeMs / 1000) < budgetSeconds
+  }
+
+  override def toString = s"elapsed time: $elapsedTimeMs ms. budgetSeconds: $budgetSeconds"
+}
+
 // Used by applications to log messages to the console. Transparently attaches vector
 // clocks to log messages.
-class VCLogger () {
+class VCLogger (writer: PrintWriter=new PrintWriter(System.out)) {
   var actor2vc = new HashMap[String, VectorClock]
 
   // TODO(cs): is there a way to specify default values for Maps in scala?
@@ -184,7 +215,8 @@ class VCLogger () {
     // Increment the clock.
     vc = vc :+ src
     // Then print it, along with the message.
-    println(JSONObject(vc.versions).toString() + " " + src + ": " + msg)
+    writer.println(JSONObject(vc.versions).toString() + " " + src + ": " + msg)
+    writer.flush
     actor2vc(src) = vc
   }
 
@@ -233,6 +265,8 @@ class FakeCell(receiver: ActorRef) extends Cell {
 }
 
 class ProvenanceTracker(trace: Queue[Unique], depGraph: Graph[Unique, DiEdge]) {
+  val log = LoggerFactory.getLogger("DPOR")
+
   val happensBefore = new HashSet[(Unique, Unique)]
 
   // We know that our traces are linearizable, so we can detect concurrent
@@ -250,7 +284,7 @@ class ProvenanceTracker(trace: Queue[Unique], depGraph: Graph[Unique, DiEdge]) {
     // events occuring on the same machine
     var receiver2priorReceives = new HashMap[String, Queue[Unique]]
 
-    println("computing first order happens-before..")
+    log.debug("computing first order happens-before..")
     trace foreach {
       // TODO(cs): consider TimerDelivery...
       case u @ Unique(MsgEvent(snd, rcv, msg), id) =>
@@ -275,7 +309,7 @@ class ProvenanceTracker(trace: Queue[Unique], depGraph: Graph[Unique, DiEdge]) {
     // closure, but it turned out to be hideously slow. So we do something
     // more complicated, described here:
     //   http://cs.stackexchange.com/questions/7231/efficient-algorithm-for-retrieving-the-transitive-closure-of-a-directed-acyclic
-    println("computing transitive closure...")
+    log.debug("computing transitive closure...")
 
     // First, topologically sort the relation.
     val sorted = Util.topologicalSort[Unique](happensBefore.filter{ case (u1,u2) => u1 != u2 })
@@ -336,7 +370,7 @@ class ProvenanceTracker(trace: Queue[Unique], depGraph: Graph[Unique, DiEdge]) {
     }
 
     // We return those that are *before* lastEvents
-    println("computing concurrent events...")
+    log.debug("computing concurrent events...")
     return trace.filterNot { concurrentOrAfterAllLastEvents(_, lastEvents) }
   }
 }
@@ -411,9 +445,9 @@ object Util {
   val logger = new VCLogger()
 
   def getStackTrace (t: Throwable): String = {
-      val sw = new StringWriter()
-      t.printStackTrace(new PrintWriter(sw));
-      return sw.toString()
+    val sw = new StringWriter()
+    t.printStackTrace(new PrintWriter(sw));
+    return sw.toString()
   }
 
 
@@ -484,11 +518,11 @@ object Util {
   def dequeueOne[T1, T2](outer : HashMap[T1, Queue[T2]]) : Option[T2] =
     
     outer.headOption match {
-        case Some((receiver, queue)) =>
+        case Some((outerKey, queue)) =>
 
           if (queue.isEmpty == true) {
             
-            outer.remove(receiver) match {
+            outer.remove(outerKey) match {
               case Some(key) => dequeueOne(outer)
               case None => throw new Exception("internal error")
             }
@@ -589,7 +623,6 @@ object Util {
       case Unique(m :MsgEvent, id) => println("\t " + id + " " + m.sender + " -> " + m.receiver + " " + m.msg)
       case Unique(s: SpawnEvent, id) => println("\t " + id + " " + s.name)
     }
-  
   
   
   def urlses(cl: ClassLoader): Array[java.net.URL] = cl match {
