@@ -38,8 +38,7 @@ abstract trait Event
  *    the messages. This is achieved through `getComponents` and
  *    `maskComponents`.
  */
-// TODO(cs): should probably force this to be serializable
-trait ExternalMessageConstructor {
+abstract class ExternalMessageConstructor extends Serializable {
   // Construct the message
   def apply() : Any
   // Optional, for `shrinking`:
@@ -131,6 +130,21 @@ object EventTypes {
   // Should be set by applications during initialization.
   def setExternalMessageFilter(filter: (Any) => Boolean) {
     externalMessageFilter = filter
+  }
+
+  def isMessageType(e: Event) : Boolean = {
+    e match {
+      case MsgEvent(_, _, m) =>
+        return true
+      case MsgSend(_, _, m) =>
+        return true
+      case UniqueMsgEvent(MsgEvent(_, _, m), _) =>
+        return true
+      case UniqueMsgSend(MsgSend(_, _, m), _) =>
+        return true
+      case _ =>
+        return false
+    }
   }
 
   // Internal events that correspond to ExternalEvents.
