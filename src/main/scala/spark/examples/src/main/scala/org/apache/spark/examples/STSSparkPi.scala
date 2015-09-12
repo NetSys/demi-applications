@@ -271,7 +271,12 @@ object STSSparkPi {
 
         // don't pay attention to shutdown messages.
         Instrumenter().setPassthrough
-        spark.stop()
+        try {
+          println("invoking spark.stop()")
+          spark.stop()
+        } catch {
+          case e: Exception => println("WARN Exception during spark.stop: " + e)
+        }
 
         // N.B. Requires us to comment out SparkEnv's actorSystem.shutdown()
         // line
