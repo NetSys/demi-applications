@@ -4,7 +4,7 @@ package org.apache.spark.examples
 import akka.dispatch.verification._
 import org.apache.spark.deploy.master.Master
 
-class CrashUponRecovery() extends ViolationFingerprint {
+case class CrashUponRecovery() extends ViolationFingerprint {
   def matches(other: ViolationFingerprint) : Boolean = {
     if (!other.isInstanceOf[CrashUponRecovery]) {
       return false
