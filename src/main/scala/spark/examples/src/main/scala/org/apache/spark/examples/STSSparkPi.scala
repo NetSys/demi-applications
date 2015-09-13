@@ -343,60 +343,73 @@ object STSSparkPi {
 
     val sched = new RandomScheduler(schedulerConfig,
       invariant_check_interval=300, randomizationStrategy=new SrcDstFIFO)
-    sched.setMaxMessages(1000)
+    sched.setMaxMessages(10000)
     Instrumenter().scheduler = sched
 
     val (externals, atomicPairs) = getExternals()
 
-    sched.nonBlockingExplore(externals, terminationCallback)
+    val fuzz = true
+    if (fuzz) {
+      sched.nonBlockingExplore(externals, terminationCallback)
 
-    sched.beginUnignorableEvents
+      sched.beginUnignorableEvents
 
-    runAndCleanup()
+      runAndCleanup()
 
-    stsReturn match {
-      case Some((initTrace, violation)) =>
-        println("Violation was found! Trying replay")
+      stsReturn match {
+        case Some((initTrace, violation)) =>
+          println("Violation was found! Trying replay")
+          val depGraph = sched.depTracker.getGraph
+          val initialTrace = sched.depTracker.getInitialTrace
 
-        val sts = new STSScheduler(schedulerConfig, initTrace, false)
-        def preTest() {
-          Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].beginUnignorableEvents
-        }
-        def postTest() {
-          prematureStopSempahore.release()
-        }
-        sts.setPreTestCallback(preTest)
-        sts.setPostTestCallback(postTest)
+          val sts = new STSScheduler(schedulerConfig, initTrace, false)
+          def preTest() {
+            Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].beginUnignorableEvents
+          }
+          def postTest() {
+            prematureStopSempahore.release()
+          }
+          sts.setPreTestCallback(preTest)
+          sts.setPostTestCallback(postTest)
 
-        val dag = new UnmodifiedEventDag(initTrace.original_externals flatMap {
-          case WaitQuiescence() => None
-          case WaitCondition(_) => None
-          case e => Some(e)
-        })
-        // Conjoin the HardKill and the subsequent recover
-        atomicPairs foreach {
-          case ((e1, e2)) =>
-            dag.conjoinAtoms(e1, e2)
-        }
+          val dag = new UnmodifiedEventDag(initTrace.original_externals flatMap {
+            case WaitQuiescence() => None
+            case WaitCondition(_) => None
+            case e => Some(e)
+          })
+          // Conjoin the HardKill and the subsequent recover
+          atomicPairs foreach {
+            case ((e1, e2)) =>
+              dag.conjoinAtoms(e1, e2)
+          }
 
-        val (mcs, stats, verified_mcs, _) = RunnerUtils.stsSchedDDMin(false, schedulerConfig,
-          initTrace, violation,
-          initializationRoutine=Some(runAndCleanup),
-          _sched=Some(sts), dag=Some(dag))
+          val (mcs, stats1, verified_mcs, _) = RunnerUtils.stsSchedDDMin(false, schedulerConfig,
+            initTrace, violation,
+            initializationRoutine=Some(runAndCleanup),
+            _sched=Some(sts), dag=Some(dag))
 
-        verified_mcs match {
-          case Some(mcsTrace) =>
-            val (internalStats, intMinTrace) = RunnerUtils.minimizeInternals(
-              schedulerConfig, mcs, mcsTrace, Seq.empty, violation,
-              initializationRoutine=Some(runAndCleanup), preTest=Some(preTest),
-              postTest=Some(postTest))
+          assert(!verified_mcs.isEmpty)
 
-            RunnerUtils.printMinimizationStats(initTrace, None, mcsTrace,
-              intMinTrace, fingerprintFactory)
-          case None =>
-        }
-      case None =>
-        println("Job finished successfully...")
+          // dump to disk
+          val serializer = new ExperimentSerializer(
+           fingerprintFactory,
+           new BasicMessageSerializer)
+
+         val dir = serializer.record_experiment("spark-fuzz",
+            initTrace, violation,
+            depGraph=Some(depGraph), initialTrace=Some(initialTrace),
+            filteredTrace=None)
+
+         val mcs_dir = serializer.serializeMCS(dir, mcs, stats1,
+            verified_mcs, violation, false)
+         println("MCS DIR: " + mcs_dir)
+        case None =>
+          println("Job finished successfully...")
+      }
+    }
+
+    if (!fuzz) {
+      // TODO(cs): runTheGamut!
     }
   }
 
