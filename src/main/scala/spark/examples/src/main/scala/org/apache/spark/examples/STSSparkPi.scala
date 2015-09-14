@@ -39,8 +39,13 @@ import scala.collection.mutable.ListBuffer
 
 import org.apache.spark.deploy.DeployMessages
 
+import org.apache.spark.executor.ExecutorURLClassLoader
+
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
+
+import java.net.URL
+import java.net.URLClassLoader
 
 import java.io._
 import akka.actor.Props
@@ -130,30 +135,37 @@ object MyJob {
   }
 }
 
+object MyVariables {
+  // Global variables here to support serialization of CodeBLocks (e.g., we
+  // don't want each closure to have its own spark variable)
+  var spark : SparkContext = null
+  var future : SimpleFutureAction[Int] = null
+  var prematureStopSempahore = new Semaphore(0)
+  var stsReturn : Option[(EventTrace,ViolationFingerprint)] = None
+  var doneSubmittingJob = new AtomicBoolean(false)
+}
+
 /** Computes an approximation to pi */
 object STSSparkPi {
   def main(args: Array[String]) {
     EventTypes.setExternalMessageFilter(STSSparkPi.externalMessageFilter)
-    var spark : SparkContext = null
-    var future : SimpleFutureAction[Int] = null
-    var prematureStopSempahore = new Semaphore(0)
-    var stsReturn : Option[(EventTrace,ViolationFingerprint)] = None
-    var doneSubmittingJob = new AtomicBoolean(false)
+    // TODO(cs): Hack: remove me after the deadline
+    Instrumenter.setSynchronizeOnScheduler(false)
 
     def resetSharedVariables() {
-      spark = null
-      future = null
-      prematureStopSempahore = new Semaphore(0)
-      doneSubmittingJob = new AtomicBoolean(false)
+      MyVariables.spark = null
+      MyVariables.future = null
+      MyVariables.prematureStopSempahore = new Semaphore(0)
+      MyVariables.doneSubmittingJob = new AtomicBoolean(false)
     }
 
     def run(jobId: Int) {
       val firstRun = (jobId == 0)
 
-      if (spark == null) {
+      if (MyVariables.spark == null) {
         println("Starting SparkPi")
         val conf = new SparkConf().setAppName("Spark Pi").setSparkHome("/Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark")
-        spark = new SparkContext(conf)
+        MyVariables.spark = new SparkContext(conf)
       }
       val slices = if (args.length > 0) args(0).toInt else 2
       val n = slices
@@ -166,11 +178,11 @@ object STSSparkPi {
         //        ANY
         else Seq((1,Seq()))
 
-      val mapRdds = spark.makeRDD(partitions).map(MyJob.mapFunction)
+      val mapRdds = MyVariables.spark.makeRDD(partitions).map(MyJob.mapFunction)
 
       try {
         if (firstRun) {
-          future = mapRdds.reduceNonBlocking(jobId, MyJob.reduceFunction)
+          MyVariables.future = mapRdds.reduceNonBlocking(jobId, MyJob.reduceFunction)
         } else {
           mapRdds.reduceNonBlocking(jobId, MyJob.reduceFunction)
         }
@@ -181,10 +193,10 @@ object STSSparkPi {
       if (firstRun) {
         // We've finished the bootstrapping phase.
         Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].endUnignorableEvents
-        doneSubmittingJob.set(true)
+        MyVariables.doneSubmittingJob.set(true)
 
         // Block until either the job is complete or a violation was found.
-        prematureStopSempahore.acquire
+        MyVariables.prematureStopSempahore.acquire
         println("Pi is roughly FOO")
       }
     }
@@ -192,13 +204,13 @@ object STSSparkPi {
     def terminationCallback(ret: Option[(EventTrace,ViolationFingerprint)]) {
       // Either a violation was found, or the WaitCondition returned true i.e.
       // the job completed.
-      stsReturn = ret
+      MyVariables.stsReturn = ret
       println("TERMINATING!")
-      prematureStopSempahore.release()
+      MyVariables.prematureStopSempahore.release()
     }
 
     def cleanup() {
-      if (spark != null) {
+      if (MyVariables.spark != null) {
         TaskSetManager.decisions.clear
 
         if (Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].unignorableEvents.get()) {
@@ -211,7 +223,7 @@ object STSSparkPi {
         Instrumenter().interruptAllScheduleBlocks
         try {
           println("invoking spark.stop()")
-          spark.stop()
+          MyVariables.spark.stop()
         } catch {
           case e: Exception => println("WARN Exception during spark.stop: " + e)
         }
@@ -272,7 +284,7 @@ object STSSparkPi {
     Instrumenter().scheduler = sched
 
     val prefix = Array[ExternalEvent](
-      WaitCondition(() => doneSubmittingJob.get())) ++
+      WaitCondition(() => MyVariables.doneSubmittingJob.get())) ++
       (1 to 3).map { case i => CodeBlock(() =>
         WorkerCreator.createWorker("Worker"+i)) } ++
       (1 to 3).map { case i => CodeBlock(() => run(i)) } ++
@@ -280,9 +292,17 @@ object STSSparkPi {
         WorkerCreator.createWorker("Worker"+i)) } ++
       (4 to 15).map { case i => CodeBlock(() => run(i)) } ++
       Array[ExternalEvent](
-      WaitCondition(() => future != null && future.isCompleted))
+      WaitCondition(() => MyVariables.future != null && MyVariables.future.isCompleted))
 
-    val fuzz = true
+
+    def preTest() {
+      Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].beginUnignorableEvents
+    }
+    def postTest() {
+      MyVariables.prematureStopSempahore.release()
+    }
+
+    val fuzz = false
     if (fuzz) {
       sched.nonBlockingExplore(prefix, terminationCallback)
 
@@ -291,19 +311,13 @@ object STSSparkPi {
 
       runAndCleanup()
 
-      stsReturn match {
+      MyVariables.stsReturn match {
         case Some((initTrace, violation)) =>
           println("Violation was found! Trying replay")
           val depGraph = sched.depTracker.getGraph
           val initialTrace = sched.depTracker.getInitialTrace
 
           val sts = new STSScheduler(schedulerConfig, initTrace, false)
-          def preTest() {
-            Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].beginUnignorableEvents
-          }
-          def postTest() {
-            prematureStopSempahore.release()
-          }
           sts.setPreTestCallback(preTest)
           sts.setPostTestCallback(postTest)
 
@@ -331,21 +345,37 @@ object STSSparkPi {
            fingerprintFactory,
            new BasicMessageSerializer)
 
-         val dir = serializer.record_experiment("spark-fuzz",
-            initTrace, violation,
-            depGraph=Some(depGraph), initialTrace=Some(initialTrace),
-            filteredTrace=None)
+          val dir = serializer.record_experiment("spark-fuzz",
+             initTrace, violation,
+             depGraph=Some(depGraph), initialTrace=Some(initialTrace),
+             filteredTrace=None)
 
-         val mcs_dir = serializer.serializeMCS(dir, mcs, stats1,
-            verified_mcs, violation, false)
-         println("MCS DIR: " + mcs_dir)
+          val mcs_dir = serializer.serializeMCS(dir, mcs, stats1,
+             verified_mcs, violation, false)
+          println("MCS DIR: " + mcs_dir)
         case None =>
           println("Job finished successfully...")
       }
     }
 
     if (!fuzz) {
-      // TODO(cs): runTheGamut!
+      val dir =
+      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_13_23_15_54"
+      val mcs_dir =
+      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_13_23_15_54_DDMin_STSSchedNoPeek"
+
+      val msgSerializer = new BasicMessageSerializer
+      val msgDeserializer = new BasicMessageDeserializer(loader=Thread.currentThread.getContextClassLoader)
+
+      def shouldRerunDDMin(externals: Seq[ExternalEvent]) =
+        false // XXX
+
+      RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
+        msgDeserializer, shouldRerunDDMin=shouldRerunDDMin,
+        populateActors=false,
+        loader=Thread.currentThread.getContextClassLoader,
+        initializationRoutine=Some(runAndCleanup),
+        preTest=Some(preTest), postTest=Some(postTest))
     }
   }
 

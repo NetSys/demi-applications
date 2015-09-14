@@ -10,7 +10,7 @@ import akka.dispatch.verification._
 
 
 // TODO(cs): probably want to tweak this fingerprint a bit.
-class LocalityInversion(val taskSetId: String) extends ViolationFingerprint {
+case class LocalityInversion(val taskSetId: String) extends ViolationFingerprint {
   def matches(other: ViolationFingerprint) : Boolean = {
     if (!other.isInstanceOf[LocalityInversion]) {
       return false
