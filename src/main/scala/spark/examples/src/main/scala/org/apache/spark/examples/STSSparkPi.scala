@@ -154,6 +154,8 @@ object MyJob {
 object STSSparkPi {
   def main(args: Array[String]) {
     EventTypes.setExternalMessageFilter(STSSparkPi.externalMessageFilter)
+    // TODO(cs): Hack: remove me after the deadline
+    Instrumenter.setSynchronizeOnScheduler(false)
 
     var spark : SparkContext = null
     var future : SimpleFutureAction[Int] = null
