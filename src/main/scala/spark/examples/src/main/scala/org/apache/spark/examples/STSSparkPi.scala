@@ -232,12 +232,6 @@ object STSSparkPi {
         // line
         Instrumenter().shutdown_system(false)
 
-        // XXX actorSystem.awaitTermination blocks forever. And simply
-        // proceeding causes exceptions upon trying to create new actors (even
-        // after nulling out Instrumenter()._actorSystem...?). So, we do the
-         // worst hack: we sleep for a bit...
-        Thread.sleep(2)
-
         // So that Spark can start its own actorSystem again
         Instrumenter()._actorSystem = null
         Instrumenter().reset_per_system_state
@@ -294,7 +288,6 @@ object STSSparkPi {
       Array[ExternalEvent](
       WaitCondition(() => MyVariables.future != null && MyVariables.future.isCompleted))
 
-
     def preTest() {
       Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].beginUnignorableEvents
     }
@@ -302,7 +295,7 @@ object STSSparkPi {
       MyVariables.prematureStopSempahore.release()
     }
 
-    val fuzz = false
+    val fuzz = true
     if (fuzz) {
       sched.nonBlockingExplore(prefix, terminationCallback)
 
@@ -310,6 +303,12 @@ object STSSparkPi {
       sched.beginUnignorableEvents
 
       runAndCleanup()
+
+      // XXX actorSystem.awaitTermination blocks forever. And simply
+      // proceeding causes exceptions upon trying to create new actors (even
+      // after nulling out Instrumenter()._actorSystem...?). So, we do the
+      // worst hack: we sleep for a bit...
+      Thread.sleep(2)
 
       MyVariables.stsReturn match {
         case Some((initTrace, violation)) =>
@@ -340,6 +339,19 @@ object STSSparkPi {
 
           assert(!verified_mcs.isEmpty)
 
+          // Just to see how much minimization there is...
+          verified_mcs match {
+            case Some(mcsTrace) =>
+              val (internalStats, intMinTrace) = RunnerUtils.minimizeInternals(
+                schedulerConfig, mcs, mcsTrace, Seq.empty, violation,
+                initializationRoutine=Some(runAndCleanup), preTest=Some(preTest),
+                postTest=Some(postTest))
+
+              RunnerUtils.printMinimizationStats(fingerprintFactory,
+                initTrace, None, Seq(("DDMin", mcsTrace), ("IntMin", intMinTrace)))
+            case None =>
+          }
+
           // dump to disk
           val serializer = new ExperimentSerializer(
            fingerprintFactory,
@@ -360,9 +372,11 @@ object STSSparkPi {
 
     if (!fuzz) {
       val dir =
-      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_13_23_15_54"
+      //"/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_13_23_15_54"
+      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_14_16_08_29"
       val mcs_dir =
-      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_13_23_15_54_DDMin_STSSchedNoPeek"
+      //"/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_13_23_15_54_DDMin_STSSchedNoPeek"
+      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_14_16_08_29_DDMin_STSSchedNoPeek"
 
       val msgSerializer = new BasicMessageSerializer
       val msgDeserializer = new BasicMessageDeserializer(loader=Thread.currentThread.getContextClassLoader)

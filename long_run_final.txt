@@ -1,0 +1,124 @@
+Original message deliveries: 1000 (0 externals, 0 timers)[0m
+Removed by DDMin: 775 (0 externals, 0 timers)[0m
+Removed by internal minimization: 106 (0 externals, 0 timers)[0m
+Final deliveries: 119 (0 externals, 0 timers)[0m
+Final messages delivered:[0m
+y  MsgEvent(dGVsbC1yZWdpc3RlckJsb2NrTWFuYWdlci1pbml0aWFsaXpl,BlockManagerMaster,RegisterBlockManager(BlockManagerId(<driver>, localhost, 57128, 0),1718196633,Actor[akka://new-system-257/user/BlockManagerActor1#-1746277365]))[0m
+y  MsgEvent(leaderElectionAgent,Master,ElectedLeader)[0m
+y  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+y  MsgEvent(c3RhcnQtb3JnJGFwYWNoZSRzcGFyayRTcGFya0NvbnRleHQkJGNyZWF0ZVRhc2tTY2hlZHVsZXItPGluaXQ+,Master,RequestWebUIPort)[0m
+y  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+y  MsgEvent(aW5pdGlhbGl6ZUV2ZW50UHJvY2Vzc0FjdG9yLTxpbml0Pi08aW5pdD4=,DAGSchedulerActorSupervisor,Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>)))[0m
+y  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+y  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+y  MsgEvent(AppClient,Master,RegisterApplication(ApplicationDescription(Spark Pi)))[0m
+y  MsgEvent(Master,AppClient,RegisteredApplication(theOnlyApp,spark://localhost:1))[0m
+?  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+y  MsgEvent(deadLetters,ScheduleFunctionPlaceholder,ScheduleBlock-AppClient.scala:92-AppClient.scala:69-ActorCell.scala:562)[0m
+?  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+y  MsgEvent(deadLetters,$a,JobSubmitted(0,MappedRDD[1] at map at STSSparkPi.scala:169,<function2>,[I@75bbd6fd,false,CallSite(reduceNonBlocking at STSSparkPi.scala:173,org.apache.spark.rdd.RDD.reduceNonBlocking(RDD.scala:864)[0m
+y  MsgEvent(Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw==,BlockManagerMaster,GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@6ef034cb))[0m
+y  MsgEvent(Worker1,Master,RegisterWorker(Worker1,localhost,12345,1,512,1234,Worker1))[0m
+y  MsgEvent(Worker2,Master,RegisterWorker(Worker2,localhost,12345,1,512,1234,Worker2))[0m
+y  MsgEvent(Master,Worker1,RegisteredWorker(spark://localhost:1,http://localhost:-1))[0m
+y  MsgEvent(Master,Worker1,LaunchExecutor(spark://localhost:1,theOnlyApp,1,ApplicationDescription(Spark Pi),1,512))[0m
+y  MsgEvent(executor1,CoarseGrainedScheduler,RegisterExecutor(1,1,1))[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+y  MsgEvent(Master,Worker2,RegisteredWorker(spark://localhost:1,http://localhost:-1))[0m
+y  MsgEvent(CoarseGrainedScheduler,executor1,RegisteredExecutor)[0m
+y  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+y  MsgEvent(BlockManagerMaster,Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw==,ArraySeq(List(), List(), List(), List()))[0m
+y  MsgEvent(Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw==,BlockManagerMaster,GetLocationsMultipleBlockIds([Lorg.apache.spark.storage.BlockId;@2f3ce7e3))[0m
+n  MsgEvent(deadLetters,ScheduleFunctionPlaceholder,ScheduleBlock-Worker.scala:195-Worker.scala:146-ActorCell.scala:562)[0m
+y  MsgEvent(BlockManagerMaster,Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw==,ArraySeq(List(), List(), List(), List()))[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+n  MsgEvent(deadLetters,Worker1,SendHeartbeat)[0m
+y  MsgEvent(Master,Worker2,LaunchExecutor(spark://localhost:1,theOnlyApp,2,ApplicationDescription(Spark Pi),1,512))[0m
+y  MsgEvent(executor2,CoarseGrainedScheduler,RegisterExecutor(2,2,1))[0m
+n  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+y  MsgEvent(CoarseGrainedScheduler,executor1,LaunchTask(org.apache.spark.util.SerializableBuffer@6cc5cb23))[0m
+n  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+n  MsgEvent(deadLetters,Worker1,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+n  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+n  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+y  MsgEvent(executor1,CoarseGrainedScheduler,StatusUpdate(1,0,FINISHED,org.apache.spark.util.SerializableBuffer@7c8b24f3))[0m
+  MsgEvent(Worker1,Master,Heartbeat(Worker1))[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+n  MsgEvent(deadLetters,Worker1,SendHeartbeat)[0m
+  MsgEvent(Worker2,Master,Heartbeat(Worker2))[0m
+n  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+  MsgEvent(deadLetters,Worker1,SendHeartbeat)[0m
+  MsgEvent(Worker2,Master,Heartbeat(Worker2))[0m
+  MsgEvent(Worker1,Master,Heartbeat(Worker1))[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+  MsgEvent(Worker1,Master,Heartbeat(Worker1))[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+n  MsgEvent(deadLetters,Worker1,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+  MsgEvent(Worker2,Master,Heartbeat(Worker2))[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+  MsgEvent(Worker1,Master,Heartbeat(Worker1))[0m
+n  MsgEvent(deadLetters,Worker1,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+  MsgEvent(Worker2,Master,Heartbeat(Worker2))[0m
+n  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Worker1,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+  MsgEvent(Worker1,Master,Heartbeat(Worker1))[0m
+n  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+n  MsgEvent(deadLetters,Worker1,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+  MsgEvent(Worker1,Master,Heartbeat(Worker1))[0m
+  MsgEvent(Worker2,Master,Heartbeat(Worker2))[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+n  MsgEvent(deadLetters,Worker1,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+  MsgEvent(Worker1,Master,Heartbeat(Worker1))[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+  MsgEvent(Worker2,Master,Heartbeat(Worker2))[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+  MsgEvent(Worker2,Master,Heartbeat(Worker2))[0m
+n  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+  MsgEvent(Worker1,Master,Heartbeat(Worker1))[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+n  MsgEvent(deadLetters,Worker1,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+  MsgEvent(Worker2,Master,Heartbeat(Worker2))[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+n  MsgEvent(deadLetters,Worker1,SendHeartbeat)[0m
+  MsgEvent(Worker1,Master,Heartbeat(Worker1))[0m
+  MsgEvent(Worker1,Master,Heartbeat(Worker1))[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+n  MsgEvent(deadLetters,Worker1,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+  MsgEvent(Worker2,Master,Heartbeat(Worker2))[0m
+n  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+  MsgEvent(Worker2,Master,Heartbeat(Worker2))[0m
+  MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)[0m
+  MsgEvent(Worker1,Master,Heartbeat(Worker1))[0m
+n  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)[0m
+  MsgEvent(Worker2,Master,Heartbeat(Worker2))[0m
+n  MsgEvent(deadLetters,Worker2,SendHeartbeat)[0m
+n  MsgEvent(deadLetters,Worker1,SendHeartbeat)[0m
