@@ -29,6 +29,7 @@ case class EventTrace(val events: SynchronizedQueue[Event], var original_externa
   // Optional: if you have the original external events, that helps us with
   // filtering.
   def setOriginalExternalEvents(_original_externals: Seq[ExternalEvent]) = {
+    println("Setting originalExternalEvents: " + _original_externals.size)
     original_externals = _original_externals
   }
 
@@ -50,6 +51,8 @@ case class EventTrace(val events: SynchronizedQueue[Event], var original_externa
   def getEvents() : Seq[Event] = {
     return getEvents(events)
   }
+
+  def length = events.length
 
   private[this] def getEvents(_events: Seq[Event]): Seq[Event] = {
     return _events.map(e =>
@@ -218,14 +221,39 @@ case class EventTrace(val events: SynchronizedQueue[Event], var original_externa
       return getEvents
     }
     val sendsQueue = Queue(sends: _*)
+
+    // ---- Check an assertion: ----
+    val sendsSet = new HashSet[UniqueMsgSend]
+    events.foreach {
+      case u @ UniqueMsgSend(MsgSend(snd, receiver, msg), id) =>
+        if (sendsSet contains u) {
+          throw new AssertionError("Duplicate UniqueMsgSend " + u + " " + events.mkString("\n"))
+        }
+        sendsSet += u
+      case _ =>
+    }
+    // ----------------------
+
     return getEvents(events map {
-      case u @ UniqueMsgSend(MsgSend("deadLetters", receiver, msg), id) =>
-        if (MessageTypes.fromCheckpointCollector(msg)) {
-          u
-        } else {
+      case u @ UniqueMsgSend(MsgSend(snd, receiver, msg), id) =>
+        if (EventTypes.isExternal(u)) {
+          if (sendsQueue.isEmpty) {
+            // XXX
+            // Problem seems to be some of the Send events that were actually
+            // sent, don't appear in externals. Truncated somehow?
+            println("events:---")
+            events.foreach { case e => println(e) }
+            println("---")
+            println("externals:---")
+            externals.foreach { case e => println(e) }
+            println("---")
+            throw new IllegalStateException("sendsQueue is empty, yet " + u)
+          }
           val send = sendsQueue.dequeue
           val new_msg = send.messageCtor()
-          UniqueMsgSend(MsgSend("deadLetters", receiver, new_msg), id)
+          UniqueMsgSend(MsgSend(snd, receiver, new_msg), id)
+        } else {
+          u
         }
       case m: MsgSend =>
         throw new IllegalArgumentException("Must be UniqueMsgSend")
@@ -255,7 +283,10 @@ case class EventTrace(val events: SynchronizedQueue[Event], var original_externa
     // iterate left to right.
     for (event <- events) {
       if (remaining.isEmpty) {
-        if (!EventTypes.isExternal(event)) {
+        if (EventTypes.isMessageType(event)) {
+          result += event
+        } else if (!EventTypes.isExternal(event) &&
+                   !event.isInstanceOf[ChangeContext]) {
           result += event
         }
       } else {
@@ -370,8 +401,8 @@ case class EventTrace(val events: SynchronizedQueue[Event], var original_externa
 
     for (e <- events) {
       e match {
-        case UniqueMsgSend(m, id) =>
-          if (m.sender == "deadLetters") {
+        case m @ UniqueMsgSend(msgEvent, id) =>
+          if (EventTypes.isExternal(m)) {
             msg_send_idx += 1
             if (!(missing_indices contains msg_send_idx)) {
               remaining += e

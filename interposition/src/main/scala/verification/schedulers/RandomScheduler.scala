@@ -11,12 +11,12 @@ import scala.collection.mutable.SynchronizedQueue
 import scala.collection.mutable.Set
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.HashSet
-import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 import scala.collection.generic.Growable
 
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.ArrayList
 import java.util.Random
 
 import org.slf4j.LoggerFactory,
@@ -47,7 +47,7 @@ class RandomScheduler(val schedulerConfig: SchedulerConfig,
 
   val messageFingerprinter = schedulerConfig.messageFingerprinter
 
-  val logger = LoggerFactory.getLogger("RandomScheduler")
+  override val logger = LoggerFactory.getLogger("RandomScheduler")
 
   // Allow the user to place a bound on how many messages are delivered.
   // Useful for dealing with non-terminating systems.
@@ -158,8 +158,9 @@ class RandomScheduler(val schedulerConfig: SchedulerConfig,
       // If the violation has already been found, return.
       case Some(fingerprint) =>
         // Prune off any external events that we didn't end up using.
-        event_trace.original_externals =
-          event_trace.original_externals.slice(0, event_orchestrator.traceIdx)
+        println("Pruning external events: " + event_orchestrator.traceIdx)
+        event_trace.setOriginalExternalEvents(
+          event_trace.original_externals.slice(0, event_orchestrator.traceIdx))
         return Some((event_trace, fingerprint))
       // Else, check the invariant condition one last time.
       case None =>
@@ -245,17 +246,19 @@ class RandomScheduler(val schedulerConfig: SchedulerConfig,
     }
 
     for (i <- 1 to max_executions) {
-      println("Trying random interleaving " + i)
+      logger.info("Trying random interleaving " + i)
       event_orchestrator.events.setOriginalExternalEvents(_trace)
       if (stats != null) {
         stats.increment_replays()
       }
 
       val event_trace = execute_trace(_trace)
-      checkIfBugFound(event_trace) match {
-        case Some((event_trace, fingerprint)) =>
-          return Some((event_trace, fingerprint))
-        case None =>
+      if (messagesScheduledSoFar <= maxMessages) {
+        checkIfBugFound(event_trace) match {
+          case Some((event_trace, fingerprint)) =>
+            return Some((event_trace, fingerprint))
+          case None =>
+        }
       }
 
       if (i != max_executions) {
@@ -287,7 +290,9 @@ class RandomScheduler(val schedulerConfig: SchedulerConfig,
         }
         val unique = depTracker.reportNewlyEnabled(snd, rcv, msg)
         if (!crosses_partition(snd, rcv)) {
-          pendingEvents += ((uniq, unique))
+          pendingEvents.synchronized {
+            pendingEvents += ((uniq, unique))
+          }
         }
       }
       case ExternalMessage => {
@@ -296,7 +301,9 @@ class RandomScheduler(val schedulerConfig: SchedulerConfig,
           pendingSystemMessages += uniq
         } else {
           val unique = depTracker.reportNewlyEnabledExternal(snd, rcv, msg)
-          pendingEvents += ((uniq, unique))
+          pendingEvents.synchronized {
+            pendingEvents += ((uniq, unique))
+          }
         }
       }
       case FailureDetectorQuery => None
@@ -346,6 +353,7 @@ class RandomScheduler(val schedulerConfig: SchedulerConfig,
     // First, check if we've found the violation. If so, stop.
     violationFound match {
       case Some(fingerprint) =>
+        logger.debug("schedule_new_message: violationFound")
         return None
       case None =>
         None
@@ -353,12 +361,13 @@ class RandomScheduler(val schedulerConfig: SchedulerConfig,
 
     // Also check if the WaitCondition is true. If so, quiesce.
     if (checkWaitCondition) {
+      logger.debug("schedule_new_message: checkWaitCondition")
       return None
     }
 
     // Also check if we've exceeded our message limit
     if (messagesScheduledSoFar > maxMessages) {
-      println("Exceeded maxMessages")
+      logger.info("Exceeded maxMessages")
       event_orchestrator.finish_early
       return None
     }
@@ -368,7 +377,7 @@ class RandomScheduler(val schedulerConfig: SchedulerConfig,
         (messagesScheduledSoFar % invariant_check_interval) == 0 &&
         !blockedOnCheckpoint.get() &&
         lastCheckpoint != messagesScheduledSoFar) {
-      println("Checking invariant")
+      logger.debug("Checking invariant")
 
       if (!schedulerConfig.enableCheckpointing) {
         // If no checkpointing, go ahead and check the invariant now
@@ -378,6 +387,7 @@ class RandomScheduler(val schedulerConfig: SchedulerConfig,
         // Return early if we found one.
         violationFound match {
           case Some(fingerprint) =>
+            logger.debug("schedule_new_message: violationFound")
             return None
           case None =>
             None
@@ -429,11 +439,25 @@ class RandomScheduler(val schedulerConfig: SchedulerConfig,
     }
 
     // Find a non-blocked destination
-    Util.find_non_blocked_message[Tuple2[Uniq[(Cell,Envelope)],Unique]](
-      blockedActors,
-      pendingEvents,
-      () => pendingEvents.removeRandomElement,
-      (e: Tuple2[Uniq[(Cell,Envelope)],Unique]) => e._1.element._1.self.path.name) match {
+    var toSchedule: Option[Tuple2[Uniq[(Cell,Envelope)],Unique]] = None
+    // Hack: SrcDstFIFO doesn't play nicely with Util.find_non_blocked_message
+    // in the presense of blocked actors. Rather than finding a nicer
+    // interface, just do type casting.
+    if (pendingEvents.isInstanceOf[SrcDstFIFO]) {
+      toSchedule = pendingEvents.synchronized {
+        pendingEvents.asInstanceOf[SrcDstFIFO].getNonBlockedMessage(blockedActors)
+      }
+    } else {
+      toSchedule = pendingEvents.synchronized {
+        Util.find_non_blocked_message[Tuple2[Uniq[(Cell,Envelope)],Unique]](
+          blockedActors,
+          pendingEvents,
+          () => pendingEvents.removeRandomElement,
+          (e: Tuple2[Uniq[(Cell,Envelope)],Unique]) => e._1.element._1.self.path.name)
+      }
+    }
+
+    toSchedule match {
       case Some((uniq,  unique)) =>
         messagesScheduledSoFar += 1
         if (messagesScheduledSoFar == Int.MaxValue) {
@@ -455,6 +479,7 @@ class RandomScheduler(val schedulerConfig: SchedulerConfig,
         updateRepeatingTimer(uniq.element)
         return Some(uniq.element)
       case None =>
+        logger.debug("schedule_new_message: no non-blocked messages")
         return None
     }
   }
@@ -465,7 +490,7 @@ class RandomScheduler(val schedulerConfig: SchedulerConfig,
       case Some(fingerprint) =>
         // Wake up the main thread early; no need to continue with the rest of
         // the trace.
-        println("Violation found early. Halting")
+        logger.info("Violation found early. Halting")
         started.set(false)
         terminationCallback match {
           case None => traceSem.release
@@ -503,17 +528,21 @@ class RandomScheduler(val schedulerConfig: SchedulerConfig,
     }
     // Awkward, we need to walk through the entire hashset to find what we're
     // looking for.
-    pendingEvents.remove("deadLetters",rcv, msg)
+    pendingEvents.synchronized {
+      pendingEvents.remove("deadLetters",rcv, msg)
+    }
   }
 
   override def actorTerminated(name: String): Seq[(String, Any)] = {
     // TODO(cs): also deal with pendingSystemMessages
-    return randomizationStrategy.removeAll(name).map {
-      case (uniq, unique) =>
-        val envelope = uniq.element._2
-        val snd = envelope.sender.path.name
-        val msg = envelope.message
-        (snd, msg)
+    pendingEvents.synchronized {
+      return pendingEvents.removeAll(name).map {
+        case (uniq, unique) =>
+          val envelope = uniq.element._2
+          val snd = envelope.sender.path.name
+          val msg = envelope.message
+          (snd, msg)
+      }
     }
   }
 
@@ -597,12 +626,17 @@ trait RandomizationStrategy extends
     Growable[(Uniq[(Cell,Envelope)],Unique)] {
   def removeRandomElement: (Uniq[(Cell,Envelope)],Unique)
   // Remove the first matching element
-  def remove(snd: String, rcv: String, msg: Any)
+  def remove(snd: String, rcv: String, msg: Any): Option[(Uniq[(Cell,Envelope)],Unique)]
   def removeAll(rcv: String): Seq[(Uniq[(Cell,Envelope)],Unique)]
 }
 
-class FullyRandom extends RandomizationStrategy {
-  val pendingEvents = new RandomizedHashSet[Tuple2[Uniq[(Cell,Envelope)],Unique]]
+// userDefinedFilter can throw out entries to be delivered, by returning false
+// arguments: src, dst, message
+class FullyRandom(
+    userDefinedFilter: (String, String, Any) => Boolean = (_,_,_) => true,
+    seed:Long=System.currentTimeMillis()) extends RandomizationStrategy {
+
+  val pendingEvents = new RandomizedHashSet[Tuple2[Uniq[(Cell,Envelope)],Unique]](seed=seed)
 
   def iterator: Iterator[Tuple2[Uniq[(Cell,Envelope)],Unique]] =
     pendingEvents.iterator
@@ -616,20 +650,37 @@ class FullyRandom extends RandomizationStrategy {
     pendingEvents.clear
   }
 
-  def remove(snd: String, rcv: String, msg: Any): Unit = {
+  def remove(snd: String, rcv: String, msg: Any): Option[(Uniq[(Cell,Envelope)],Unique)] = {
     for (e <- pendingEvents.arr) {
       val otherSnd  = e._1._1.element._2.sender.path.name
       val otherRcv = e._1._1.element._1.self.path.name
       val otherMsg = e._1._1.element._2.message
       if (snd == otherSnd && rcv == otherRcv && msg == otherMsg) {
         pendingEvents.remove(e)
-        return
+        return Some(e._1)
       }
     }
+    return None
   }
 
   def removeRandomElement(): (Uniq[(Cell,Envelope)],Unique) = {
-    return pendingEvents.removeRandomElement
+    var ret = pendingEvents.removeRandomElement()
+    var snd  = ret._1.element._2.sender.path.name
+    var rcv = ret._1.element._1.self.path.name
+    var msg = ret._1.element._2.message
+
+    val rejected = new Queue[(Uniq[(Cell,Envelope)],Unique)]
+
+    // userDefinedFilter better be well-behaved...
+    while (pendingEvents.size > 1 && !userDefinedFilter(snd,rcv,msg)) {
+      rejected += ret
+      ret = pendingEvents.removeRandomElement()
+      snd  = ret._1.element._2.sender.path.name
+      rcv = ret._1.element._1.self.path.name
+      msg = ret._1.element._2.message
+    }
+    pendingEvents ++= rejected
+    return ret
   }
 
   def removeAll(rcv: String): Seq[(Uniq[(Cell,Envelope)],Unique)] = {
@@ -645,22 +696,85 @@ class FullyRandom extends RandomizationStrategy {
   }
 }
 
-// For each <src, dst> pair, maintain FIFO order. Other than that, fully
-// random.
-// TODO(cs): very strange behavior sometimes: NullPointerExceptions in
-// removeAll, becuase srcDsts apparently contains null tuples. I am baffled as
-// to why it happens, not even synchronized methods everywhere helps it. For
-// now, keep the synchronized methods in...
-class SrcDstFIFO extends RandomizationStrategy {
-  private var srcDsts = new ArrayBuffer[(String, String)]
+// TODO(cs): simulate TCP connection resets, i.e. allow us to randomly drop
+// all pending messages for a src,dst pair. Probably trigger them via external
+// events, e.g. Kills or HardKills or something else.
+class SrcDstFIFO (userDefinedFilter: (String, String, Any) => Boolean = (_,_,_) => true)
+    extends RandomizationStrategy {
+  private var srcDsts = new ArrayList[(String, String)]
   private val rand = new Random(System.currentTimeMillis())
   private val srcDstToMessages = new HashMap[(String, String),
                                              Queue[(Uniq[(Cell,Envelope)],Unique)]]
+  // Includes both timers and normal messages
   private val allMessages = new MultiSet[(Uniq[(Cell,Envelope)],Unique)]
+  // Special datastructure for src=="deadLetters", which can be scheduled in
+  // random order.
+  private val timersAndExternals = new FullyRandom(userDefinedFilter=userDefinedFilter)
 
-  def getRandomSrcDst(): ((String, String), Int) = synchronized {
-    val idx = rand.nextInt(srcDsts.length)
-    return (srcDsts(idx), idx)
+  // TODO(cs): support user defined filter? Really, should just find a better
+  // interace, and get rid of this method altogether
+  def getNonBlockedMessage(blockedActors: scala.collection.immutable.Set[String]): Option[(Uniq[(Cell,Envelope)],Unique)] = {
+    if (!srcDstToMessages.keys.exists(t => !(blockedActors contains t._2))) {
+      // Only timers left
+      val t = Util.find_non_blocked_message[Tuple2[Uniq[(Cell,Envelope)],Unique]](
+        blockedActors,
+        timersAndExternals,
+        () => timersAndExternals.removeRandomElement,
+        (e: Tuple2[Uniq[(Cell,Envelope)],Unique]) => e._1.element._1.self.path.name)
+      if (!t.isEmpty) {
+        allMessages -= t.get
+      }
+      return t
+    }
+
+    // First check whether we should choose a timer
+    var timer: Option[(Uniq[(Cell,Envelope)],Unique)] = None
+    if (rand.nextInt(allMessages.size) < timersAndExternals.size) {
+      timer = Util.find_non_blocked_message[Tuple2[Uniq[(Cell,Envelope)],Unique]](
+        blockedActors,
+        timersAndExternals,
+        () => timersAndExternals.removeRandomElement,
+        (e: Tuple2[Uniq[(Cell,Envelope)],Unique]) => e._1.element._1.self.path.name)
+    }
+
+    if (!timer.isEmpty) {
+      allMessages -= timer.get
+      return timer
+    }
+
+    // Otherwise choose a normal message
+    // Blocked actors should in general be much smaller than srcDsts, so
+    // copying all of srcDsts is probably more expensive than just trying
+    // randomly.
+    // TODO(cs): still kludgy, find a better way.
+    var idx = rand.nextInt(srcDsts.size)
+    while (blockedActors contains srcDsts.get(idx)._2) {
+      idx = rand.nextInt(srcDsts.size)
+    }
+    val srcDst = srcDsts.get(idx)
+    return Some(dequeue(srcDst, idx))
+  }
+
+  private def dequeue(srcDst: (String,String), idx: Int): (Uniq[(Cell,Envelope)],Unique) = {
+    var queue = srcDstToMessages(srcDst)
+    assert(!queue.isEmpty)
+    val ret = queue.dequeue
+    if (queue.isEmpty) {
+      srcDstToMessages -= srcDst
+      srcDsts.remove(idx)
+    }
+    allMessages -= ret
+    return ret
+  }
+
+  def getRandomSrcDst(ignore:Set[Int]=Set.empty): ((String, String), Int) = synchronized {
+    var idx = rand.nextInt(srcDsts.size)
+    // TODO(cs): unfortunate algorithm; not guarenteed to finish. Do this in a
+    // cleaner way.
+    while (ignore contains idx) {
+      idx = rand.nextInt(srcDsts.size)
+    }
+    return (srcDsts.get(idx), idx)
   }
 
   def iterator: Iterator[Tuple2[Uniq[(Cell,Envelope)],Unique]] = synchronized {
@@ -671,11 +785,16 @@ class SrcDstFIFO extends RandomizationStrategy {
 
   def +=(tuple: Tuple2[Uniq[(Cell,Envelope)],Unique]) : this.type = synchronized {
     val src = tuple._1.element._2.sender.path.name
+    if (src == "deadLetters") {
+      timersAndExternals.+=(tuple)
+      allMessages += tuple
+      return this
+    }
     val dst = tuple._1.element._1.self.path.name
     if (!(srcDstToMessages contains ((src, dst)))) {
       // If there is no queue, create one
       assert(((src, dst)) != null)
-      srcDsts += ((src, dst))
+      srcDsts.add((src, dst))
       srcDstToMessages((src, dst)) = new Queue[(Uniq[(Cell,Envelope)],Unique)]
     }
 
@@ -689,24 +808,65 @@ class SrcDstFIFO extends RandomizationStrategy {
     srcDsts.clear()
     srcDstToMessages.clear()
     allMessages.clear()
+    timersAndExternals.clear()
   }
 
   def removeRandomElement(): (Uniq[(Cell,Envelope)],Unique) = synchronized {
-    // First find a random queue. Then dequeue from the queue.
-    val (srcDst, idx) = getRandomSrcDst
-    val queue = srcDstToMessages(srcDst)
-    val ret = queue.dequeue
-    if (queue.isEmpty) {
-      srcDstToMessages -= srcDst
-      srcDsts.remove(idx)
+    // First see if we should deliver a timer
+    if (!timersAndExternals.isEmpty &&
+         rand.nextInt(allMessages.size) < timersAndExternals.size) {
+      val t = timersAndExternals.removeRandomElement
+      allMessages -= t
+      return t
     }
-    allMessages -= ret
-    return ret
+
+    // Otherwise deliver a normal message. First find a random queue
+    var (srcDst, idx) = getRandomSrcDst()
+    var queue = srcDstToMessages(srcDst)
+    var ret = queue.head
+
+    var snd  = ret._1.element._2.sender.path.name
+    var rcv = ret._1.element._1.self.path.name
+    var msg = ret._1.element._2.message
+
+    // userDefinedFilter better be well-behaved...
+    var ignoredSrcDstIndices = Set[Int]()
+    while (!userDefinedFilter(snd,rcv,msg) && ignoredSrcDstIndices.size + 1 < srcDsts.size) {
+      ignoredSrcDstIndices = ignoredSrcDstIndices + idx
+      val t = getRandomSrcDst(ignoredSrcDstIndices)
+      srcDst = t._1
+      idx = t._2
+      queue = srcDstToMessages(srcDst)
+      ret = queue.head
+
+      snd  = ret._1.element._2.sender.path.name
+      rcv = ret._1.element._1.self.path.name
+      msg = ret._1.element._2.message
+    }
+
+    if (ignoredSrcDstIndices.size + 1 == srcDsts.size &&
+        !userDefinedFilter(snd,rcv,msg)) {
+      // Well, they better want a timer...
+      val t = timersAndExternals.removeRandomElement
+      allMessages -= t
+      return t
+    }
+
+    return dequeue(srcDst, idx)
   }
 
-  def remove(src: String, dst: String, msg: Any): Unit = synchronized {
+  def remove(src: String, dst: String, msg: Any): Option[(Uniq[(Cell,Envelope)],Unique)] = synchronized {
+    if (src == "deadLetters") {
+      timersAndExternals.remove(src,dst,msg) match {
+        case Some(t) =>
+          allMessages -= t
+          return Some(t)
+        case None =>
+          return None
+      }
+    }
     if (!(srcDstToMessages contains ((src,dst)))) {
-      return
+      return None
     }
     val queue = srcDstToMessages((src,dst))
     queue.dequeueFirst(t => {
@@ -721,27 +881,29 @@ class SrcDstFIFO extends RandomizationStrategy {
           srcDstToMessages -= ((src,dst))
           srcDsts.remove(srcDsts.indexOf(((src,dst))))
         }
-      case _ =>
+        return Some(t)
+      case _ => return None
     }
   }
 
   def removeAll(rcv: String): Seq[(Uniq[(Cell,Envelope)],Unique)] = synchronized {
     val result = new ListBuffer[(Uniq[(Cell,Envelope)],Unique)]
-    srcDsts.toSeq.foreach {
-      case (src, dst) =>
-        if (dst == rcv) {
-          val queue = srcDstToMessages((src, dst))
-          for (e <- queue) {
-            allMessages -= e
-            result += e
-          }
-          srcDstToMessages -= ((src,rcv))
-          srcDsts.remove(srcDsts.indexOf(((src,rcv))))
+    val itr = srcDsts.iterator
+    while (itr.hasNext) {
+      val (src, dst) = itr.next
+      if (dst == rcv) {
+        val queue = srcDstToMessages((src, dst))
+        for (e <- queue) {
+          allMessages -= e
+          result += e
         }
-      case null =>
-        // WTF... How did we even get here...
-        assert(!(srcDstToMessages contains null))
+        srcDstToMessages -= ((src,rcv))
+        itr.remove
+      }
     }
+    val timers = timersAndExternals.removeAll(rcv)
+    timers.foreach { case t => allMessages -= t }
+    result ++= timers
     return result
   }
 }

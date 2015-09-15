@@ -17,6 +17,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import scala.util.control.Breaks._
 
+import org.slf4j.LoggerFactory,
+       ch.qos.logback.classic.Level,
+       ch.qos.logback.classic.Logger
+
 class ReplayException(message:String=null, cause:Throwable=null) extends
       RuntimeException(message, cause)
 
@@ -34,6 +38,8 @@ class ReplayScheduler(val schedulerConfig: SchedulerConfig,
     extends AbstractScheduler with ExternalEventInjector[Event] {
 
   val messageFingerprinter = schedulerConfig.messageFingerprinter
+
+  override val logger = LoggerFactory.getLogger("ReplaySched")
 
   // Have we started off the execution yet?
   private[this] var firstMessage = true
@@ -55,6 +61,8 @@ class ReplayScheduler(val schedulerConfig: SchedulerConfig,
   // If != "", there was non-determinism. Have the main thread throw an
   // exception, so that it can be caught by the caller.
   private[this] var nonDeterministicErrorMsg = ""
+
+  var violationAtEnd : Option[ViolationFingerprint] = None
 
   // Given an event trace, try to replay it exactly. Return the events
   // observed in *this* execution, which should in theory be the same as the
@@ -116,11 +124,11 @@ class ReplayScheduler(val schedulerConfig: SchedulerConfig,
     schedulerConfig.invariant_check match {
       case Some(check) =>
         val checkpoint = takeCheckpoint()
-        val violation = check(List.empty, checkpoint)
-        // TODO(cs): actually return this rather than printing it
-        println("Violation?: " + violation)
+        violationAtEnd = check(List.empty, checkpoint)
+        logger.info("Violation?: " + violationAtEnd)
       case None =>
     }
+    event_orchestrator.events.setOriginalExternalEvents(_trace.original_externals)
     return event_orchestrator.events
   }
 
@@ -130,8 +138,8 @@ class ReplayScheduler(val schedulerConfig: SchedulerConfig,
     var loop = true
     breakable {
       while (loop && !event_orchestrator.trace_finished) {
-        // println("Replaying " + event_orchestrator.traceIdx + "/" +
-        //   event_orchestrator.trace.length + " " + event_orchestrator.current_event)
+        logger.trace("Replaying " + event_orchestrator.traceIdx + "/" +
+          event_orchestrator.trace.length + " " + event_orchestrator.current_event)
         event_orchestrator.current_event match {
           case SpawnEvent (_, _, name, _) =>
             event_orchestrator.trigger_start(name)
@@ -141,9 +149,8 @@ class ReplayScheduler(val schedulerConfig: SchedulerConfig,
             event_orchestrator.trigger_partition(a,b)
           case UnPartitionEvent((a,b)) =>
             event_orchestrator.trigger_unpartition(a,b)
-          case MsgSend (sender, receiver, message) =>
-            // sender == "deadLetters" means the message is external.
-            if (sender == "deadLetters") {
+          case m @ MsgSend (sender, receiver, message) =>
+            if (EventTypes.isExternal(m)) {
               enqueue_message(None, receiver, message)
             }
           case t: TimerDelivery =>
@@ -255,6 +262,7 @@ class ReplayScheduler(val schedulerConfig: SchedulerConfig,
     send_external_messages()
 
     if (!pendingSystemMessages.isEmpty) {
+
       return Some(pendingSystemMessages.dequeue)
     }
 
@@ -281,7 +289,7 @@ class ReplayScheduler(val schedulerConfig: SchedulerConfig,
       val nextMessage = pendingEvents.get(key) match {
         case Some(queue) =>
           if (queue.isEmpty) {
-            println("queue.isEmpty")
+            logger.debug("queue.isEmpty")
             // Message not enabled
             pendingEvents.remove(key)
             None
@@ -293,16 +301,16 @@ class ReplayScheduler(val schedulerConfig: SchedulerConfig,
             Some(willRet)
           }
         case None =>
-          println("key not found")
+          logger.debug("key not found")
           // Message not enabled
           None
       }
 
       nextMessage match {
         case None =>
-          println("pending keys:")
+          logger.debug("pending keys:")
           for (pending <- pendingEvents.keys) {
-            println(pending)
+            logger.debug("" + pending)
           }
           // Have the main thread crash on our behalf
           nonDeterministicErrorMsg = "Expected event " + key
@@ -312,6 +320,16 @@ class ReplayScheduler(val schedulerConfig: SchedulerConfig,
           if (!(event_orchestrator.actorToActorRef.values contains uniq.element._1.self)) {
             throw new IllegalStateException("unknown ActorRef: " + uniq.element._1.self)
           }
+
+          if (logger.isTraceEnabled()) {
+            val cell = uniq.element._1
+            val envelope = uniq.element._2
+            val snd = envelope.sender.path.name
+            val rcv = cell.self.path.name
+            val msg = envelope.message
+            logger.trace("schedule_new_message(): " + snd + " -> " + rcv + " " + msg)
+          }
+
           event_orchestrator.events.appendMsgEvent(uniq.element, uniq.id)
           schedSemaphore.release
           return Some(uniq.element)

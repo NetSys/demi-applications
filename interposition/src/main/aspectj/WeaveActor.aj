@@ -4,6 +4,7 @@ import static java.lang.Thread.sleep;
 
 import akka.dispatch.verification.Instrumenter;
 import akka.dispatch.verification.WrappedCancellable;
+import akka.dispatch.verification.ShutdownHandler;
 
 import akka.actor.ActorRef;
 import akka.actor.ScalaActorRef;
@@ -18,6 +19,7 @@ import akka.actor.Scheduler;
 import akka.actor.Cancellable;
 import akka.actor.LightArrayRevolverScheduler;
 import akka.actor.LocalActorRefProvider;
+import akka.actor.VirtualPathContainer;
 import akka.actor.ActorPath;
 
 import akka.pattern.AskSupport;
@@ -27,6 +29,7 @@ import akka.dispatch.Envelope;
 import akka.dispatch.MessageQueue;
 import akka.dispatch.MessageDispatcher;
 import akka.dispatch.Mailbox;
+import akka.dispatch.MonitorableThreadFactory;
 
 import scala.concurrent.impl.CallbackRunnable;
 import scala.concurrent.duration.FiniteDuration;
@@ -37,13 +40,40 @@ import java.lang.Runnable;
 
 privileged public aspect WeaveActor {
   Instrumenter inst = Instrumenter.apply();
-  
+
+  // Don't allow LightArrayRevolverScheduler to restart its timer thread.
+  // TODO(cs): much cleaner would be to not use Thread.stop(), and figure out
+  // what's really causing this memory leak...
+  Object around(MonitorableThreadFactory me):
+  execution(* akka.dispatch.MonitorableThreadFactory.newThread(Runnable)) &&
+  this(me) {
+    if (me.name().contains("scheduler") && me.counter().get() > 1) {
+      return null;
+    }
+    return proceed(me);
+  }
+
+  // Prevent memory leaks when the ActorSystem crashes?
+  Object around(ActorSystemImpl me):
+  execution(* akka.actor.ActorSystemImpl.uncaughtExceptionHandler(..)) &&
+  this(me) {
+    return ShutdownHandler.getHandler(me);
+  }
+
   before(ActorCell me, Object msg):
   execution(* akka.actor.ActorCell.receiveMessage(Object)) &&
   args(msg, ..) && this(me) {
     inst.beforeMessageReceive(me, msg);
   }
-  
+
+  // N.B. the order of the next two advice is important: need to catch throws
+  // before after
+  after(ActorCell me, Object msg) throwing (Exception ex):
+  execution(* akka.actor.ActorCell.receiveMessage(Object)) &&
+  args(msg, ..) && this(me) {
+    inst.actorCrashed(me.self().path().name(), ex);
+  }
+
   after(ActorCell me, Object msg):
   execution(* akka.actor.ActorCell.receiveMessage(Object)) &&
   args(msg, ..) && this(me) {
@@ -55,7 +85,7 @@ privileged public aspect WeaveActor {
     inst.mailboxIdle(me);
   }
 
-  pointcut dispatchOperation(MessageDispatcher me, ActorCell receiver, Envelope handle): 
+  pointcut dispatchOperation(MessageDispatcher me, ActorCell receiver, Envelope handle):
   execution(* akka.dispatch.MessageDispatcher.dispatch(..)) &&
   args(receiver, handle, ..) && this(me);
 
@@ -76,10 +106,37 @@ privileged public aspect WeaveActor {
   Object around(PromiseActorRef me, Object message, ActorRef sender):
   receiveAnswer(me, message, sender) {
     if (inst.receiveAskAnswer(me, message, sender)) {
-      return proceed(me, message, sender);
+      Object ret = proceed(me, message, sender);
+      inst.afterReceiveAskAnswer(me, message, sender);
+      return ret;
     }
     return null;
   }
+
+  // Sanity check: make sure we don't allocate two temp actors at the same
+  // time with the same name.
+  before(VirtualPathContainer me, String name, InternalActorRef ref):
+  execution(* VirtualPathContainer.addChild(String, InternalActorRef)) &&
+  this(me) && args(name, ref) {
+    if (me.children.containsKey(name)) {
+      System.err.println("WARNING: temp name already taken: " + name);
+    }
+  }
+
+  /*
+   For debugging redundant temp names:
+  before(VirtualPathContainer me, String name, InternalActorRef ref):
+  execution(* VirtualPathContainer.removeChild(String, InternalActorRef)) &&
+  this(me) && args(name, ref) {
+    System.out.println("removeChild: " + name);
+  }
+
+  before(VirtualPathContainer me, String name):
+  execution(* VirtualPathContainer.removeChild(String)) &&
+  this(me) && args(name) {
+    System.out.println("removeChild: " + name);
+  }
+  */
 
   // Interposition on the code that assigns IDs to temporary actors. See this
   // doc for more details:
@@ -231,7 +288,7 @@ privileged public aspect WeaveActor {
   // TODO(cs): issue: no receiver.
   Object around(LightArrayRevolverScheduler me, FiniteDuration delay, scala.Function0<scala.runtime.BoxedUnit> block, ExecutionContext exc):
   scheduleOnceBlock(me, delay, block, exc) {
-    if (!inst.actorSystemInitialized() || Instrumenter.akkaInternalCodeBlockSchedule()) {
+    if (!inst.actorSystemInitialized()) {
       return proceed(me, delay, block, exc);
     }
 
@@ -241,6 +298,10 @@ privileged public aspect WeaveActor {
       }
     }
     MyRunnable runnable = new MyRunnable();
+    if (Instrumenter.akkaInternalCodeBlockSchedule()) {
+      // Don't ever allow the `ask` timer to expire
+      return me.scheduleOnce(delay, runnable, exc);
+    }
     Cancellable c = new WrappedCancellable(me.scheduleOnce(delay, runnable, exc), "ScheduleFunction", block);
     inst.registerCancellable(c, false, "ScheduleFunction", block);
     return c;
