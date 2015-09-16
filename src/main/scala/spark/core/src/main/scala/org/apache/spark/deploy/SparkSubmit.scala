@@ -55,7 +55,7 @@ object SparkSubmit {
   private val PYSPARK_SHELL = "pyspark-shell"
 
   // Exposed for testing
-  private[spark] var exitFn: () => Unit = () => System.exit(-1)
+  private[spark] var exitFn: () => Unit = () => null //System.exit(-1)
   private[spark] var printStream: PrintStream = System.err
   private[spark] def printWarning(str: String) = printStream.println("Warning: " + str)
   private[spark] def printErrorAndExit(str: String) = {

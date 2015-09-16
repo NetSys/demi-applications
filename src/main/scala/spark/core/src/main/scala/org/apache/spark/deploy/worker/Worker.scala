@@ -199,7 +199,7 @@ private[spark] class Worker(
             registrationRetryTimer.foreach(_.cancel())
           } else if (retries >= REGISTRATION_RETRIES) {
             logError("All masters are unresponsive! Giving up.")
-            System.exit(1)
+            //System.exit(1)
           } else {
             tryRegisterAllMasters()
           }

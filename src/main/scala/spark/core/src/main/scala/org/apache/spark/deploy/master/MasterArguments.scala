@@ -84,6 +84,6 @@ private[spark] class MasterArguments(args: Array[String], conf: SparkConf) {
       "  -h HOST, --host HOST   Hostname to listen on\n" +
       "  -p PORT, --port PORT   Port to listen on (default: 7077)\n" +
       "  --webui-port PORT      Port for web UI (default: 8080)")
-    System.exit(exitCode)
+    //System.exit(exitCode)
   }
 }

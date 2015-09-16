@@ -196,7 +196,7 @@ private[spark] object CoarseGrainedExecutorBackend extends Logging {
           // Worker url is used in spark standalone mode to enforce fate-sharing with worker
           "Usage: CoarseGrainedExecutorBackend <driverUrl> <executorId> <hostname> " +
           "<cores> [<workerUrl>]")
-        System.exit(1)
+        //System.exit(1)
       case 4 =>
         run(args(0), args(1), args(2), args(3).toInt, None)
       case x if x > 4 =>

@@ -44,7 +44,7 @@ object DriverWrapper {
 
       case _ =>
         System.err.println("Usage: DriverWrapper <workerUrl> <driverMainClass> [options]")
-        System.exit(-1)
+        //System.exit(-1)
     }
   }
 }

@@ -71,7 +71,7 @@ private[spark] class HistoryServerArguments(conf: SparkConf, args: Array[String]
       |  spark.history.fs.updateInterval    How often to reload log data from storage (in seconds,
       |                                     default 10)
       |""".stripMargin)
-    System.exit(exitCode)
+    //System.exit(exitCode)
   }
 
 }

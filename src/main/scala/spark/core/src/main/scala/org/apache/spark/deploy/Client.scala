@@ -95,7 +95,7 @@ private class ClientActor(driverArgs: ClientArguments, conf: SparkConf) extends 
     statusResponse.found match {
       case false =>
         println(s"ERROR: Cluster master did not recognize $driverId")
-        System.exit(-1)
+        //System.exit(-1)
       case true =>
         println(s"State of $driverId is ${statusResponse.state.get}")
         // Worker node, if present
@@ -108,9 +108,9 @@ private class ClientActor(driverArgs: ClientArguments, conf: SparkConf) extends 
         statusResponse.exception.map { e =>
           println(s"Exception from cluster was: $e")
           e.printStackTrace()
-          System.exit(-1)
+          //System.exit(-1)
         }
-        System.exit(0)
+        //System.exit(0)
     }
   }
 
@@ -118,20 +118,20 @@ private class ClientActor(driverArgs: ClientArguments, conf: SparkConf) extends 
 
     case SubmitDriverResponse(success, driverId, message) =>
       println(message)
-      if (success) pollAndReportStatus(driverId.get) else System.exit(-1)
+      if (success) pollAndReportStatus(driverId.get) else null //System.exit(-1)
 
     case KillDriverResponse(driverId, success, message) =>
       println(message)
-      if (success) pollAndReportStatus(driverId) else System.exit(-1)
+      if (success) pollAndReportStatus(driverId) else null //System.exit(-1)
 
     case DisassociatedEvent(_, remoteAddress, _) =>
       println(s"Error connecting to master ${driverArgs.master} ($remoteAddress), exiting.")
-      System.exit(-1)
+      //System.exit(-1)
 
     case AssociationErrorEvent(cause, _, remoteAddress, _) =>
       println(s"Error connecting to master ${driverArgs.master} ($remoteAddress), exiting.")
       println(s"Cause was: $cause")
-      System.exit(-1)
+      //System.exit(-1)
   }
 }
 

@@ -119,7 +119,7 @@ private[spark] class WorkerArguments(args: Array[String]) {
       "  -h HOST, --host HOST     Hostname to listen on\n" +
       "  -p PORT, --port PORT     Port to listen on (default: random)\n" +
       "  --webui-port PORT        Port for web UI (default: 8081)")
-    System.exit(exitCode)
+    //System.exit(exitCode)
   }
 
   def inferDefaultCores(): Int = {

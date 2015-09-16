@@ -95,7 +95,7 @@ private[spark] object ShuffleCopier extends Logging {
   def main(args: Array[String]) {
     if (args.length < 3) {
       System.err.println("Usage: ShuffleCopier <host> <port> <shuffle_block_id> <threads>")
-      System.exit(1)
+      //System.exit(1)
     }
     val host = args(0)
     val port = args(1).toInt
@@ -113,6 +113,6 @@ private[spark] object ShuffleCopier extends Logging {
     }).asJava
     copiers.invokeAll(tasks)
     copiers.shutdown()
-    System.exit(0)
+    //System.exit(0)
   }
 }

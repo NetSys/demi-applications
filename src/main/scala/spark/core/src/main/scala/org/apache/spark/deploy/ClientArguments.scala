@@ -109,7 +109,7 @@ private[spark] class ClientArguments(args: Array[String]) {
       |   -v, --verbose                  Print more debugging output
      """.stripMargin
     System.err.println(usage)
-    System.exit(exitCode)
+    //System.exit(exitCode)
   }
 }
 

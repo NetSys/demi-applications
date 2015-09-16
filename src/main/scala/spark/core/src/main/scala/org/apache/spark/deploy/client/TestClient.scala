@@ -30,12 +30,12 @@ private[spark] object TestClient {
 
     def disconnected() {
       logInfo("Disconnected from master")
-      System.exit(0)
+      //System.exit(0)
     }
 
     def dead(reason: String) {
       logInfo("Application died with error: " + reason)
-      System.exit(0)
+      //System.exit(0)
     }
 
     def executorAdded(id: String, workerId: String, hostPort: String, cores: Int, memory: Int) {}

@@ -63,7 +63,7 @@ object PythonRunner {
 
     new RedirectThread(process.getInputStream, System.out, "redirect output").start()
 
-    System.exit(process.waitFor())
+    //System.exit(process.waitFor())
   }
 
   /**
