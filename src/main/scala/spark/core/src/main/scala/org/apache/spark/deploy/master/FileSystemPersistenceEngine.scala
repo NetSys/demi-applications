@@ -23,6 +23,12 @@ import akka.serialization.Serialization
 
 import org.apache.spark.Logging
 
+import java.util.concurrent.atomic.AtomicBoolean
+
+object FileSystemPersistenceEngine {
+  val hasThrownException = new AtomicBoolean(false)
+}
+
 /**
  * Stores data in a single on-disk directory with one file per application and worker.
  * Files are deleted when applications and workers are removed.
@@ -77,7 +83,10 @@ private[spark] class FileSystemPersistenceEngine(
 
   private def serializeIntoFile(file: File, value: AnyRef) {
     val created = file.createNewFile()
-    if (!created) { throw new IllegalStateException("Could not create file: " + file) }
+    if (!created) {
+      //throw new IllegalStateException("Could not create file: " + file)
+      FileSystemPersistenceEngine.hasThrownException.set(true)
+    }
 
     val serializer = serialization.findSerializerFor(value)
     val serialized = serializer.toBinary(value)
