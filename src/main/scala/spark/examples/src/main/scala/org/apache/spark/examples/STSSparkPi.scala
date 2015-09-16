@@ -360,7 +360,7 @@ object STSSparkPi {
       MyVariables.prematureStopSempahore.release()
     }
 
-    val fuzz = true
+    val fuzz = false
     if (fuzz) {
       sched.nonBlockingExplore(externals, terminationCallback)
 
@@ -435,9 +435,9 @@ object STSSparkPi {
 
     if (!fuzz) {
       val dir =
-      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_15_13_08_54"
+      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_15_20_44_06"
       val mcs_dir =
-      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_15_13_08_54_DDMin_STSSchedNoPeek"
+      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_15_20_44_06_DDMin_STSSchedNoPeek"
 
       val msgSerializer = new BasicMessageSerializer
       val msgDeserializer = new BasicMessageDeserializer(loader=Thread.currentThread.getContextClassLoader)
