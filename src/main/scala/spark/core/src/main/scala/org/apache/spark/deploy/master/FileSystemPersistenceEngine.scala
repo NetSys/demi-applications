@@ -86,6 +86,7 @@ private[spark] class FileSystemPersistenceEngine(
     if (!created) {
       //throw new IllegalStateException("Could not create file: " + file)
       FileSystemPersistenceEngine.hasThrownException.set(true)
+      println("FILESYSTEM COULD NOT CREATE FILE")
     }
 
     val serializer = serialization.findSerializerFor(value)
