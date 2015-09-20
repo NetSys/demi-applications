@@ -85,15 +85,15 @@ private[spark] class CoarseGrainedExecutorBackend(
 
     case RegisterExecutorFailed(message) =>
       logError("Slave registration failed: " + message)
-      releaseSemaphore
-      throw new RuntimeException("Slave registration failed: " + message)
+      //releaseSemaphore
+      //throw new RuntimeException("Slave registration failed: " + message)
       //System.exit(1)
 
     case LaunchTask(data) =>
       if (executor == null) {
         logError("Received LaunchTask command but executor was null")
-        releaseSemaphore
-        throw new RuntimeException("Received LaunchTask command but executor was null")
+        //releaseSemaphore
+        //throw new RuntimeException("Received LaunchTask command but executor was null")
         //System.exit(1)
       } else {
         val ser = SparkEnv.get.closureSerializer.newInstance()
@@ -105,8 +105,8 @@ private[spark] class CoarseGrainedExecutorBackend(
     case KillTask(taskId, _, interruptThread) =>
       if (executor == null) {
         logError("Received KillTask command but executor was null")
-        releaseSemaphore
-        throw new RuntimeException("Received KillTask command but executor was null")
+        //releaseSemaphore
+        //throw new RuntimeException("Received KillTask command but executor was null")
       } else {
         executor.killTask(taskId, interruptThread)
       }
