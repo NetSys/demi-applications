@@ -84,6 +84,9 @@ object BlockManagerMessages {
       diskSize = in.readLong()
       tachyonSize = in.readLong()
     }
+
+    override def toString() =
+      s"UpdateBlockInfo($blockManagerId,$blockId,$storageLevel,$memSize,$diskSize,$tachyonSize)"
   }
 
   object UpdateBlockInfo {
@@ -106,7 +109,12 @@ object BlockManagerMessages {
 
   case class GetLocations(blockId: BlockId) extends ToBlockManagerMaster
 
-  case class GetLocationsMultipleBlockIds(blockIds: Array[BlockId]) extends ToBlockManagerMaster
+  case class GetLocationsMultipleBlockIds(blockIds: Array[BlockId]) extends ToBlockManagerMaster {
+    override def toString = {
+      val idsString = blockIds.mkString("-")
+      s"GetLocationsMultipleBlockIds(${idsString})"
+    }
+  }
 
   case class GetPeers(blockManagerId: BlockManagerId, size: Int) extends ToBlockManagerMaster
 
