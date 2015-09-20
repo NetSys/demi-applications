@@ -79,7 +79,10 @@ class BlockManagerId private (
   @throws(classOf[IOException])
   private def readResolve(): Object = BlockManagerId.getCachedBlockManagerId(this)
 
-  override def toString = "BlockManagerId(%s, %s, %d, %d)".format(executorId, host, port, nettyPort)
+  override def toString =
+    //"BlockManagerId(%s, %s, %d, %d)".format(executorId, host, port, nettyPort)
+    "BlockManagerId(%s)".format(executorId)
+
 
   override def hashCode: Int = (executorId.hashCode * 41 + host.hashCode) * 41 + port + nettyPort
 
