@@ -131,7 +131,7 @@ private[spark] class CoarseGrainedExecutorBackend(
 private[spark] object CoarseGrainedExecutorBackend extends Logging {
   def runLocal(actorSystem: ActorSystem, executorId: String, execId: Int) {
     val driver = actorSystem.actorFor("/user/CoarseGrainedScheduler")
-    val timeout = 30.seconds
+    val timeout = Duration.Inf // 30.seconds
 
     //val fut = Instrumenter().serializeAskWithID(executorId,
     //  () => Patterns.ask(driver, RetrieveSparkProps, timeout))
