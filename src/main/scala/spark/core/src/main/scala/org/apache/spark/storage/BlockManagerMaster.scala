@@ -20,9 +20,13 @@ package org.apache.spark.storage
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import org.apache.spark.executor.Executor
+
 import akka.actor._
 import akka.pattern.ask
 import akka.dispatch.verification.Instrumenter
+import akka.dispatch.verification.ExternalEventInjector
+import akka.dispatch.verification.Util
 
 import org.apache.spark.{Logging, SparkConf, SparkException}
 import org.apache.spark.storage.BlockManagerMessages._
@@ -66,6 +70,7 @@ class BlockManagerMaster(var driverActor: ActorRef, conf: SparkConf) extends Log
       memSize: Long,
       diskSize: Long,
       tachyonSize: Long): Boolean = {
+    val taskId = Executor.threadToTaskId.get(Thread.currentThread)
     val res = askDriverWithReply[Boolean](
       UpdateBlockInfo(blockManagerId, blockId, storageLevel, memSize, diskSize, tachyonSize))
     logInfo("Updated info of block " + blockId)
@@ -239,9 +244,47 @@ class BlockManagerMaster(var driverActor: ActorRef, conf: SparkConf) extends Log
     while (attempts < AKKA_RETRY_ATTEMPTS) {
       attempts += 1
       try {
-        val future = driverActor.ask(message)(timeout)
+        // XXX STS
+        val taskId = Executor.threadToTaskId.get(Thread.currentThread)
+
+        // We need to tell Instrumenter that, immediately after it delivers the next ask
+        // question, it should block until a BeginAtomicBlock for this task
+        // occurs. Otherwise, during replay, STSSched might incorrectly skip
+        // over the next BeginAtomicBlock (since there is a race on notifying
+        // the scheduler that the BeginAtomicBlock is starting).
+        //
+        // N.B., ExternalEventInjector schedulers should be blocked at this
+        // point, i.e. stopDispatch should have kicked in because we are
+        // currently executing an atomic block.
+        // TODO(cs): YET!, there might be other external threads running that
+        // send messages too?
+        if (!taskId.isEmpty) {
+          Instrumenter().blockForAtomicAfterNextMessage(taskId.get, message)
+        }
+
+        val future = if (taskId.isEmpty)
+          driverActor.ask(message)(timeout)
+          else Instrumenter().linearizeAskWithID(s"${taskId.get}", () => driverActor.ask(message)(timeout))
+
+        if (!taskId.isEmpty) {
+          //println("endAtomicBlock: intermediate Executor.launchTask:"+taskId.get)
+          if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+            val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+            sched.endExternalAtomicBlock(taskId.get)
+          }
+        }
+
         Instrumenter().actorBlocked
         val result = Await.result(future, timeout)
+
+        if (!taskId.isEmpty) {
+          //println("beginAtomicBlock: intermediate Executor.launchTask:"+taskId.get)
+          if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
+            val sched = Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]]
+            sched.beginExternalAtomicBlock(taskId.get)
+          }
+        }
+
         if (result == null) {
           throw new SparkException("BlockManagerMaster returned null")
         }
