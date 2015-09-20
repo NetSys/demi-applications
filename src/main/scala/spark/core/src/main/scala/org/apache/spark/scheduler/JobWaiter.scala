@@ -71,10 +71,6 @@ private[spark] class JobWaiter[T](
   }
 
   def awaitResult(): JobResult = synchronized {
-    if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
-      // We've finished the bootstrapping phase.
-      Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].endUnignorableEvents
-    }
     while (!_jobFinished) {
       this.wait()
     }
