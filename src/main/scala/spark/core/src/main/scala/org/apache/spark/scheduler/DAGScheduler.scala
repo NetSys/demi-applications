@@ -129,7 +129,7 @@ class DAGScheduler(
   private def initializeEventProcessActor() {
     // blocking the thread until supervisor is started, which ensures eventProcessActor is
     // not null before any job is submitted
-    implicit val timeout = Timeout(30 seconds)
+    implicit val timeout = Timeout(Int.MaxValue seconds)
     val initEventActorReply =
       dagSchedulerActorSupervisor ? Props(new DAGSchedulerEventProcessActor(this))
     Instrumenter().actorBlocked
