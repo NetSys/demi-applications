@@ -3,6 +3,10 @@ package akka.dispatch.verification
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Queue
 
+import org.slf4j.LoggerFactory,
+       ch.qos.logback.classic.Level,
+       ch.qos.logback.classic.Logger
+
 /**
  * Invoke DDMin with maxDistance=0, then again with maxDistance=2, ... up to
  * given maxMaxDistance.
@@ -14,57 +18,68 @@ import scala.collection.mutable.Queue
  */
 // TODO(cs): propogate stopAtSize to DDMin?
 class IncrementalDDMin (oracle: ResumableDPOR, maxMaxDistance:Int=256,
-                        stopAtSize:Int=1, checkUnmodifed:Boolean=true) extends Minimizer {
+                        stopAtSize:Int=1, checkUnmodifed:Boolean=false,
+                        stats: Option[MinimizationStats]=None) extends Minimizer {
 
+  val logger = LoggerFactory.getLogger("IncrementalDDMin")
   var ddmin = new DDMin(oracle, checkUnmodifed=false)
-  val stats = new MinimizationStats("IncDDMin", oracle.getName)
+  val _stats = stats match {
+    case Some(s) => s
+    case None => new MinimizationStats
+  }
+  _stats.updateStrategy("IncDDMin", oracle.getName)
 
   private[this] def mergeStats(otherStats: MinimizationStats) {
     // Increment keys in otherStats.iterationSize by my current iteration
-    for ((k, v) <- otherStats.iterationSize) {
-      stats.iterationSize(k + stats.iteration) = v
+    for ((k, v) <- otherStats.inner().iterationSize) {
+      _stats.inner().iterationSize(k + _stats.inner().total_replays) = v
     }
     // Now increment my own iteration
-    stats.iteration += otherStats.iteration
-    stats.total_replays += otherStats.total_replays
+    _stats.inner().total_replays += otherStats.inner().total_replays
     // Ignore otherStats.stats
   }
 
-  def minimize(events: Seq[ExternalEvent], violation_fingerprint: ViolationFingerprint) : Seq[ExternalEvent] = {
+  def minimize(dag: EventDag,
+               violation_fingerprint: ViolationFingerprint,
+               initializationRoutine: Option[()=>Any]) : EventDag = {
     var currentDistance = 0
     oracle.setMaxDistance(currentDistance)
 
     // First check if the initial trace violates the exception
     if (checkUnmodifed) {
-      println("Checking if unmodified trace triggers violation...")
-      if (oracle.test(events, violation_fingerprint, stats) == None) {
+      logger.info("Checking if unmodified trace triggers violation...")
+      if (oracle.test(dag.events, violation_fingerprint, _stats) == None) {
         throw new IllegalArgumentException("Unmodified trace does not trigger violation")
       }
     }
-    stats.reset()
+    _stats.reset()
 
-    var currentMCS = events
+    var currentMCS = dag
 
-    stats.record_prune_start()
+    _stats.record_prune_start()
 
-    while (currentDistance < maxMaxDistance && currentMCS.size > stopAtSize) {
-      println("Trying currentDistance="+currentDistance)
+    while (currentDistance < maxMaxDistance && currentMCS.events.size > stopAtSize) {
+      logger.info("Trying currentDistance="+currentDistance)
       ddmin = new DDMin(oracle, checkUnmodifed=false)
-      currentMCS = ddmin.minimize(currentMCS, violation_fingerprint)
-      RunnerUtils.printMCS(currentMCS)
-      mergeStats(ddmin.stats)
+      currentMCS = ddmin.minimize(currentMCS, violation_fingerprint, initializationRoutine)
+      RunnerUtils.printMCS(currentMCS.events)
+      mergeStats(ddmin._stats)
       currentDistance = if (currentDistance == 0) 2 else currentDistance << 1
       oracle.setMaxDistance(currentDistance)
-      stats.record_distance_increase(currentDistance)
+      _stats.record_distance_increase(currentDistance)
     }
 
-    stats.record_prune_end()
+    _stats.record_prune_end()
 
     return currentMCS
   }
 
-  def verify_mcs(mcs: Seq[ExternalEvent], _violation_fingerprint: ViolationFingerprint): Option[EventTrace] = {
-    return oracle.test(mcs, _violation_fingerprint, new MinimizationStats("NOP", "NOP"))
+  def verify_mcs(mcs: EventDag,
+                 _violation_fingerprint: ViolationFingerprint,
+                 initializationRoutine: Option[()=>Any]=None): Option[EventTrace] = {
+    val nopStats = new MinimizationStats
+    nopStats.updateStrategy("NOP", "NOP")
+    return oracle.test(mcs.events, _violation_fingerprint, nopStats)
   }
 }
 
@@ -94,13 +109,14 @@ class ResumableDPOR(ctor: ResumableDPOR.DPORConstructor) extends TestOracle {
 
   def test(events: Seq[ExternalEvent],
            violation_fingerprint: ViolationFingerprint,
-           stats: MinimizationStats) : Option[EventTrace] = {
+           stats: MinimizationStats,
+           init:Option[()=>Any]=None) : Option[EventTrace] = {
     if (!(subseqToDPOR contains events)) {
       subseqToDPOR(events) = ctor()
       subseqToDPOR(events).setInvariant(invariant)
     }
     val dpor = subseqToDPOR(events)
     dpor.setMaxDistance(currentMaxDistance)
-    return dpor.test(events, violation_fingerprint, stats)
+    return dpor.test(events, violation_fingerprint, stats, init)
   }
 }

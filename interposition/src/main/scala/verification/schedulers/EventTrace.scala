@@ -1,23 +1,24 @@
 package akka.dispatch.verification
 
-import akka.actor.{ActorCell, ActorRef, ActorSystem, Props}
+import akka.actor.{Cell, ActorRef, ActorSystem, Props}
 import akka.dispatch.Envelope
 
 import scala.collection.mutable.ListBuffer
 import scala.collection.generic.Growable
-import scala.collection.mutable.Queue
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
+import scala.collection.mutable.SynchronizedQueue
+import scala.collection.mutable.Queue
 
 // Internal api
 case class UniqueMsgSend(m: MsgSend, id: Int) extends Event
 case class UniqueMsgEvent(m: MsgEvent, id: Int) extends Event
 case class UniqueTimerDelivery(t: TimerDelivery, id: Int) extends Event
 
-case class EventTrace(val events: Queue[Event], var original_externals: Seq[ExternalEvent]) extends Growable[Event] with Iterable[Event] {
-  def this() = this(new Queue[Event], null)
-  def this(original_externals: Seq[ExternalEvent]) = this(new Queue[Event], original_externals)
+case class EventTrace(val events: SynchronizedQueue[Event], var original_externals: Seq[ExternalEvent]) extends Growable[Event] with Iterable[Event] {
+  def this() = this(new SynchronizedQueue[Event], null)
+  def this(original_externals: Seq[ExternalEvent]) = this(new SynchronizedQueue[Event], original_externals)
 
   override def hashCode = this.events.hashCode
   override def equals(other: Any) : Boolean = other match {
@@ -28,6 +29,7 @@ case class EventTrace(val events: Queue[Event], var original_externals: Seq[Exte
   // Optional: if you have the original external events, that helps us with
   // filtering.
   def setOriginalExternalEvents(_original_externals: Seq[ExternalEvent]) = {
+    println("Setting originalExternalEvents: " + _original_externals.size)
     original_externals = _original_externals
   }
 
@@ -35,7 +37,11 @@ case class EventTrace(val events: Queue[Event], var original_externals: Seq[Exte
     assume(original_externals != null)
     assume(!events.isEmpty)
     assume(!original_externals.isEmpty)
-    return new EventTrace(new Queue[Event] ++ events,
+    // I can't figure out the type signature for SynchronizedQueue's ++ operator, so we
+    // do it in two separate steps here
+    val copy = new SynchronizedQueue[Event]
+    copy ++= events
+    return new EventTrace(copy,
                           new Queue[ExternalEvent] ++ original_externals)
   }
 
@@ -45,6 +51,8 @@ case class EventTrace(val events: Queue[Event], var original_externals: Seq[Exte
   def getEvents() : Seq[Event] = {
     return getEvents(events)
   }
+
+  def length = events.length
 
   private[this] def getEvents(_events: Seq[Event]): Seq[Event] = {
     return _events.map(e =>
@@ -68,7 +76,7 @@ case class EventTrace(val events: Queue[Event], var original_externals: Seq[Exte
     this.+=(m)
   }
 
-  def appendMsgEvent(pair: (ActorCell, Envelope), id: Int) = {
+  def appendMsgEvent(pair: (Cell, Envelope), id: Int) = {
     val cell = pair._1
     val envelope = pair._2
     val snd = envelope.sender.path.name
@@ -149,7 +157,10 @@ case class EventTrace(val events: Queue[Event], var original_externals: Seq[Exte
       case e => Some(e)
     }
 
-    return new EventTrace(filtered, original_externals)
+    val filteredQueue = new SynchronizedQueue[Event]
+    filteredQueue ++= filtered
+
+    return new EventTrace(filteredQueue, original_externals)
   }
 
   // Ensure that all failure detector messages are pruned from the original trace,
@@ -164,24 +175,34 @@ case class EventTrace(val events: Queue[Event], var original_externals: Seq[Exte
       return MessageTypes.fromFailureDetector(msg)
     }
 
-    return new EventTrace(events.filterNot(e => e match {
+    val filtered = events.filterNot(e => e match {
         case UniqueMsgEvent(m, _) =>
           fromFD(m.sender, m.msg) || m.receiver == FailureDetector.fdName
         case UniqueMsgSend(m, _) =>
           fromFD(m.sender, m.msg) || m.receiver == FailureDetector.fdName
         case _ => false
       }
-    ), original_externals)
+    )
+
+    val filteredQueue = new SynchronizedQueue[Event]
+    filteredQueue ++= filtered
+
+    return new EventTrace(filteredQueue, original_externals)
   }
 
   def filterCheckpointMessages(): EventTrace = {
-    return new EventTrace(events flatMap {
+    val filtered = events flatMap {
       case UniqueMsgEvent(MsgEvent(_, _, CheckpointRequest), _) => None
       case UniqueMsgEvent(MsgEvent(_, _, CheckpointReply(_)), _) => None
       case UniqueMsgSend(MsgSend(_, _, CheckpointRequest), _) => None
       case UniqueMsgSend(MsgSend(_, _, CheckpointReply(_)), _) => None
       case e => Some(e)
-    }, original_externals)
+    }
+
+    val filteredQueue = new SynchronizedQueue[Event]
+    filteredQueue ++= filtered
+
+    return new EventTrace(filteredQueue, original_externals)
   }
 
   // Pre: externals corresponds exactly to our external MsgSend
@@ -200,14 +221,39 @@ case class EventTrace(val events: Queue[Event], var original_externals: Seq[Exte
       return getEvents
     }
     val sendsQueue = Queue(sends: _*)
+
+    // ---- Check an assertion: ----
+    val sendsSet = new HashSet[UniqueMsgSend]
+    events.foreach {
+      case u @ UniqueMsgSend(MsgSend(snd, receiver, msg), id) =>
+        if (sendsSet contains u) {
+          throw new AssertionError("Duplicate UniqueMsgSend " + u + " " + events.mkString("\n"))
+        }
+        sendsSet += u
+      case _ =>
+    }
+    // ----------------------
+
     return getEvents(events map {
-      case u @ UniqueMsgSend(MsgSend("deadLetters", receiver, msg), id) =>
-        if (MessageTypes.fromCheckpointCollector(msg)) {
-          u
-        } else {
+      case u @ UniqueMsgSend(MsgSend(snd, receiver, msg), id) =>
+        if (EventTypes.isExternal(u)) {
+          if (sendsQueue.isEmpty) {
+            // XXX
+            // Problem seems to be some of the Send events that were actually
+            // sent, don't appear in externals. Truncated somehow?
+            println("events:---")
+            events.foreach { case e => println(e) }
+            println("---")
+            println("externals:---")
+            externals.foreach { case e => println(e) }
+            println("---")
+            throw new IllegalStateException("sendsQueue is empty, yet " + u)
+          }
           val send = sendsQueue.dequeue
           val new_msg = send.messageCtor()
-          UniqueMsgSend(MsgSend("deadLetters", receiver, new_msg), id)
+          UniqueMsgSend(MsgSend(snd, receiver, new_msg), id)
+        } else {
+          u
         }
       case m: MsgSend =>
         throw new IllegalArgumentException("Must be UniqueMsgSend")
@@ -218,22 +264,29 @@ case class EventTrace(val events: Queue[Event], var original_externals: Seq[Exte
   // Filter all external events in original_trace that aren't in subseq.
   // As an optimization, also filter out some internal events that we know a priori
   // aren't going to occur in the subsequence execution.
-  def subsequenceIntersection(subseq: Seq[ExternalEvent]) : EventTrace = {
+  def subsequenceIntersection(subseq: Seq[ExternalEvent],
+                              filterKnownAbsents:Boolean=true) : EventTrace = {
     // Walk through all events in original_trace. As we walk through, check if
     // the current event corresponds to an external event at the head of subseq. If it does, we
     // include that in result, and pop off the head of subseq. Otherwise that external event has been
     // pruned and should not be included. All internal events are included in
     // result.
-    var remaining = ListBuffer[ExternalEvent]() ++ subseq
-    var result = new Queue[Event]()
-
     // N.B. we deal with external messages separately after this for loop,
     // since they're a bit trickier.
+    var remaining = ListBuffer[ExternalEvent]() ++ subseq.filter {
+      case Send(_,_) => false
+      case _ => true
+    }
+    var result = new Queue[Event]()
+
     // N.B. it'd be nicer to use a filter() here, but it isn't guarenteed to
     // iterate left to right.
     for (event <- events) {
       if (remaining.isEmpty) {
-        if (!EventTypes.isExternal(event)) {
+        if (EventTypes.isMessageType(event)) {
+          result += event
+        } else if (!EventTypes.isExternal(event) &&
+                   !event.isInstanceOf[ChangeContext]) {
           result += event
         }
       } else {
@@ -278,6 +331,16 @@ case class EventTrace(val events: Queue[Event], var original_externals: Seq[Exte
               }
               case _ => None
             }
+          case c @ CodeBlock(_) =>
+            if (remaining(0) == c) {
+              result += event
+              remaining = remaining.tail
+            }
+          case h @ HardKill(_) =>
+            if (remaining(0) == h) {
+              result += event
+              remaining = remaining.tail
+            }
           // We don't currently use ContextSwitches, so prune them to remove
           // clutter.
           case ChangeContext(_) => None
@@ -286,11 +349,16 @@ case class EventTrace(val events: Queue[Event], var original_externals: Seq[Exte
         } // close match
       } // close else
     } // close for
-    return new EventTrace(filterSends(result, subseq), original_externals)
+
+    val filtered = filterSends(result, subseq, filterKnownAbsents=filterKnownAbsents)
+    val filteredQueue = new SynchronizedQueue[Event]
+    filteredQueue ++= filtered
+    return new EventTrace(filteredQueue, original_externals)
   }
 
   private[this] def filterSends(events: Queue[Event],
-                                subseq: Seq[ExternalEvent]) : Queue[Event] = {
+                                subseq: Seq[ExternalEvent],
+                                filterKnownAbsents:Boolean=true) : Queue[Event] = {
     // We assume that Send messages are sent in FIFO order, i.e. so that the
     // the zero-th MsgSend event from deadLetters corresponds to the zero-th Send event.
 
@@ -328,14 +396,13 @@ case class EventTrace(val events: Queue[Event], var original_externals: Seq[Exte
     var msg_send_idx = -1
     val pruned_msg_ids = new HashSet[Int]
 
-    // N.B. it'd be nicer to use a filter() here, but it isn't guarenteed to
-    // iterate left to right according to the spec.
+    // N.B. it'd be nicer to use a filter() here
     var remaining = new Queue[Event]()
 
     for (e <- events) {
       e match {
-        case UniqueMsgSend(m, id) =>
-          if (m.sender == "deadLetters") {
+        case m @ UniqueMsgSend(msgEvent, id) =>
+          if (EventTypes.isExternal(m)) {
             msg_send_idx += 1
             if (!(missing_indices contains msg_send_idx)) {
               remaining += e
@@ -355,7 +422,10 @@ case class EventTrace(val events: Queue[Event], var original_externals: Seq[Exte
       } // end match
     } // end for
 
-    return filterKnownAbsentInternals(remaining, subseq)
+    if (filterKnownAbsents) {
+      return filterKnownAbsentInternals(remaining, subseq)
+    }
+    return remaining
   }
 
   // Remove internal events that we know a priori aren't going to occur for

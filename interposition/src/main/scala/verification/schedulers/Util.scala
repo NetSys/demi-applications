@@ -1,12 +1,18 @@
 package akka.dispatch.verification
 
 
-import akka.actor.ActorCell,
+import akka.actor.Cell,
        akka.actor.ActorSystem,
        akka.actor.ActorRef,
        akka.actor.Actor,
        akka.actor.PoisonPill,
-       akka.actor.Props
+       akka.actor.Props,
+       akka.actor.ActorSystemImpl,
+       akka.actor.InternalActorRef,
+       akka.actor.ChildStats
+
+import akka.actor.dungeon.ChildrenContainer
+import akka.dispatch.sysmsg.SystemMessage
 
 import akka.dispatch.Envelope,
        akka.dispatch.MessageQueue,
@@ -18,7 +24,8 @@ import scala.collection.concurrent.TrieMap,
        scala.collection.mutable.HashSet,
        scala.collection.mutable.Set,
        scala.collection.mutable.ArrayBuffer,
-       scala.annotation.tailrec
+       scala.annotation.tailrec,
+       scala.collection.generic.Growable
 
 import scalax.collection.mutable.Graph,
        scalax.collection.GraphPredef._, 
@@ -35,6 +42,13 @@ import scalax.collection.edge.LDiEdge,
 import akka.cluster.VectorClock
 import scala.util.parsing.json.JSONObject
 import java.util.Random
+
+import java.io.StringWriter
+import java.io.PrintWriter
+
+import org.slf4j.LoggerFactory,
+       ch.qos.logback.classic.Level,
+       ch.qos.logback.classic.Logger
 
 // Provides O(1) lookup, but allows multiple distinct elements
 class MultiSet[E] extends Set[E] {
@@ -74,18 +88,40 @@ class MultiSet[E] extends Set[E] {
   def iterator: Iterator[E] = {
     return m.values.flatten.iterator
   }
+
+  // Return values in this set not present in the other set.
+  def setDifference(other: MultiSet[E]) : MultiSet[E] = {
+    val setDiff = new MultiSet[E]
+    m.keys.foreach {
+      case k =>
+        if (!(other.m contains k)) {
+          setDiff ++= m(k)
+        } else {
+          val elt = m(k)(0)
+          val count = m(k).size - other.m(k).size
+          (1 to count) foreach { case _ => setDiff += elt }
+        }
+    }
+    return setDiff
+  }
 }
 
 // Provides O(1) insert and removeRandomElement
-class RandomizedHashSet[E] {
+class RandomizedHashSet[E](seed:Long=System.currentTimeMillis()) extends Set[E] {
   // We store a counter along with each element E to ensure uniqueness
   var arr = new ArrayBuffer[(E,Int)]
   // Value is index into array
   var hash = new HashMap[(E,Int),Int]
-  val rand = new Random(System.currentTimeMillis());
+  val rand = new Random(seed)
   // This multiset is only used for .contains().. can't use hash's keys since
   // we ensure that they're unique.
   var multiset = new MultiSet[E]
+
+  def +=(e: E) : this.type  = {
+    // backwards-compatibility:
+    insert(e)
+    return this
+  }
 
   def insert(value: E) = {
     var uniqueness_counter = 0
@@ -97,6 +133,14 @@ class RandomizedHashSet[E] {
     hash(tuple) = i
     arr += tuple
     multiset += value
+  }
+
+  def -=(e: E) : this.type = {
+    throw new UnsupportedOperationException("Use removeRandomElement()")
+  }
+
+  def iterator: Iterator[E] = {
+    return multiset.iterator
   }
 
   def remove(value: (E,Int)) = {
@@ -138,15 +182,24 @@ class RandomizedHashSet[E] {
     val v = arr(random_idx)
     return v._1
   }
+}
 
-  def isEmpty () : Boolean = {
-    return arr.isEmpty
+class Stopwatch(budgetSeconds: Long) {
+  var startTime = System.currentTimeMillis
+  var elapsedTimeMs: Long = 0
+
+  def start = { startTime = System.currentTimeMillis; elapsedTimeMs = 0 }
+  def anyTimeLeft : Boolean = {
+    elapsedTimeMs = System.currentTimeMillis - startTime
+    return (elapsedTimeMs / 1000) < budgetSeconds
   }
+
+  override def toString = s"elapsed time: $elapsedTimeMs ms. budgetSeconds: $budgetSeconds"
 }
 
 // Used by applications to log messages to the console. Transparently attaches vector
 // clocks to log messages.
-class VCLogger () {
+class VCLogger (writer: PrintWriter=new PrintWriter(System.out)) {
   var actor2vc = new HashMap[String, VectorClock]
 
   // TODO(cs): is there a way to specify default values for Maps in scala?
@@ -162,7 +215,8 @@ class VCLogger () {
     // Increment the clock.
     vc = vc :+ src
     // Then print it, along with the message.
-    println(JSONObject(vc.versions).toString() + " " + src + ": " + msg)
+    writer.println(JSONObject(vc.versions).toString() + " " + src + ": " + msg)
+    writer.flush
     actor2vc(src) = vc
   }
 
@@ -178,7 +232,41 @@ class VCLogger () {
   }
 }
 
+class ScheduleFunctionReceiver extends Actor {
+  def receive = {
+    case e => throw new UnsupportedOperationException("")
+  }
+}
+
+// A Cell that only provides functionality for `self()` (which is the only field we need anyway).
+// We use this class to shoehorn `ask` responses
+// (which don't go through the normal dispatch()->ActorCell pipeline)
+// into the schedulers' `event_produced` and `schedule_new_message` APIs.
+class FakeCell(receiver: ActorRef) extends Cell {
+  def self: ActorRef = receiver
+  def system: ActorSystem = throw new UnsupportedOperationException("")
+  def systemImpl: ActorSystemImpl = throw new UnsupportedOperationException("")
+  def start(): this.type = throw new UnsupportedOperationException("")
+  def suspend(): Unit = throw new UnsupportedOperationException("")
+  def resume(causedByFailure: Throwable): Unit = throw new UnsupportedOperationException("")
+  def restart(cause: Throwable): Unit = throw new UnsupportedOperationException("")
+  def stop(): Unit = throw new UnsupportedOperationException("")
+  def isTerminated: Boolean = throw new UnsupportedOperationException("")
+  def parent: InternalActorRef = throw new UnsupportedOperationException("")
+  def childrenRefs: ChildrenContainer = throw new UnsupportedOperationException("")
+  def getChildByName(name: String): Option[ChildStats] = throw new UnsupportedOperationException("")
+  def getSingleChild(name: String): InternalActorRef = throw new UnsupportedOperationException("")
+  def sendMessage(msg: Envelope): Unit = throw new UnsupportedOperationException("")
+  def sendSystemMessage(msg: SystemMessage): Unit = throw new UnsupportedOperationException("")
+  def isLocal: Boolean = throw new UnsupportedOperationException("")
+  def hasMessages: Boolean = throw new UnsupportedOperationException("")
+  def numberOfMessages: Int = throw new UnsupportedOperationException("")
+  def props: Props = throw new UnsupportedOperationException("")
+}
+
 class ProvenanceTracker(trace: Queue[Unique], depGraph: Graph[Unique, DiEdge]) {
+  val log = LoggerFactory.getLogger("DPOR")
+
   val happensBefore = new HashSet[(Unique, Unique)]
 
   // We know that our traces are linearizable, so we can detect concurrent
@@ -196,7 +284,7 @@ class ProvenanceTracker(trace: Queue[Unique], depGraph: Graph[Unique, DiEdge]) {
     // events occuring on the same machine
     var receiver2priorReceives = new HashMap[String, Queue[Unique]]
 
-    println("computing first order happens-before..")
+    log.debug("computing first order happens-before..")
     trace foreach {
       // TODO(cs): consider TimerDelivery...
       case u @ Unique(MsgEvent(snd, rcv, msg), id) =>
@@ -221,7 +309,7 @@ class ProvenanceTracker(trace: Queue[Unique], depGraph: Graph[Unique, DiEdge]) {
     // closure, but it turned out to be hideously slow. So we do something
     // more complicated, described here:
     //   http://cs.stackexchange.com/questions/7231/efficient-algorithm-for-retrieving-the-transitive-closure-of-a-directed-acyclic
-    println("computing transitive closure...")
+    log.debug("computing transitive closure...")
 
     // First, topologically sort the relation.
     val sorted = Util.topologicalSort[Unique](happensBefore.filter{ case (u1,u2) => u1 != u2 })
@@ -282,7 +370,7 @@ class ProvenanceTracker(trace: Queue[Unique], depGraph: Graph[Unique, DiEdge]) {
     }
 
     // We return those that are *before* lastEvents
-    println("computing concurrent events...")
+    log.debug("computing concurrent events...")
     return trace.filterNot { concurrentOrAfterAllLastEvents(_, lastEvents) }
   }
 }
@@ -356,6 +444,48 @@ object Util {
   // Global logger instance.
   val logger = new VCLogger()
 
+  def getStackTrace (t: Throwable): String = {
+    val sw = new StringWriter()
+    t.printStackTrace(new PrintWriter(sw));
+    return sw.toString()
+  }
+
+
+  /**
+   * Find a pending message (of type E) that isn't destined for a
+   * blockedActor (or None if there are no such messages).
+   * For all pending messages that we dequeue() but are destined
+   * for a blockedActor, append them back onto the collection.
+   *
+   * dequeueNext: this is awkward. What we really want is a "Dequeable" trait.
+   *              Scala doesn't such a trait for Queue, so instead we just have
+   *              a lambda do the dequeue for us, and hope that the lambda
+   *              actually acts on the collection we were passed.
+   * getActor: different schedulers store different kinds of tuples. This is a
+   *           lambda to allow us to access the actor name, form whatever type
+   *           of tuple the scheduler happens to use.
+   */
+  def find_non_blocked_message[E](blockedActors: scala.collection.immutable.Set[String],
+                                  collection: Iterable[E] with Growable[E], // Iterable: has .isEmpty
+                                  dequeueNext: () => E, // Side-effect: mutate collection
+                                  getActor: (E) => String) : Option[E] = {
+    if (collection.isEmpty) {
+      return None
+    }
+    val blocked = new Queue[E]
+    var e = dequeueNext()
+    while (blockedActors contains getActor(e)) {
+      blocked += e
+      if (collection.isEmpty) {
+        collection ++= blocked
+        return None
+      }
+      e = dequeueNext()
+    }
+    collection ++= blocked
+    return Some(e)
+  }
+
   def map_from_iterable[A,B](in: Iterable[(A,B)]) : collection.mutable.Map[A,B] = {
     val dest = collection.mutable.Map[A,B]()
     for (e @ (k,v) <- in) {
@@ -388,11 +518,11 @@ object Util {
   def dequeueOne[T1, T2](outer : HashMap[T1, Queue[T2]]) : Option[T2] =
     
     outer.headOption match {
-        case Some((receiver, queue)) =>
+        case Some((outerKey, queue)) =>
 
           if (queue.isEmpty == true) {
             
-            outer.remove(receiver) match {
+            outer.remove(outerKey) match {
               case Some(key) => dequeueOne(outer)
               case None => throw new Exception("internal error")
             }
@@ -412,7 +542,7 @@ object Util {
       case None =>  None
     }
 
-  def queueStr(queue: Queue[(Unique, ActorCell, Envelope)]) : String = {
+  def queueStr(queue: Queue[(Unique, Cell, Envelope)]) : String = {
     var str = "Queue content: "
     
     for((item, _ , _) <- queue) item match {
@@ -493,7 +623,6 @@ object Util {
       case Unique(m :MsgEvent, id) => println("\t " + id + " " + m.sender + " -> " + m.receiver + " " + m.msg)
       case Unique(s: SpawnEvent, id) => println("\t " + id + " " + s.name)
     }
-  
   
   
   def urlses(cl: ClassLoader): Array[java.net.URL] = cl match {
