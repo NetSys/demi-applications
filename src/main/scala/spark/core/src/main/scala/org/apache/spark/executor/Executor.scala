@@ -33,6 +33,10 @@ import org.apache.spark.util.{AkkaUtils, Utils}
 
 import akka.dispatch.verification._
 
+object Executor {
+  val threadToTaskId = new HashMap[Thread,Long]
+}
+
 /**
  * Spark executor used with Mesos, YARN, and the standalone scheduler.
  */
@@ -158,6 +162,7 @@ private[spark] class Executor(
     }
 
     override def run() {
+      Executor.threadToTaskId(Thread.currentThread) = taskId
       val startTime = System.currentTimeMillis()
       SparkEnv.set(env)
       Thread.currentThread.setContextClassLoader(replClassLoader)
@@ -192,6 +197,7 @@ private[spark] class Executor(
 
         // Run the actual task and measure its runtime.
         taskStart = System.currentTimeMillis()
+
         val value = task.run(taskId.toInt)
         val taskFinish = System.currentTimeMillis()
 
@@ -267,6 +273,8 @@ private[spark] class Executor(
           }
         }
       } finally {
+        Executor.threadToTaskId -= Thread.currentThread
+
         // XXX STS
         println("endAtomicBlock: Executor.finally:launchTask:"+taskId)
         if (Instrumenter().scheduler.isInstanceOf[ExternalEventInjector[_]]) {
