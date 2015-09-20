@@ -344,7 +344,8 @@ private[spark] class Master(
         case DriverState.ERROR | DriverState.FINISHED | DriverState.KILLED | DriverState.FAILED =>
           removeDriver(driverId, state, exception)
         case _ =>
-          throw new Exception(s"Received unexpected state update for driver $driverId: $state")
+          logError(s"Received unexpected state update for driver $driverId: $state")
+          //throw new Exception(s"Received unexpected state update for driver $driverId: $state")
       }
     }
 
