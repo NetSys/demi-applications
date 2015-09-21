@@ -429,7 +429,9 @@ object STSSparkPi {
         populateActors=false,
         loader=Thread.currentThread.getContextClassLoader,
         initializationRoutine=Some(runAndCleanup),
-        preTest=Some(preTest), postTest=Some(postTest))
+        preTest=Some(preTest), postTest=Some(postTest),
+        clusteringStrategy=ClusteringStrategy.SingletonClusterizer,
+        paranoid=false)
     }
   }
 
