@@ -18,9 +18,9 @@
 package org.apache.spark.examples
 
 import scala.math.random
-
 import org.apache.spark._
 import org.apache.spark.storage._
+import org.apache.spark.rdd.RDD
 import org.apache.spark.scheduler._
 import org.apache.spark.scheduler.TaskLocality
 import org.apache.spark.scheduler.local._
@@ -58,32 +58,39 @@ class SparkMessageFingerprinter extends MessageFingerprinter {
     }
 
     val str = msg match {
-      case BlockManagerMessages.RegisterBlockManager(_,_,_) =>
+      case BlockManagerMessages.RegisterBlockManager(manager_id,maxmem,sender) =>
         "RegisterBlockManager"
-      case BlockManagerMessages.HeartBeat(_) =>
+      case BlockManagerMessages.HeartBeat(manager_id) =>
         "HeartBeat"
-      case JobSubmitted(jobId,_,_,_,_,_,_,_) =>
+      case JobSubmitted(jobId,finalRDD,func,partitions,allowLocal,callSite,listener,props) =>
         ("JobSubmitted", jobId).toString
-      case BlockManagerMessages.GetLocationsMultipleBlockIds(_) =>
-        "GetLocationsMultipleBlockIds"
-      case BeginEvent(task,_) =>
+      case BlockManagerMessages.UpdateBlockInfo(blockManagerId, blockId, storageLevel, memSize, diskSize, tachyonSize) =>
+        ("UpdateBlockInfo", blockId, storageLevel).toString
+      //case BlockManagerMessages.GetLocationsMultipleBlockIds(blockIds) =>
+      //  // TODO(cs): how are block ids named? rdd_?_?
+      //  "GetLocationsMultipleBlockIds"
+      case BeginEvent(task,taskInfo) =>
         ("BeginEvent", task).toString
-      case CompletionEvent(task, reason, _, _, _, _) =>
+      case CompletionEvent(task, reason, result, accumUpdates, taskInfo, taskMetrics) =>
         ("CompletionEvent", task, reason).toString
-      case org.apache.spark.scheduler.local.StatusUpdate(id, state, _) =>
+      case org.apache.spark.scheduler.local.StatusUpdate(id, state, data) =>
         ("StatusUpdate", id, state).toString
-      case CoarseGrainedClusterMessages.StatusUpdate(execId, tid, state, _) =>
+      case CoarseGrainedClusterMessages.StatusUpdate(execId, tid, state, data) =>
         ("StatusUpdate", execId, tid, state).toString
-      case DeployMessages.RegisteredApplication(_, _) =>
+      case DeployMessages.RegisteredApplication(appId, masterUrl) =>
         ("RegisteredApplication").toString
-      case DeployMessages.ExecutorStateChanged(_, id, state, _, _) =>
+      case DeployMessages.ExecutorStateChanged(appId, id, state, message, exitStatus) =>
         ("ExecutorStateChanged", id, state).toString
       case DeployMessages.RegisterWorker(id, host, port, cores, memory, webUiPort, publicAddress) =>
         ("RegisterWorker", id).toString
-      case DeployMessages.RegisteredWorker(_, _) =>
+      case DeployMessages.RegisteredWorker(masterUrl, masterWebUrl) =>
         ("RegisteredWorker").toString
-      case CoarseGrainedClusterMessages.LaunchTask(_) =>
+      case CoarseGrainedClusterMessages.LaunchTask(data) =>
         ("LaunchTask").toString
+      //case s: Seq[Seq[BlockManagerId]] =>
+      //  s
+      //case s: Seq[BlockManagerId] =>
+      //  s
       case m =>
         ""
     }
@@ -125,9 +132,15 @@ object WorkerCreator {
 
 object MyJob {
   def mapFunction(i: Int): Int = {
-    val x = random * 2 - 1
-    val y = random * 2 - 1
-    if (x*x + y*y < 1) 1 else 0
+    i * ((random * 100) / 100).toInt
+  }
+
+  def identity(i: Int): Int = {
+    return i
+  }
+
+  def mapGrouped(t: (Int,Iterable[Int])): Int = {
+    return t._2.head
   }
 
   def reduceFunction(i: Int, j: Int): Int = {
@@ -143,6 +156,7 @@ object MyVariables {
   var prematureStopSempahore = new Semaphore(0)
   var stsReturn : Option[(EventTrace,ViolationFingerprint)] = None
   var doneSubmittingJob = new AtomicBoolean(false)
+  var input : RDD[Int] = null
 }
 
 /** Computes an approximation to pi */
@@ -161,29 +175,56 @@ object STSSparkPi {
 
     def run(jobId: Int) {
       val firstRun = (jobId == 0)
+      val secondRun = (jobId == 1)
 
       if (MyVariables.spark == null) {
         println("Starting SparkPi")
         val conf = new SparkConf().setAppName("Spark Pi").setSparkHome("/Users/cs/Research/UCB/code/sts2-applications/src/main/scala/spark")
         MyVariables.spark = new SparkContext(conf)
+        // We've finished the bootstrapping phase.
+        Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].endUnignorableEvents
       }
       val slices = if (args.length > 0) args(0).toInt else 2
       val n = slices
 
       println("Submitting job")
 
-      val partitions = if (firstRun)
-        //          NODE_LOCAL                NODE_LOCAL         ANY       ANY
-        Seq((0,Seq("localhost", "0")),(1,Seq("localhost", "0")),(2,Seq()),(3,Seq()))
-        //        ANY
-        else Seq((1,Seq()))
+      // TODO(cs): to show where STSSched performs poorly, we may need to tie
+      // the safety violation to reading from cache somehow
 
-      val mapRdds = MyVariables.spark.makeRDD(partitions).map(MyJob.mapFunction)
+      if (firstRun) {
+        // Avoid unambiguity. Only the second job should violate locality.
+        // Yet all other jobs besides the second job should read from cache
+        // (BlockManager).
+        val partitions =
+          //   ANY       ANY       ANY       ANY
+          Seq((0,Seq()),(1,Seq()),(2,Seq()),(3,Seq()))
+
+        MyVariables.input = MyVariables.spark.makeRDD(partitions).cache()
+        println("MATERIALIZING")
+        MyVariables.input.reduceNonBlocking(jobId, _ + _) // Force materialization, but hopefully we can still get away with not blocking
+      }
+
+      val mapRdds = if (secondRun) {
+        // Avoid unambiguity. Only the second job should violate locality.
+        //                             NODE_LOCAL                NODE_LOCAL         ANY       ANY
+        val partitions = Seq((0,Seq("localhost", "0")),(1,Seq("localhost", "0")),(2,Seq()),(3,Seq()))
+        MyVariables.spark.makeRDD(partitions)
+      } else {
+        MyVariables.input.map(MyJob.mapFunction)
+      }
+
+      // To make the pipelines longer?
+      //for (i <- 1 to 1) {
+      //  mapRdds = mapRdds.groupBy(MyJob.identity).cache().
+      //    map(MyJob.mapGrouped).cache()
+      //}
 
       try {
         if (firstRun) {
           MyVariables.future = mapRdds.reduceNonBlocking(jobId, MyJob.reduceFunction)
         } else {
+          // TODO(cs): have this repopulate input. Don't let the future get GCed
           mapRdds.reduceNonBlocking(jobId, MyJob.reduceFunction)
         }
       } catch {
@@ -191,8 +232,6 @@ object STSSparkPi {
       }
 
       if (firstRun) {
-        // We've finished the bootstrapping phase.
-        Instrumenter().scheduler.asInstanceOf[ExternalEventInjector[_]].endUnignorableEvents
         MyVariables.doneSubmittingJob.set(true)
 
         // Block until either the job is complete or a violation was found.
@@ -272,19 +311,21 @@ object STSSparkPi {
     //sched.setMaxMessages(1000)
     // UNCOMMENT FOR LONG RUN
     val sched = new RandomScheduler(schedulerConfig,
-      invariant_check_interval=1000, randomizationStrategy=new SrcDstFIFO)
-    sched.setMaxMessages(1000000)
+      invariant_check_interval=700, randomizationStrategy=new SrcDstFIFO)
+    sched.setMaxMessages(1500)
 
     Instrumenter().scheduler = sched
 
     val prefix = Array[ExternalEvent](
-      WaitCondition(() => MyVariables.doneSubmittingJob.get())) ++
+      WaitCondition(() => MyVariables.spark != null)) ++
       (1 to 3).map { case i => CodeBlock(() =>
         WorkerCreator.createWorker("Worker"+i)) } ++
-      (1 to 3).map { case i => CodeBlock(() => run(i)) } ++
-      (4 to 15).map { case i => CodeBlock(() =>
-        WorkerCreator.createWorker("Worker"+i)) } ++
-      (4 to 15).map { case i => CodeBlock(() => run(i)) } ++
+      Array[ExternalEvent](WaitCondition(() => MyVariables.doneSubmittingJob.get())) ++
+      //(1 to 3).map { case i => CodeBlock(() => run(i)) } ++
+      // XXX
+      // (4 to 15).map { case i => CodeBlock(() =>
+      //   WorkerCreator.createWorker("Worker"+i)) } ++
+      // (4 to 15).map { case i => CodeBlock(() => run(i)) } ++
       Array[ExternalEvent](
       WaitCondition(() => MyVariables.future != null && MyVariables.future.isCompleted))
 
@@ -295,11 +336,10 @@ object STSSparkPi {
       MyVariables.prematureStopSempahore.release()
     }
 
-    val fuzz = true
+    val fuzz = false
     if (fuzz) {
       sched.nonBlockingExplore(prefix, terminationCallback)
 
-      // TODO(cs): having this line after nonBlockingExplore may not be correct
       sched.beginUnignorableEvents
 
       runAndCleanup()
@@ -308,7 +348,7 @@ object STSSparkPi {
       // proceeding causes exceptions upon trying to create new actors (even
       // after nulling out Instrumenter()._actorSystem...?). So, we do the
       // worst hack: we sleep for a bit...
-      Thread.sleep(2)
+      Thread.sleep(3)
 
       MyVariables.stsReturn match {
         case Some((initTrace, violation)) =>
@@ -335,7 +375,7 @@ object STSSparkPi {
           RunnerUtils.stsSchedDDMin(false, schedulerConfig,
             initTrace, violation,
             initializationRoutine=Some(runAndCleanup),
-            _sched=Some(sts), dag=Some(dag))
+            _sched=Some(sts), dag=Some(dag), checkUnmodified=true)
 
           assert(!verified_mcs.isEmpty)
 
@@ -373,10 +413,10 @@ object STSSparkPi {
     if (!fuzz) {
       val dir =
       //"/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_13_23_15_54"
-      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_14_16_08_29"
+      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_20_16_23_12"
       val mcs_dir =
       //"/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_13_23_15_54_DDMin_STSSchedNoPeek"
-      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_14_16_08_29_DDMin_STSSchedNoPeek"
+      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_20_16_23_12_DDMin_STSSchedNoPeek"
 
       val msgSerializer = new BasicMessageSerializer
       val msgDeserializer = new BasicMessageDeserializer(loader=Thread.currentThread.getContextClassLoader)
