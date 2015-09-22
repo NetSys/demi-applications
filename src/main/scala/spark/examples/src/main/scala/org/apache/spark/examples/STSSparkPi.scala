@@ -55,32 +55,39 @@ class SparkMessageFingerprinter extends MessageFingerprinter {
     }
 
     val str = msg match {
-      case BlockManagerMessages.RegisterBlockManager(_,_,_) =>
+      case BlockManagerMessages.RegisterBlockManager(manager_id,maxmem,sender) =>
         "RegisterBlockManager"
-      case BlockManagerMessages.HeartBeat(_) =>
+      case BlockManagerMessages.HeartBeat(manager_id) =>
         "HeartBeat"
-      case JobSubmitted(jobId,_,_,_,_,_,_,_) =>
+      case JobSubmitted(jobId,finalRDD,func,partitions,allowLocal,callSite,listener,props) =>
         ("JobSubmitted", jobId).toString
-      case BlockManagerMessages.GetLocationsMultipleBlockIds(_) =>
-        "GetLocationsMultipleBlockIds"
-      case BeginEvent(task,_) =>
+      case BlockManagerMessages.UpdateBlockInfo(blockManagerId, blockId, storageLevel, memSize, diskSize, tachyonSize) =>
+        ("UpdateBlockInfo", blockId, storageLevel).toString
+      //case BlockManagerMessages.GetLocationsMultipleBlockIds(blockIds) =>
+      //  // TODO(cs): how are block ids named? rdd_?_?
+      //  "GetLocationsMultipleBlockIds"
+      case BeginEvent(task,taskInfo) =>
         ("BeginEvent", task).toString
-      case CompletionEvent(task, reason, _, _, _, _) =>
+      case CompletionEvent(task, reason, result, accumUpdates, taskInfo, taskMetrics) =>
         ("CompletionEvent", task, reason).toString
-      case org.apache.spark.scheduler.local.StatusUpdate(id, state, _) =>
+      case org.apache.spark.scheduler.local.StatusUpdate(id, state, data) =>
         ("StatusUpdate", id, state).toString
-      case CoarseGrainedClusterMessages.StatusUpdate(execId, tid, state, _) =>
+      case CoarseGrainedClusterMessages.StatusUpdate(execId, tid, state, data) =>
         ("StatusUpdate", execId, tid, state).toString
-      case DeployMessages.RegisteredApplication(_, _) =>
+      case DeployMessages.RegisteredApplication(appId, masterUrl) =>
         ("RegisteredApplication").toString
-      case DeployMessages.ExecutorStateChanged(_, id, state, _, _) =>
+      case DeployMessages.ExecutorStateChanged(appId, id, state, message, exitStatus) =>
         ("ExecutorStateChanged", id, state).toString
       case DeployMessages.RegisterWorker(id, host, port, cores, memory, webUiPort, publicAddress) =>
         ("RegisterWorker", id).toString
-      case DeployMessages.RegisteredWorker(_, _) =>
+      case DeployMessages.RegisteredWorker(masterUrl, masterWebUrl) =>
         ("RegisteredWorker").toString
-      case CoarseGrainedClusterMessages.LaunchTask(_) =>
+      case CoarseGrainedClusterMessages.LaunchTask(data) =>
         ("LaunchTask").toString
+      //case s: Seq[Seq[BlockManagerId]] =>
+      //  s
+      //case s: Seq[BlockManagerId] =>
+      //  s
       case m =>
         ""
     }
@@ -368,7 +375,7 @@ object STSSparkPi {
       MyVariables.prematureStopSempahore.release()
     }
 
-    val fuzz = true
+    val fuzz = false
     if (fuzz) {
       sched.nonBlockingExplore(externals, terminationCallback)
 
@@ -437,6 +444,24 @@ object STSSparkPi {
           val mcs_dir = serializer.serializeMCS(dir, mcs, stats1,
              verified_mcs, violation, false)
           println("MCS DIR: " + mcs_dir)
+
+          // Hack
+          val msgSerializer = new BasicMessageSerializer
+          val msgDeserializer = new BasicMessageDeserializer(loader=Thread.currentThread.getContextClassLoader)
+
+          def shouldRerunDDMin(externals: Seq[ExternalEvent]) =
+            false // XXX
+
+          RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
+            msgDeserializer, shouldRerunDDMin=shouldRerunDDMin,
+            populateActors=false,
+            atomIndices=Some(Seq((1,8),(3,9),(21,22))),
+            loader=Thread.currentThread.getContextClassLoader,
+            initializationRoutine=Some(runAndCleanup),
+            preTest=Some(preTest), postTest=Some(postTest),
+            clusteringStrategy=ClusteringStrategy.SingletonClusterizer,
+            fungClocksScheduler=TestScheduler.STSSched)
+            //paranoid=false)
         case None =>
           println("Job finished successfully...")
       }
@@ -444,9 +469,13 @@ object STSSparkPi {
 
     if (!fuzz) {
       val dir =
-      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_15_13_08_54"
+      //"/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_15_13_08_54"
+      //"/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_22_12_03_12"
+      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_22_12_36_30"
       val mcs_dir =
-      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_15_13_08_54_DDMin_STSSchedNoPeek"
+      //"/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_15_13_08_54_DDMin_STSSchedNoPeek"
+      //"/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_22_12_03_12_DDMin_STSSchedNoPeek"
+      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_22_12_36_30_DDMin_STSSchedNoPeek"
 
       val msgSerializer = new BasicMessageSerializer
       val msgDeserializer = new BasicMessageDeserializer(loader=Thread.currentThread.getContextClassLoader)
@@ -460,7 +489,10 @@ object STSSparkPi {
         atomIndices=Some(Seq((1,8),(3,9),(21,22))),
         loader=Thread.currentThread.getContextClassLoader,
         initializationRoutine=Some(runAndCleanup),
-        preTest=Some(preTest), postTest=Some(postTest))
+        preTest=Some(preTest), postTest=Some(postTest),
+        clusteringStrategy=ClusteringStrategy.SingletonClusterizer,
+        fungClocksScheduler=TestScheduler.STSSched)
+        //paranoid=false)
     }
   }
 
