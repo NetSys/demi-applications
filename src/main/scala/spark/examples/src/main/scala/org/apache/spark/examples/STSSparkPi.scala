@@ -413,10 +413,10 @@ object STSSparkPi {
     if (!fuzz) {
       val dir =
       //"/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_13_23_15_54"
-      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_20_16_23_12"
+      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_21_17_53_01"
       val mcs_dir =
       //"/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_13_23_15_54_DDMin_STSSchedNoPeek"
-      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_20_16_23_12_DDMin_STSSchedNoPeek"
+      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_21_17_53_01_DDMin_STSSchedNoPeek"
 
       val msgSerializer = new BasicMessageSerializer
       val msgDeserializer = new BasicMessageDeserializer(loader=Thread.currentThread.getContextClassLoader)
@@ -431,7 +431,8 @@ object STSSparkPi {
         initializationRoutine=Some(runAndCleanup),
         preTest=Some(preTest), postTest=Some(postTest),
         clusteringStrategy=ClusteringStrategy.SingletonClusterizer,
-        paranoid=false)
+        fungClocksScheduler=TestScheduler.STSSched)
+        //paranoid=false)
     }
   }
 
