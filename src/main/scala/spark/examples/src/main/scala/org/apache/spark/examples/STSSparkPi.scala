@@ -451,7 +451,9 @@ object STSSparkPi {
         atomIndices=Some(Seq((1,8),(3,9),(21,22))),
         loader=Thread.currentThread.getContextClassLoader,
         initializationRoutine=Some(runAndCleanup),
-        preTest=Some(preTest), postTest=Some(postTest))
+        preTest=Some(preTest), postTest=Some(postTest),
+        clusteringStrategy=ClusteringStrategy.SingletonClusterizer,
+        fungClocksScheduler=TestScheduler.STSSched)
     }
   }
 
