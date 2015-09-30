@@ -1,4 +1,4 @@
-Test applications for STS2
+Test applications for DEMi
 =================
 
 This is mostly meant to be a repository containing test applications, one per branch. Master is currently set up to 
@@ -6,7 +6,7 @@ allow one to use the interposition code relatively quickly. interposition itself
 building an application, just branch from master and write code. To update the interposition code itself:
 
 ```
-git remote add interposition git@github.com:NetSys/sts2-interposition.git
+git remote add interposition git@github.com:NetSys/demi.git
 git subtree pull --prefix=interposition interposition master
 ```
 
