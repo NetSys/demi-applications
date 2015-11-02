@@ -1,8 +1,11 @@
 Test applications for DEMi
 =================
 
-This is mostly meant to be a repository containing test applications, one per branch. Master is currently set up to 
-allow one to use the interposition code relatively quickly. interposition itself is pulled in using git subtree. For 
+This repository contains example applications tested with DEMi.
+For documentation on how to test your system with DEMi, see this page.
+
+Each branch contains one case study. Master is currently set up to
+allow one to use the interposition code relatively quickly. interposition itself is pulled in using git subtree. For
 building an application, just branch from master and write code. To update the interposition code itself:
 
 ```
@@ -19,18 +22,20 @@ $ git checkout --theirs $CONFLICT_FILE
 $ git add $CONFLICT_FILE
 ```
 
-Branches:
+#### Branches:
 
 Branch | Application
 -------|------------
-panda-rbcast | One of three reliable broadcast applications
-colin-rbcast | fully-fleshed out reliable broadcast application
 akka-raft | mainline akka-raft instrumentation
-spark | mainline spark instrumentation
-raft-leader-safety | https://github.com/ktoso/akka-raft/issues/47
-raft-shrunk-leader-safety | https://github.com/ktoso/akka-raft/issues/47
+colin-rbcast | fully-fleshed out reliable broadcast application
+panda-rbcast | One of three reliable broadcast applications
+raft-* | Case studies for issues on the akka-raft repo. https://github.com/ktoso/akka-raft/issues
+raft-leader-safety | deprecated. https://github.com/ktoso/akka-raft/issues/47
+raft-shrunk-leader-safety | deprecated. https://github.com/ktoso/akka-raft/issues/47
 raft-strange-cluster-membership | https://github.com/ktoso/akka-raft/issues/49
-
+spark | mainline spark instrumentation
+spark-* | Case studies for issues on the Spark repo. https://issues.apache.org/jira/browse/spark/
+test-ask | an integration test for our handling of Akka's `ask'
 
 #### Prequisites
 
