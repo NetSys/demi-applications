@@ -2,7 +2,8 @@ Test applications for DEMi
 =================
 
 This repository contains example applications tested with DEMi.
-For documentation on how to test your system with DEMi, see this page.
+For documentation on how to test your system with DEMi, see this
+[page](https://github.com/NetSys/demi/blob/master/README.md).
 
 Each branch contains one case study. Master is currently set up to
 allow one to use the interposition code relatively quickly. interposition itself is pulled in using git subtree. For
