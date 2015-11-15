@@ -122,17 +122,25 @@ object RunnerUtils {
                   schedulerConfig: SchedulerConfig,
                   msgSerializer: MessageSerializer,
                   msgDeserializer: MessageDeserializer,
+                  loader:ClassLoader=ClassLoader.getSystemClassLoader(),
+                  atomIndices:Option[Seq[(Int,Int)]]=None, // Hack: remove after we serialize EventDags to disk
                   paranoid: Boolean=true,
+                  populateActors:Boolean=true,
                   timeBudgetSeconds:Long=(60*60*4:Long), // 4 hours per minimizer
-                  shouldRerunDDMin:(Seq[ExternalEvent] => Boolean)=(_)=>true) {
+                  shouldRerunDDMin:(Seq[ExternalEvent] => Boolean)=(_)=>true,
+                  initializationRoutine: Option[() => Any]=None,
+                  clusteringStrategy:ClusteringStrategy.ClusteringStrategy=ClusteringStrategy.ClockClusterizer,
+                  fungClocksScheduler:TestScheduler.TestScheduler=TestScheduler.DPORwHeuristics, // Hack: remove after we have Spark support for DPOR
+                  preTest: Option[STSScheduler.PreTestCallback]=None,
+                  postTest: Option[STSScheduler.PostTestCallback]=None) {
 
     val serializer = new ExperimentSerializer(
       schedulerConfig.messageFingerprinter,
       msgSerializer)
 
     // -- mostly for printing stats --
-    val (traceFound, _, _) = RunnerUtils.deserializeExperiment(original_dir, msgDeserializer)
-    val filteredTrace = new ExperimentDeserializer(original_dir).get_filtered_initial_trace
+    val (traceFound, _, _) = RunnerUtils.deserializeExperiment(original_dir, msgDeserializer, loader=loader)
+    val filteredTrace = new ExperimentDeserializer(original_dir, loader=loader).get_filtered_initial_trace
     // -- --
 
     trait Minimizer
@@ -217,10 +225,30 @@ object RunnerUtils {
       }
     }
 
-    val deserializer = new ExperimentDeserializer(output_dir)
+    val deserializer = new ExperimentDeserializer(output_dir, loader=loader)
 
     val violationFound = deserializer.get_violation(msgDeserializer)
-    val actors = ExperimentSerializer.getActorNameProps(traceFound)
+    val actors : Seq[Tuple2[Props, String]] = if (populateActors)
+      ExperimentSerializer.getActorNameProps(traceFound)
+      else Seq.empty
+
+    val dag = atomIndices match {
+      case Some(seq) =>
+        val d = new UnmodifiedEventDag(traceFound.original_externals flatMap {
+          case WaitQuiescence() => None
+          case WaitCondition(_) => None
+          case e => Some(e)
+        })
+        // Conjoin the HardKill and the subsequent recover
+        seq.foreach {
+          case ((i1, i2)) =>
+            d.conjoinAtoms(traceFound.original_externals(i1),
+                           traceFound.original_externals(i2))
+        }
+
+        Some(d)
+      case _ => None
+    }
 
     run(Seq(
       Some(new ExternalMinimizer("DDMin") {
@@ -230,14 +258,21 @@ object RunnerUtils {
             traceFound,
             violationFound,
             actorNameProps=Some(actors),
-            stats=Some(currentStats))
+            stats=Some(currentStats),
+            dag=dag,
+            initializationRoutine=initializationRoutine,
+            preTest=preTest,
+            postTest=postTest)
       }),
       Some(new InternalMinimizer("IntMin") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           RunnerUtils.minimizeInternals(schedulerConfig,
             currentExternals, currentTrace, actors, violationFound,
             removalStrategyCtor=() => new SrcDstFIFORemoval(currentTrace, schedulerConfig.messageFingerprinter),
-            stats=Some(currentStats))
+            stats=Some(currentStats),
+            initializationRoutine=initializationRoutine,
+            preTest=preTest,
+            postTest=postTest)
       }),
       // fungibleClocks DDMin without backtracks.
       if (!paranoid) None else
@@ -256,7 +291,10 @@ object RunnerUtils {
               }.toSeq),
               violationFound,
               actors,
-              stats=Some(currentStats))
+              stats=Some(currentStats),
+              initializationRoutine=initializationRoutine,
+              preTest=preTest,
+              postTest=postTest)
           else
             ((currentExternals, currentStats, Some(currentTrace), violationFound))
       }),
@@ -278,7 +316,10 @@ object RunnerUtils {
               violationFound,
               actors,
               resolutionStrategy=new LastOnlyStrategy,
-              stats=Some(currentStats))
+              stats=Some(currentStats),
+              initializationRoutine=initializationRoutine,
+              preTest=preTest,
+              postTest=postTest)
           else
             ((currentExternals, currentStats, Some(currentTrace), violationFound))
       }),
@@ -289,8 +330,12 @@ object RunnerUtils {
           new FungibleClockMinimizer(schedulerConfig,
             currentExternals,
             currentTrace, actors, violationFound,
-            //testScheduler=TestScheduler.DPORwHeuristics,
-            stats=Some(currentStats)).minimize
+            //testScheduler=fungClocksScheduler,
+            stats=Some(currentStats),
+            clusteringStrategy=clusteringStrategy,
+            initializationRoutine=initializationRoutine,
+            preTest=preTest,
+            postTest=postTest).minimize
       }),
       // Without backtracks, but focus on the last match.
       if (!paranoid) None else
@@ -301,58 +346,24 @@ object RunnerUtils {
             currentTrace, actors, violationFound,
             //testScheduler=TestScheduler.DPORwHeuristics,
             resolutionStrategy=new LastOnlyStrategy,
-            stats=Some(currentStats)).minimize
+            stats=Some(currentStats),
+            clusteringStrategy=clusteringStrategy,
+            initializationRoutine=initializationRoutine,
+            preTest=preTest,
+            postTest=postTest).minimize
       }),
-      //// Now with "First and Last" backtracks
-      //if (!paranoid) None else
-      //Some(new InternalMinimizer("FungibleClocksFirstLast") {
-      //  def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: Option[MinimizationStats]) =
-      //    new FungibleClockMinimizer(schedulerConfig, currentExternals,
-      //      currentTrace, actors, violationFound,
-      //      testScheduler=TestScheduler.DPORwHeuristics,
-      //      resolutionStrategy=new FirstAndLastBacktrack,
-      //      stats=currentStats).minimize
-      //}),
-      //// 2nd internal minimization pass
-      //if (!paranoid) None else
-      //Some(new InternalMinimizer("IntMin") {
-      //  def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: Option[MinimizationStats]) =
-      //    RunnerUtils.minimizeInternals(schedulerConfig,
-      //      currentExternals, currentTrace, actors, violationFound,
-      //      removalStrategyCtor=() => new SrcDstFIFORemoval(currentTrace, schedulerConfig.messageFingerprinter),
-      //      stats=currentStats)
-      //}),
-      //// fungibleClocks DDMin with only "First and Last" backtracks.
-      //if (!paranoid) None else
-      //Some(new ExternalMinimizer("WildcardDDMinFirstLast") {
-      //  def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: Option[MinimizationStats]) =
-      //    if (shouldRerunDDMin(currentExternals))
-      //      RunnerUtils.fungibleClocksDDMin(schedulerConfig,
-      //        currentTrace,
-      //        new UnmodifiedEventDag(currentExternals.flatMap {
-      //           // STSSched doesn't actually pay any attention to WaitQuiescence or
-      //           // WaitCondition, so just get rid of them.
-      //           // TODO(cs): doesn't necessarily make sense for DPOR?
-      //           case WaitQuiescence() => None
-      //           case WaitCondition(_) => None
-      //           case e => Some(e)
-      //        }.toSeq),
-      //        violationFound,
-      //        actors,
-      //        testScheduler=TestScheduler.DPORwHeuristics,
-      //        resolutionStrategy=new FirstAndLastBacktrack,
-      //        stats=currentStats)
-      //    else
-      //      ((currentExternals, currentStats.get, Some(currentTrace), violationFound))
-      //}),
       // internal clocks with full backtracks
       Some(new InternalMinimizer("FungibleClocks") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           new FungibleClockMinimizer(schedulerConfig, currentExternals,
             currentTrace, actors, violationFound,
-            testScheduler=TestScheduler.DPORwHeuristics,
+            testScheduler=fungClocksScheduler,
             timeBudgetSeconds=timeBudgetSeconds,
-            stats=Some(currentStats)).minimize
+            clusteringStrategy=clusteringStrategy,
+            stats=Some(currentStats),
+            initializationRoutine=initializationRoutine,
+            preTest=preTest,
+            postTest=postTest).minimize
       }),
       // fungibleClocks DDMin with all
       Some(new ExternalMinimizer("WildcardDDMin") {
@@ -370,19 +381,27 @@ object RunnerUtils {
               }.toSeq),
               violationFound,
               actors,
-              testScheduler=TestScheduler.DPORwHeuristics,
+              testScheduler=fungClocksScheduler,
               timeBudgetSeconds=timeBudgetSeconds,
-              stats=Some(currentStats))
+              stats=Some(currentStats),
+              initializationRoutine=initializationRoutine,
+              preTest=preTest,
+              postTest=postTest)
           else
             ((currentExternals, currentStats, Some(currentTrace), violationFound))
       }),
       // One last internal minimization
+      // TODO(cs): optimization: if nothing has been removed, don't rerun
+      // this.
       Some(new InternalMinimizer("IntMin") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           RunnerUtils.minimizeInternals(schedulerConfig,
             currentExternals, currentTrace, actors, violationFound,
             removalStrategyCtor=() => new SrcDstFIFORemoval(currentTrace, schedulerConfig.messageFingerprinter),
-            stats=Some(currentStats))
+            stats=Some(currentStats),
+            initializationRoutine=initializationRoutine,
+            preTest=preTest,
+            postTest=postTest)
       })
     ).flatten)
 
@@ -393,9 +412,10 @@ object RunnerUtils {
   def deserializeExperiment(experiment_dir: String,
       messageDeserializer: MessageDeserializer,
       scheduler: ExternalEventInjector[_] with Scheduler=null, // if null, use dummy
-      traceFile:String=ExperimentSerializer.event_trace):
+      traceFile:String=ExperimentSerializer.event_trace,
+      loader:ClassLoader=ClassLoader.getSystemClassLoader()) :
                   Tuple3[EventTrace, ViolationFingerprint, Option[Graph[Unique, DiEdge]]] = {
-    val deserializer = new ExperimentDeserializer(experiment_dir)
+    val deserializer = new ExperimentDeserializer(experiment_dir, loader=loader)
     val _scheduler = if (scheduler == null)
       new ReplayScheduler(SchedulerConfig())
       else scheduler
@@ -415,10 +435,12 @@ object RunnerUtils {
   def deserializeMCS(experiment_dir: String,
       messageDeserializer: MessageDeserializer,
       scheduler: ExternalEventInjector[_] with Scheduler=null,
-      skipStats: Boolean=false): // if null, use dummy
+      skipStats: Boolean=false, // if null, use dummy
+      loader:ClassLoader=ClassLoader.getSystemClassLoader()) :
         Tuple5[Seq[ExternalEvent], EventTrace, ViolationFingerprint,
                Seq[Tuple2[Props, String]], MinimizationStats] = {
-    val deserializer = new ExperimentDeserializer(experiment_dir)
+    val deserializer = new ExperimentDeserializer(experiment_dir,
+      loader=loader)
     val _scheduler = if (scheduler == null)
       new ReplayScheduler(SchedulerConfig())
       else scheduler
@@ -508,13 +530,15 @@ object RunnerUtils {
                     schedulerConfig: SchedulerConfig,
                     messageDeserializer: MessageDeserializer,
                     allowPeek: Boolean,
-                    stats: Option[MinimizationStats]) :
+                    stats: Option[MinimizationStats],
+                    checkUnmodified: Boolean) :
         Tuple4[Seq[ExternalEvent], MinimizationStats, Option[EventTrace], ViolationFingerprint] = {
     val sched = new STSScheduler(schedulerConfig, new EventTrace, allowPeek)
     val (trace, violation, _) = RunnerUtils.deserializeExperiment(experiment_dir, messageDeserializer, sched)
     sched.original_trace = trace
     stsSchedDDMin(allowPeek, schedulerConfig, trace,
-                  violation, _sched=Some(sched), stats=stats)
+                  violation, _sched=Some(sched), stats=stats,
+                  checkUnmodified=checkUnmodified)
   }
 
   // TODO(cs): force this to take an EventDag, so that we don't accidentally
@@ -526,17 +550,29 @@ object RunnerUtils {
                     initializationRoutine: Option[() => Any]=None,
                     actorNameProps: Option[Seq[Tuple2[Props, String]]]=None,
                     _sched:Option[STSScheduler]=None,
+                    preTest: Option[STSScheduler.PreTestCallback]=None,
+                    postTest: Option[STSScheduler.PostTestCallback]=None,
                     dag: Option[EventDag]=None,
-                    stats: Option[MinimizationStats]=None) :
+                    stats: Option[MinimizationStats]=None,
+                    checkUnmodified:Boolean=false) :
         Tuple4[Seq[ExternalEvent], MinimizationStats, Option[EventTrace], ViolationFingerprint] = {
     val sched = if (_sched != None) _sched.get else
                 new STSScheduler(schedulerConfig, trace, allowPeek)
+    preTest match {
+      case Some(f) => sched.setPreTestCallback(f)
+      case None =>
+    }
+    postTest match {
+      case Some(f) => sched.setPostTestCallback(f)
+      case None =>
+    }
+
     Instrumenter().scheduler = sched
     if (actorNameProps != None) {
       sched.setActorNamePropPairs(actorNameProps.get)
     }
 
-    val ddmin = new DDMin(sched, stats=stats)
+    val ddmin = new DDMin(sched, stats=stats, checkUnmodifed=checkUnmodified)
     var externalsSize = 0
     val mcs = dag match {
       case Some(d) =>
@@ -569,6 +605,7 @@ object RunnerUtils {
       }
       return (mcs.events, ddmin._stats, validated_mcs, violation)
     } else {
+      // TODO(cs): return the smallest trace DDMin was able to trigger so far?
       return (mcs.events, ddmin._stats, Some(trace), violation)
     }
   }
