@@ -242,7 +242,8 @@ object Main extends App {
     shouldShutdownActorSystem=true,
     filterKnownAbsents=false,
     invariant_check=Some(raftChecks.invariant),
-    ignoreTimers=false
+    ignoreTimers=false,
+    storeEventTraces=true
   )
 
   val weights = new FuzzerWeights(kill=0.00, send=0.3, wait_quiescence=0.0,
