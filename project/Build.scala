@@ -11,8 +11,7 @@ object STS2Application extends Build {
 
   val debugInUse = SettingKey[Boolean]("debug-in-use", "debug is used")
 
-  // TODO(cs): need to make 2.3.8?
-  val akkaVersion = "2.3.6"
+  val akkaVersion = "2.4.0"
 
   lazy val sets2app = Project(
     id = "randomSearch",
@@ -20,20 +19,14 @@ object STS2Application extends Build {
     settings = Defaults.defaultSettings ++ aspectjSettings ++ Seq(
       organization := "com.typesafe.sbt.aspectj",
       version := "0.1",
-      scalaVersion := "2.11.0",
+      scalaVersion := "2.11.7",
       libraryDependencies += "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       libraryDependencies += "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
-      libraryDependencies += "com.typesafe.akka" %% "akka-slf4j"   % akkaVersion,
-      libraryDependencies += "com.typesafe.akka" %% "akka-persistence-experimental" % akkaVersion,
-      libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
-      libraryDependencies += "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion % "test",
-      libraryDependencies += "org.mockito"        % "mockito-core"   % "1.9.5"     % "test",
-      libraryDependencies += "org.scalatest"     %% "scalatest"      % "2.2.1"     % "test",
+      libraryDependencies += "com.typesafe.akka" %% "akka-distributed-data-experimental" % akkaVersion,
 
       libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.2",
       libraryDependencies += "com.assembla.scala-incubator" %% "graph-core" % "1.9.4",
       libraryDependencies += "com.assembla.scala-incubator" %% "graph-dot" % "1.9.0",
-      libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
       libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.1.2",
 
       // add akka-actor as an aspectj input (find it in the update report)
