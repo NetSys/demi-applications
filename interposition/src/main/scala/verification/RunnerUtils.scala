@@ -117,6 +117,7 @@ object RunnerUtils {
   //   prune as much as possible before trying backtracks.
   // - timeBudgetSeconds: how many seconds to allow any one of the minimizers to
   //   run for.
+  // N.B., invokes System.exit(0) before returning.
   def runTheGamut(original_dir: String,
                   output_dir: String,
                   schedulerConfig: SchedulerConfig,
@@ -157,7 +158,7 @@ object RunnerUtils {
           Tuple2[MinimizationStats, EventTrace]
     }
 
-    def run(gamut: Seq[Minimizer]) {
+    def run(gamut: Seq[Minimizer]): EventTrace = {
       var currentTrace = traceFound
       var currentExternals : Seq[ExternalEvent] = Seq.empty
       var namedTraces : Seq[(String,EventTrace)] = Seq.empty
@@ -223,6 +224,7 @@ object RunnerUtils {
           RunnerUtils.printMinimizationStats(schedulerConfig.messageFingerprinter,
             traceFound, filteredTrace, namedTraces)
       }
+      return currentTrace
     }
 
     val deserializer = new ExperimentDeserializer(output_dir, loader=loader)
@@ -250,7 +252,7 @@ object RunnerUtils {
       case _ => None
     }
 
-    run(Seq(
+    val minTrace = run(Seq(
       Some(new ExternalMinimizer("DDMin") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           RunnerUtils.stsSchedDDMin(false,
@@ -274,12 +276,22 @@ object RunnerUtils {
             preTest=preTest,
             postTest=postTest)
       }),
-      // fungibleClocks DDMin without backtracks.
+      Some(new InternalMinimizer("StateMachineMin") {
+        def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
+          RunnerUtils.minimizeInternals(schedulerConfig,
+            currentExternals, currentTrace, actors, violationFound,
+            removalStrategyCtor=() => new StateMachineRemoval(currentTrace, schedulerConfig.messageFingerprinter),
+            stats=Some(currentStats),
+            initializationRoutine=initializationRoutine,
+            preTest=preTest,
+            postTest=postTest)
+      }),
+      // wildcard DDMin without backtracks.
       if (!paranoid) None else
       Some(new ExternalMinimizer("WildCardDDMinNoBacktracks") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           if (shouldRerunDDMin(currentExternals))
-            RunnerUtils.fungibleClocksDDMin(schedulerConfig,
+            RunnerUtils.wildcardDDMin(schedulerConfig,
               currentTrace,
               new UnmodifiedEventDag(currentExternals.flatMap {
                  // STSSched doesn't actually pay any attention to WaitQuiescence or
@@ -298,12 +310,12 @@ object RunnerUtils {
           else
             ((currentExternals, currentStats, Some(currentTrace), violationFound))
       }),
-      // fungibleClocks DDMin without backtracks, but focus on the last item first.
+      // wildcard DDMin without backtracks, but focus on the last item first.
       if (!paranoid) None else
       Some(new ExternalMinimizer("WildCardDDMinLastOnly") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           if (shouldRerunDDMin(currentExternals))
-            RunnerUtils.fungibleClocksDDMin(schedulerConfig,
+            RunnerUtils.wildcardDDMin(schedulerConfig,
               currentTrace,
               new UnmodifiedEventDag(currentExternals.flatMap {
                  // STSSched doesn't actually pay any attention to WaitQuiescence or
@@ -325,9 +337,9 @@ object RunnerUtils {
       }),
       // Without backtracks first
       if (!paranoid) None else
-      Some(new InternalMinimizer("FungibleClocksNoBackTracks") {
+      Some(new InternalMinimizer("WildcardsNoBackTracks") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
-          new FungibleClockMinimizer(schedulerConfig,
+          new WildcardMinimizer(schedulerConfig,
             currentExternals,
             currentTrace, actors, violationFound,
             //testScheduler=fungClocksScheduler,
@@ -339,9 +351,9 @@ object RunnerUtils {
       }),
       // Without backtracks, but focus on the last match.
       if (!paranoid) None else
-      Some(new InternalMinimizer("FungibleClocksLastOnly") {
+      Some(new InternalMinimizer("WildcardsLastOnly") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
-          new FungibleClockMinimizer(schedulerConfig,
+          new WildcardMinimizer(schedulerConfig,
             currentExternals,
             currentTrace, actors, violationFound,
             //testScheduler=TestScheduler.DPORwHeuristics,
@@ -353,9 +365,9 @@ object RunnerUtils {
             postTest=postTest).minimize
       }),
       // internal clocks with full backtracks
-      Some(new InternalMinimizer("FungibleClocks") {
+      Some(new InternalMinimizer("Wildcards") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
-          new FungibleClockMinimizer(schedulerConfig, currentExternals,
+          new WildcardMinimizer(schedulerConfig, currentExternals,
             currentTrace, actors, violationFound,
             testScheduler=fungClocksScheduler,
             timeBudgetSeconds=timeBudgetSeconds,
@@ -365,11 +377,11 @@ object RunnerUtils {
             preTest=preTest,
             postTest=postTest).minimize
       }),
-      // fungibleClocks DDMin with all
+      // Wildcards DDMin with all
       Some(new ExternalMinimizer("WildcardDDMin") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           if (shouldRerunDDMin(currentExternals))
-            RunnerUtils.fungibleClocksDDMin(schedulerConfig,
+            RunnerUtils.wildcardDDMin(schedulerConfig,
               currentTrace,
               new UnmodifiedEventDag(currentExternals.flatMap {
                  // STSSched doesn't actually pay any attention to WaitQuiescence or
@@ -404,6 +416,8 @@ object RunnerUtils {
             postTest=postTest)
       })
     ).flatten)
+
+    RunnerUtils.visualizeDeliveries(minTrace, output_dir + "/shiviz.txt")
 
     // Play nicely with ./interposition/tools/rerun_experiments.sh
     System.exit(0)
@@ -610,7 +624,7 @@ object RunnerUtils {
     }
   }
 
-  def fungibleClocksDDMin(schedulerConfig: SchedulerConfig,
+  def wildcardDDMin(schedulerConfig: SchedulerConfig,
         originalTrace: EventTrace,
         dag: EventDag,
         violation: ViolationFingerprint,
@@ -629,7 +643,7 @@ object RunnerUtils {
     // DDMin. Therefore we give each subsequence a time budget of
     // timeBudgetSeconds / N.
     // TODO(cs): do this compuation within DDMin?
-    val oracle = new FungibleClockTestOracle(
+    val oracle = new WildcardTestOracle(
         schedulerConfig,
         originalTrace,
         actorNameProps,
@@ -1190,7 +1204,7 @@ object RunnerUtils {
   }
 
   /**
-   * Make it easier to construct specifically delivery orders manually.
+   * Make it easier to construct specific delivery orders manually.
    *
    * Given:
    *  - An event trace to be twiddled with
