@@ -106,7 +106,7 @@ class TwoLeader34 {
 
 class RaftChecks {
   def invariant(seq: Seq[ExternalEvent], checkpoint: HashMap[String,Option[CheckpointReply]]) : Option[ViolationFingerprint] = {
-    println("RaftChecks.invariant. Checkpoint: " + checkpoint)
+    //println("RaftChecks.invariant. Checkpoint: " + checkpoint)
     var crashes = Util.map_from_iterable(checkpoint.toSeq flatMap {
       case (k, None) => Some(("Crash:"+k, Set(k)))
       case _ => None
@@ -146,7 +146,7 @@ class RaftChecks {
   var allCommitted = new HashSet[(Cmnd, Term, Int)]
 
   def clear() {
-    println("RaftChecks, clear()'ing state")
+    //println("RaftChecks, clear()'ing state")
     electionSafety = new ElectionSafetyChecker(this)
     logMatch = new LogMatchChecker(this)
     leaderCompleteness = new LeaderCompletenessChecker(this)
