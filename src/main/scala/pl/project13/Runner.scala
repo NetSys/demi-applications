@@ -155,7 +155,8 @@ object Init {
 }
 
 object Main extends App {
-  Instrumenter().setLogLevel("ERROR")
+  //Instrumenter().setLogLevel("ERROR")
+  Instrumenter().setLogLevel("DEBUG")
 
   EventTypes.setExternalMessageFilter(Init.externalMessageFilter)
   Instrumenter().setPassthrough
@@ -252,21 +253,50 @@ object Main extends App {
       RunnerUtils.getDeliveries(verified_mcs.get).size)
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
-    val dir =
-    "experiments/akka-raft-fuzz-long_2015_09_02_12_18_50"
+    //val dir =
+    //"experiments/akka-raft-fuzz-long_2015_09_02_12_18_50"
     val mcs_dir =
     "experiments/akka-raft-fuzz-long_2015_09_02_12_18_50_DDMin_STSSchedNoPeek"
 
-    val msgSerializer = new RaftMessageSerializer
+    val deserializer = new ExperimentDeserializer(mcs_dir)
+
+    // val msgSerializer = new RaftMessageSerializer
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
-    def shouldRerunDDMin(externals: Seq[ExternalEvent]) =
-      externals.exists({
-        case s: Send => s.messageCtor.isInstanceOf[AppendWordConstuctor]
-        case _ => false
-      })
+    val violation = deserializer.get_violation(msgDeserializer)
+    // Not really fair for breadth-first enumeration?
+    val _externals = deserializer.get_mcs()
+    val actorNameProps = deserializer.get_actors()
 
-    RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
-      msgDeserializer, shouldRerunDDMin=shouldRerunDDMin)
+    println("Violation: " + violation)
+    println("Externals: " + _externals)
+
+    val (externals, stats, minimized, _) =
+      RunnerUtils.boundedDPOR(schedulerConfig, _externals, violation,
+        actorNameProps, 25, None)
+
+    minimized match {
+      case Some(trace) =>
+        val serializer = new ExperimentSerializer(
+          fingerprintFactory,
+          new RaftMessageSerializer)
+
+        val dir = serializer.record_experiment("akka-raft-dpor",
+          trace.filterCheckpointMessages(), violation)
+
+        println("Found failing trace: " + trace.filterCheckpointMessages().size)
+        println("Saved trace at " + dir)
+      case None =>
+    }
+
+    // def shouldRerunDDMin(externals: Seq[ExternalEvent]) =
+    //   externals.exists({
+    //     case s: Send => s.messageCtor.isInstanceOf[AppendWordConstuctor]
+    //     case _ => false
+    //   })
+
+    // RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
+    //   msgDeserializer, shouldRerunDDMin=shouldRerunDDMin)
+
   }
 }
