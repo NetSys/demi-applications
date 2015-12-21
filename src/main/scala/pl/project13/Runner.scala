@@ -155,8 +155,8 @@ object Init {
 }
 
 object Main extends App {
-  //Instrumenter().setLogLevel("ERROR")
-  Instrumenter().setLogLevel("DEBUG")
+  Instrumenter().setLogLevel("OFF")
+  //Instrumenter().setLogLevel("DEBUG")
 
   EventTypes.setExternalMessageFilter(Init.externalMessageFilter)
   Instrumenter().setPassthrough
@@ -283,6 +283,8 @@ object Main extends App {
 
         val dir = serializer.record_experiment("akka-raft-dpor",
           trace.filterCheckpointMessages(), violation)
+
+        serializer.recordMinimizationStats(dir, stats)
 
         println("Found failing trace: " + trace.filterCheckpointMessages().size)
         println("Saved trace at " + dir)
