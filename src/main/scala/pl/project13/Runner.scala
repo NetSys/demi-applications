@@ -258,38 +258,32 @@ object Main extends App {
     val mcs_dir =
     "experiments/akka-raft-fuzz-long_2015_09_02_12_18_50_DDMin_STSSchedNoPeek"
 
-    val deserializer = new ExperimentDeserializer(mcs_dir)
-
-    // val msgSerializer = new RaftMessageSerializer
+    val msgSerializer = new RaftMessageSerializer
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
+    val deserializer = new ExperimentDeserializer(mcs_dir)
     val violation = deserializer.get_violation(msgDeserializer)
-    // Not really fair for breadth-first enumeration?
-    val _externals = deserializer.get_mcs()
-    val actorNameProps = deserializer.get_actors()
+    val externals = deserializer.get_mcs
 
-    println("Violation: " + violation)
-    println("Externals: " + _externals)
+    println("externals:")
+    externals.foreach { case e => println(e) }
 
-    val (externals, stats, minimized, _) =
-      RunnerUtils.boundedDPOR(schedulerConfig, _externals, violation,
-        actorNameProps, 25, None)
+    // TODO(cs): put me in RunnerUtils, along with recording.
+    val sched = new InteractiveScheduler(schedulerConfig)
+    Instrumenter().scheduler = sched
+    val (trace, maybeViolation) = sched.run(externals)
 
-    minimized match {
-      case Some(trace) =>
-        val serializer = new ExperimentSerializer(
-          fingerprintFactory,
-          new RaftMessageSerializer)
+    val serializer = new ExperimentSerializer(
+      fingerprintFactory,
+      msgSerializer)
 
-        val dir = serializer.record_experiment("akka-raft-dpor",
-          trace.filterCheckpointMessages(), violation)
+    val new_dir = serializer.record_experiment("akka-raft-interactive",
+      trace.filterCheckpointMessages())
 
-        serializer.recordMinimizationStats(dir, stats)
+    //serializer.recordMinimizationStats(dir, stats)
 
-        println("Found failing trace: " + trace.filterCheckpointMessages().size)
-        println("Saved trace at " + dir)
-      case None =>
-    }
+    println("Found failing trace: " + trace.filterCheckpointMessages().size)
+    println("Saved trace at " + new_dir)
 
     // def shouldRerunDDMin(externals: Seq[ExternalEvent]) =
     //   externals.exists({
@@ -299,6 +293,5 @@ object Main extends App {
 
     // RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
     //   msgDeserializer, shouldRerunDDMin=shouldRerunDDMin)
-
   }
 }
