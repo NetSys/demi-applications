@@ -37,23 +37,12 @@ private[raft] trait Candidate {
         }
       }
 
-    case Event(msg: RequestVote, m: ElectionMeta) if msg.term < m.currentTerm =>
-      log.info("Rejecting RequestVote msg by {} in {}. Received stale {}.", candidate, m.currentTerm, msg.term)
-      candidate ! DeclineCandidate(m.currentTerm)
-      stay()
-
-    case Event(msg: RequestVote, m: ElectionMeta)
-      if m.canVoteIn(msg.term, msg.candidateId) =>
+    case Event(msg: RequestVote, m: ElectionMeta) if m.canVoteIn(msg.term) =>
       sender ! VoteCandidate(m.currentTerm)
       stay() using m.withVoteFor(msg.term, candidate())
 
     case Event(msg: RequestVote, m: ElectionMeta) =>
       sender ! DeclineCandidate(msg.term)
-      stay()
-
-    case Event(VoteCandidate(term), m: ElectionMeta) if term < m.currentTerm =>
-      log.info("Rejecting VoteCandidate msg by {} in {}. Received stale {}.", voter(), m.currentTerm, term)
-      voter ! DeclineCandidate(m.currentTerm)
       stay()
 
     case Event(VoteCandidate(term), m: ElectionMeta) =>
