@@ -685,7 +685,7 @@ object RunnerUtils {
   }
 
   // TODO(cs): force this to take an EventDag, so that we don't accidentally
-  // minimize the orignal externals twice.
+  // minimize the original externals twice.
   def editDistanceDporDDMin(experiment_dir: String,
                             schedulerConfig: SchedulerConfig,
                             messageDeserializer: MessageDeserializer,
@@ -793,6 +793,38 @@ object RunnerUtils {
       return (mcs.events, ddmin._stats, verified_mcs, violation)
     } else {
       return (mcs.events, ddmin._stats, Some(trace), violation)
+    }
+  }
+
+  def boundedDPOR(schedulerConfig: SchedulerConfig,
+                  externals: Seq[ExternalEvent],
+                  violation_fingerprint: ViolationFingerprint,
+                  actorNameProps: Seq[Tuple2[Props, String]],
+                  maxScheduleLength: Int,
+                  stats: Option[MinimizationStats]) :
+        Tuple4[Seq[ExternalEvent], MinimizationStats, Option[EventTrace], ViolationFingerprint] = {
+    // since depth first, set trackHistory=false
+    val dpor = new DPORwHeuristics(schedulerConfig,
+      invariant_check_interval=5, trackHistory=false, saveInterval=250)
+    dpor.setMaxMessagesToSchedule(maxScheduleLength)
+    dpor.setActorNameProps(actorNameProps)
+    val _stats = stats match {
+      case Some(s) => s
+      case None => new MinimizationStats
+    }
+    _stats.updateStrategy("BoundedDPOR", "")
+
+    _stats.record_prune_start()
+    val traceOpt = dpor.test(externals, violation_fingerprint, _stats)
+    _stats.record_prune_end()
+
+    traceOpt match {
+      case None =>
+        return (Seq.empty, _stats, None, violation_fingerprint)
+      case Some(trace) =>
+        // Hmm, may not be the minimal... (since depth-first)
+        // TODO(cs): extract externals from trace.
+        return (Seq.empty, _stats, traceOpt, violation_fingerprint)
     }
   }
 
@@ -1115,6 +1147,18 @@ object RunnerUtils {
     }
 
     printer.print
+  }
+
+  def countOptimalEvents(dir: String, messageDeserializer: MessageDeserializer,
+                         messageFingerprinter: FingerprintFactory) {
+    var deserializer = new ExperimentDeserializer(dir)
+    val dummy_sched = new ReplayScheduler(SchedulerConfig())
+    Instrumenter().scheduler = dummy_sched
+    dummy_sched.populateActorSystem(deserializer.get_actors)
+    val origTrace = deserializer.get_events(messageDeserializer, Instrumenter().actorSystem)
+    val (deliveries, externals, timers) = RunnerUtils.extractDeliveryStats(origTrace, messageFingerprinter)
+    println(s"Optimal: ${deliveries.size} ($externals externals, $timers timers)")
+    dummy_sched.shutdown
   }
 
   def getDeliveries(trace: EventTrace): Seq[Event] = {
