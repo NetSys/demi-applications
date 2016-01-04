@@ -72,6 +72,7 @@ object DPORwHeuristics {
  *     invariant_check_interval message deliveries.
  *   - depth_bound: determines the maximum depGraph path from the root to the messages
  *     played. Note that this differs from maxMessagesToSchedule.
+ *   - saveInterval: how many schedules should pass before printing intermediate runtime statistics.
  */
 class DPORwHeuristics(schedulerConfig: SchedulerConfig,
   prioritizePendingUponDivergence:Boolean=false,
@@ -82,7 +83,9 @@ class DPORwHeuristics(schedulerConfig: SchedulerConfig,
   startFromBackTrackPoints:Boolean=true,
   skipBacktrackComputation:Boolean=false,
   stopAfterNextTrace:Boolean=false,
-  budgetSeconds:Long=Long.MaxValue) extends Scheduler with TestOracle {
+  trackHistory:Boolean=true,
+  budgetSeconds:Long=Long.MaxValue,
+  saveInterval:Int=Int.MaxValue) extends Scheduler with TestOracle {
 
   val log = LoggerFactory.getLogger("DPOR")
 
@@ -340,6 +343,10 @@ class DPORwHeuristics(schedulerConfig: SchedulerConfig,
     currentTrace += getRootEvent
     if (stats != null) {
       stats.increment_replays()
+      if ((stats.inner().total_replays % saveInterval) == 0) {
+        stats.record_prune_end()
+        println(stats.toJson())
+      }
     }
     maybeStartActors()
     runExternal()
@@ -496,7 +503,9 @@ class DPORwHeuristics(schedulerConfig: SchedulerConfig,
                     // not necessary
                     val priorEvent = currentTrace.last
                     val branchI = currentTrace.length - 1
-                    exploredTracker.setExplored(branchI, (priorEvent, found._1))
+                    if (trackHistory) {
+                      exploredTracker.setExplored(branchI, (priorEvent, found._1))
+                    }
                     val msgEvent = found._1.event
                     queue.dequeueFirst(e => e == found)
                   case None => None
@@ -1059,7 +1068,9 @@ class DPORwHeuristics(schedulerConfig: SchedulerConfig,
           // events, we need to extract the values.
           val needToReplayV = needToReplay.toList
 
-          exploredTracker.setExplored(branchI, (earlier, later))
+          if (trackHistory) {
+            exploredTracker.setExplored(branchI, (earlier, later))
+          }
           return Some((branchI, needToReplayV))
       }
       return None
@@ -1131,7 +1142,9 @@ class DPORwHeuristics(schedulerConfig: SchedulerConfig,
     def getNext() : Option[(Int, (Unique, Unique), Seq[Unique])] = {
       // If the backtrack set is empty, this means we're done.
       if (backTrack.isEmpty ||
-          (should_cap_distance && backtrackHeuristic.getDistance(backTrack.head) >= stop_at_distance)) {
+          (should_cap_distance &&
+            backtrackHeuristic.getDistance(backTrack.head) >= stop_at_distance) ||
+          (stopIfViolationFound && shortestTraceSoFar != null)) {
         log.info("Tutto finito!")
         done(depGraph)
         return None
@@ -1140,7 +1153,7 @@ class DPORwHeuristics(schedulerConfig: SchedulerConfig,
       backtrackHeuristic.clearKey(backTrack.head)
       val (maxIndex, (e1, e2), replayThis) = backTrack.dequeue
 
-      exploredTracker.isExplored((e1, e2)) match {
+      (trackHistory && exploredTracker.isExplored((e1, e2))) match {
         case true =>
           log.debug("Skipping backTrack point: " + e1 + " " + e2)
           return getNext()
@@ -1153,7 +1166,9 @@ class DPORwHeuristics(schedulerConfig: SchedulerConfig,
         log.info(Console.RED + "Exploring a new message interleaving " +
            e1 + " and " + e2  + " at index " + maxIndex + Console.RESET)
 
-        exploredTracker.setExplored(maxIndex, (e1, e2))
+        if (trackHistory) {
+          exploredTracker.setExplored(maxIndex, (e1, e2))
+        }
         // TODO(cs): the following optimization is not correct if we don't
         // explore in depth-first order. Figure out how to make it correct.
         //exploredTracker.trimExplored(maxIndex)
@@ -1179,7 +1194,6 @@ class DPORwHeuristics(schedulerConfig: SchedulerConfig,
            violation_fingerprint: ViolationFingerprint,
            _stats: MinimizationStats,
            init:Option[()=>Any]=None) : Option[EventTrace] = {
-    assert(_initialTrace != null)
     if (stopIfViolationFound && shortestTraceSoFar != null) {
       log.warn("Already have shortestTrace!")
       return Some(DPORwHeuristicsUtil.convertToEventTrace(shortestTraceSoFar,
@@ -1203,7 +1217,8 @@ class DPORwHeuristics(schedulerConfig: SchedulerConfig,
 
     var traceSem = new Semaphore(0)
     var initialTrace = if (startFromBackTrackPoints && !backTrack.isEmpty)
-      dpor(currentTrace) else Some(_initialTrace)
+      dpor(currentTrace) else if (_initialTrace != null)
+      Some(_initialTrace) else None
     // N.B. reset() and Instrumenter().reinitialize_system
     // are invoked at the beginning of run(), hence we don't need to clean up
     // after ourselves at the end of test(), *unless* some other scheduler
