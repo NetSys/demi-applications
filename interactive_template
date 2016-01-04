@@ -1,0 +1,29 @@
+    val mcs_dir =
+    "experiments/akka-raft-fuzz-long_2015_09_02_12_18_50_DDMin_STSSchedNoPeek"
+
+    val msgSerializer = new RaftMessageSerializer
+    val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
+
+    val deserializer = new ExperimentDeserializer(mcs_dir)
+    val violation = deserializer.get_violation(msgDeserializer)
+    val externals = deserializer.get_mcs
+
+    println("externals:")
+    externals.foreach { case e => println(e) }
+
+    // TODO(cs): put me in RunnerUtils, along with recording.
+    val sched = new InteractiveScheduler(schedulerConfig)
+    Instrumenter().scheduler = sched
+    val (trace, maybeViolation) = sched.run(externals)
+
+    val serializer = new ExperimentSerializer(
+      fingerprintFactory,
+      msgSerializer)
+
+    val new_dir = serializer.record_experiment("akka-raft-interactive",
+      trace.filterCheckpointMessages())
+
+    //serializer.recordMinimizationStats(dir, stats)
+
+    println("Found failing trace: " + trace.filterCheckpointMessages().size)
+    println("Saved trace at " + new_dir)
