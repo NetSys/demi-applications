@@ -155,8 +155,7 @@ object Init {
 }
 
 object Main extends App {
-  Instrumenter().setLogLevel("OFF")
-  //Instrumenter().setLogLevel("DEBUG")
+  Instrumenter().setLogLevel("ERROR")
 
   EventTypes.setExternalMessageFilter(Init.externalMessageFilter)
   Instrumenter().setPassthrough
@@ -253,45 +252,21 @@ object Main extends App {
       RunnerUtils.getDeliveries(verified_mcs.get).size)
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
-    //val dir =
-    //"experiments/akka-raft-fuzz-long_2015_09_02_12_18_50"
+    val dir =
+    "experiments/akka-raft-fuzz-long_2016_01_03_20_36_00"
     val mcs_dir =
-    "experiments/akka-raft-fuzz-long_2015_09_02_12_18_50_DDMin_STSSchedNoPeek"
+    "experiments/akka-raft-fuzz-long_2016_01_03_20_36_00_DDMin_STSSchedNoPeek"
 
     val msgSerializer = new RaftMessageSerializer
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
-    val deserializer = new ExperimentDeserializer(mcs_dir)
-    val violation = deserializer.get_violation(msgDeserializer)
-    val externals = deserializer.get_mcs
+    def shouldRerunDDMin(externals: Seq[ExternalEvent]) =
+      externals.exists({
+        case s: Send => s.messageCtor.isInstanceOf[AppendWordConstuctor]
+        case _ => false
+      })
 
-    println("externals:")
-    externals.foreach { case e => println(e) }
-
-    // TODO(cs): put me in RunnerUtils, along with recording.
-    val sched = new InteractiveScheduler(schedulerConfig)
-    Instrumenter().scheduler = sched
-    val (trace, maybeViolation) = sched.run(externals)
-
-    val serializer = new ExperimentSerializer(
-      fingerprintFactory,
-      msgSerializer)
-
-    val new_dir = serializer.record_experiment("akka-raft-interactive",
-      trace.filterCheckpointMessages())
-
-    //serializer.recordMinimizationStats(dir, stats)
-
-    println("Found failing trace: " + trace.filterCheckpointMessages().size)
-    println("Saved trace at " + new_dir)
-
-    // def shouldRerunDDMin(externals: Seq[ExternalEvent]) =
-    //   externals.exists({
-    //     case s: Send => s.messageCtor.isInstanceOf[AppendWordConstuctor]
-    //     case _ => false
-    //   })
-
-    // RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
-    //   msgDeserializer, shouldRerunDDMin=shouldRerunDDMin)
+    RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
+      msgDeserializer, shouldRerunDDMin=shouldRerunDDMin)
   }
 }
