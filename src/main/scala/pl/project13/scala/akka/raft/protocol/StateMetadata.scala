@@ -45,9 +45,10 @@ private[protocol] trait StateMetadata extends Serializable {
     config: ClusterConfiguration,
     votes: Map[Term, Candidate]
   ) extends Metadata {
-    
+
     // transition helpers
-    def forNewElection: ElectionMeta = ElectionMeta(clusterSelf, currentTerm.next, 0, config, votes)
+    def forNewElection: ElectionMeta = ElectionMeta(clusterSelf,
+      currentTerm.next, Set.empty, config, votes)
 
     def withVote(term: Term, candidate: ActorRef) = {
       copy(votes = votes updated (term, candidate))
@@ -65,15 +66,15 @@ private[protocol] trait StateMetadata extends Serializable {
   case class ElectionMeta(
     clusterSelf: ActorRef,
     currentTerm: Term,
-    votesReceived: Int,
+    votesReceived: Set[String],
     config: ClusterConfiguration,
     votes: Map[Term, Candidate]
   ) extends Metadata {
 
-    def hasMajority = votesReceived > config.members.size / 2
+    def hasMajority = votesReceived.size > config.members.size / 2
 
     // transistion helpers
-    def incVote = copy(votesReceived = votesReceived + 1)
+    def incVote(voter: Candidate) = copy(votesReceived = votesReceived + voter.path.name)
     def incTerm = copy(currentTerm = currentTerm.next)
 
     def withVoteFor(term: Term, candidate: ActorRef) = copy(votes = votes + (term -> candidate))
