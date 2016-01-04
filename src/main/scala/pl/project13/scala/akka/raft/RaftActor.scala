@@ -141,8 +141,8 @@ abstract class RaftActor extends Actor with LoggingFSM[RaftState, Metadata]
   }
 
   /** Stop being the Leader */
-  def stepDown(m: LeaderMeta, term: Term) = {
-    goto(Follower) using m.forFollower(term)
+  def stepDown(m: LeaderMeta) = {
+    goto(Follower) using m.forFollower
   }
 
   /** Stay in current state and reset the election timeout */
