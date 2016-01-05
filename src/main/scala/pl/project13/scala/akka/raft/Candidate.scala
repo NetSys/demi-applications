@@ -47,7 +47,7 @@ private[raft] trait Candidate {
       stay()
 
     case Event(VoteCandidate(term), m: ElectionMeta) =>
-      val includingThisVote = m.incVote(self)
+      val includingThisVote = m.incVote(voter())
 
       if (includingThisVote.hasMajority) {
         log.info("Received vote by {}; Won election with {} of {} votes", voter(), includingThisVote.votesReceived, m.config.members.size)
