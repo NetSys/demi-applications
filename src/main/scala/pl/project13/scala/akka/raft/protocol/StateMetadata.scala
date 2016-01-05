@@ -56,6 +56,8 @@ private[protocol] trait StateMetadata extends Serializable {
       copy(votes = votes updated (term, candidate))
     }
 
+    def withTerm(term: Term) = copy(currentTerm = term)
+
     def withConfig(conf: ClusterConfiguration): Meta = copy(config = conf)
   }
 
@@ -80,8 +82,8 @@ private[protocol] trait StateMetadata extends Serializable {
     def withVoteFor(term: Term, candidate: ActorRef) = copy(votes = votes + (term -> candidate))
 
     def forLeader: LeaderMeta        = LeaderMeta(clusterSelf, currentTerm, config)
-    def forFollower: Meta            = Meta(clusterSelf, currentTerm, config, Map.empty)
-    def forNewElection: ElectionMeta = this.forFollower.forNewElection
+    def forFollower(term:Term=currentTerm): Meta = Meta(clusterSelf, term, config, votes)
+    def forNewElection: ElectionMeta = this.forFollower().forNewElection
   }
 
   case class LeaderMeta(
@@ -94,8 +96,7 @@ private[protocol] trait StateMetadata extends Serializable {
 
     // todo duplication; yeah, having 3 meta classes was a bad idea. todo make one Meta class
     def withConfig(conf: ClusterConfiguration): LeaderMeta = copy(config = conf)
-
-    def forFollower: Meta = Meta(clusterSelf, currentTerm, config, Map.empty)
+    def forFollower(term:Term=currentTerm): Meta = Meta(clusterSelf, term, config, Map.empty)
   }
 
 }
