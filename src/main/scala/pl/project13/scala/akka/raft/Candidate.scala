@@ -39,6 +39,7 @@ private[raft] trait Candidate {
 
     case Event(msg: RequestVote, m: ElectionMeta) if msg.term > m.currentTerm =>
       log.info("Received newer {}. Current term is {}. Revert to follower state.", msg.term, m.currentTerm)
+      m.clusterSelf forward msg
       goto(Follower) using m.forFollower(msg.term)
 
     case Event(msg: RequestVote, m: ElectionMeta)
