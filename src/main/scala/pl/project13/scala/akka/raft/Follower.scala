@@ -20,9 +20,10 @@ private[raft] trait Follower {
       stay()
 
     // election
-    case Event(RequestVote(term, candidate, lastLogTerm, lastLogIndex), m: Meta)
+    case Event(msg @ RequestVote(term, candidate, lastLogTerm, lastLogIndex), m: Meta)
       if term > m.currentTerm =>
       log.info("Received newer {}. Current term is {}. Revert to follower state.", term, m.currentTerm)
+      m.clusterSelf forward msg
       stay() using m.withTerm(term)
 
     case Event(RequestVote(term, candidate, lastLogTerm, lastLogIndex), m: Meta)
