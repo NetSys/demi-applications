@@ -155,7 +155,7 @@ object Init {
 }
 
 object Main extends App {
-  Instrumenter().setLogLevel("ERROR")
+  Instrumenter().setLogLevel("DEBUG")
 
   EventTypes.setExternalMessageFilter(Init.externalMessageFilter)
   Instrumenter().setPassthrough
@@ -214,6 +214,7 @@ object Main extends App {
     }
     def randomizationStrategy() : RandomizationStrategy = {
       return new SrcDstFIFO
+      //return new FullyRandom
     }
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  schedulerConfig,
@@ -251,9 +252,9 @@ object Main extends App {
     println("MCS DIR: " + mcs_dir)
   } else { // !fuzz
     val dir =
-    "experiments/akka-raft-fuzz-long_2015_09_02_12_36_41"
+    "experiments/akka-raft-fuzz-long_2016_01_05_17_18_39"
     val mcs_dir =
-    "experiments/akka-raft-fuzz-long_2015_09_02_12_36_41_DDMin_STSSchedNoPeek"
+    "experiments/akka-raft-fuzz-long_2016_01_05_17_18_39_DDMin_STSSchedNoPeek"
 
     val msgSerializer = new RaftMessageSerializer
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
