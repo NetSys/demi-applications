@@ -173,9 +173,10 @@ object Main extends App {
     members.map(member =>
       Start(Init.actorCtor, member)) ++
     members.map(member =>
-      Send(member, new BootstrapMessageConstructor(Set[Int]())))
-    Array[ExternalEvent](WaitQuiescence()
-  )
+      Send(member, new BootstrapMessageConstructor(Set[Int]()))) // ++
+  //  Array[ExternalEvent](
+  //    WaitCondition()
+  //)
   // -- --
 
   def shutdownCallback() = {
@@ -199,7 +200,7 @@ object Main extends App {
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(100, weights, messageGen, prefix)
 
-  val fuzz = false
+  val fuzz = true
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -214,13 +215,23 @@ object Main extends App {
     }
     def randomizationStrategy() : RandomizationStrategy = {
       return new SrcDstFIFO
+      //return new FullyRandom
+    }
+    // Skip over crashes.
+    def violationWereLookingFor(f: ViolationFingerprint): Boolean = {
+      f match {
+        case RaftViolation(fingerprint2affectedNodes) =>
+          return fingerprint2affectedNodes.keySet.exists(!_.startsWith("Crash"))
+        case _ => return false
+      }
     }
     val tuple = RunnerUtils.fuzz(fuzzer, raftChecks.invariant,
                                  schedulerConfig,
                                  validate_replay=Some(replayerCtor),
                                  maxMessages=Some(3000),
-                                 invariant_check_interval=30,  // XXX
-                                 randomizationStrategyCtor=randomizationStrategy)
+                                 invariant_check_interval=10,  // XXX
+                                 randomizationStrategyCtor=randomizationStrategy,
+                                 violationWereLookingFor=violationWereLookingFor)
     traceFound = tuple._1
     violationFound = tuple._2
     depGraph = tuple._3
