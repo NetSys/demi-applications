@@ -36,7 +36,8 @@ object RunnerUtils {
            invariant_check_interval:Int=30,
            maxMessages:Option[Int]=None,
            randomizationStrategyCtor:() => RandomizationStrategy=() => new FullyRandom,
-           computeProvenance:Boolean=true) :
+           computeProvenance:Boolean=true,
+           violationWereLookingFor:(ViolationFingerprint)=>Boolean=(f:ViolationFingerprint)=>true):
         Tuple5[EventTrace, ViolationFingerprint, Graph[Unique, DiEdge], Queue[Unique], Queue[Unique]] = {
     var violationFound : ViolationFingerprint = null
     var traceFound : EventTrace = null
@@ -63,35 +64,39 @@ object RunnerUtils {
           sched.shutdown()
           logger.info("shutdown successfully")
         case Some((trace, violation)) => {
-          logger.info("Found a safety violation!")
-          depGraph = sched.depTracker.getGraph
-          initialTrace = sched.depTracker.getInitialTrace
-          sched.shutdown()
-          validate_replay match {
-            case Some(replayerCtor) =>
-              logger.info("Validating replay")
-              val replayer = replayerCtor()
-              Instrumenter().scheduler = replayer
-              var deterministic = true
-              try {
-                replayer.replay(trace.filterCheckpointMessages)
-                if (replayer.violationAtEnd.isEmpty) {
-                  deterministic = false
+          if (violationWereLookingFor(violation)) {
+            logger.info("Found a safety violation!")
+            depGraph = sched.depTracker.getGraph
+            initialTrace = sched.depTracker.getInitialTrace
+            sched.shutdown()
+            validate_replay match {
+              case Some(replayerCtor) =>
+                logger.info("Validating replay")
+                val replayer = replayerCtor()
+                Instrumenter().scheduler = replayer
+                var deterministic = true
+                try {
+                  replayer.replay(trace.filterCheckpointMessages)
+                  if (replayer.violationAtEnd.isEmpty) {
+                    deterministic = false
+                  }
+                } catch {
+                  case r: ReplayException =>
+                    logger.info("doesn't replay deterministically..." + r)
+                    deterministic = false
+                } finally {
+                  replayer.shutdown()
                 }
-              } catch {
-                case r: ReplayException =>
-                  logger.info("doesn't replay deterministically..." + r)
-                  deterministic = false
-              } finally {
-                replayer.shutdown()
-              }
-              if (deterministic) {
+                if (deterministic) {
+                  violationFound = violation
+                  traceFound = trace
+                }
+              case None =>
                 violationFound = violation
                 traceFound = trace
-              }
-            case None =>
-              violationFound = violation
-              traceFound = trace
+            }
+          } else {
+            sched.shutdown()
           }
         }
       }
@@ -428,6 +433,7 @@ object RunnerUtils {
       messageDeserializer: MessageDeserializer,
       scheduler: ExternalEventInjector[_] with Scheduler=null, // if null, use dummy
       traceFile:String=ExperimentSerializer.event_trace,
+      externalsFile:String=ExperimentSerializer.mcs,
       loader:ClassLoader=ClassLoader.getSystemClassLoader()) :
                   Tuple3[EventTrace, ViolationFingerprint, Option[Graph[Unique, DiEdge]]] = {
     val deserializer = new ExperimentDeserializer(experiment_dir, loader=loader)
@@ -439,7 +445,8 @@ object RunnerUtils {
     _scheduler.setActorNamePropPairs(deserializer.get_actors)
     val violation = deserializer.get_violation(messageDeserializer)
     val trace = deserializer.get_events(messageDeserializer,
-                  Instrumenter().actorSystem, traceFile=traceFile)
+                  Instrumenter().actorSystem, traceFile=traceFile,
+                  externalsFile=externalsFile)
     val dep_graph = deserializer.get_dep_graph()
     if (scheduler == null) {
       _scheduler.shutdown
@@ -475,11 +482,13 @@ object RunnerUtils {
   def replayExperiment(experiment_dir: String,
                        schedulerConfig: SchedulerConfig,
                        messageDeserializer: MessageDeserializer,
-                       traceFile:String=ExperimentSerializer.event_trace): EventTrace = {
+                       traceFile:String=ExperimentSerializer.event_trace,
+                       externalsFile:String=ExperimentSerializer.mcs): EventTrace = {
     val replayer = new ReplayScheduler(schedulerConfig, false)
     val (trace, _, _) = RunnerUtils.deserializeExperiment(experiment_dir,
                                         messageDeserializer, replayer,
-                                        traceFile=traceFile)
+                                        traceFile=traceFile,
+                                        externalsFile=externalsFile)
 
     return RunnerUtils.replayExperiment(trace, schedulerConfig,
       Seq.empty, _replayer=Some(replayer))
