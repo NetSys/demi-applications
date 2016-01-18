@@ -16,6 +16,7 @@ private[raft] trait Leader {
   val leaderBehavior: StateFunction = {
     case Event(ElectedAsLeader, m: LeaderMeta) =>
       log.info("Became leader for {}", m.currentTerm)
+      initializeLeaderState(m.config.members)
       startHeartbeat(m)
       stay()
 
@@ -90,6 +91,12 @@ private[raft] trait Leader {
     case Event(AskForState, _) =>
       sender() ! IAmInState(Leader)
       stay()
+  }
+
+  def initializeLeaderState(members: Set[ActorRef]) {
+    log.info("Preparing nextIndex and matchIndex table for followers, init all to: replicatedLog.lastIndex = {}", replicatedLog.lastIndex)
+    nextIndex = LogIndexMap.initialize(members, replicatedLog.lastIndex)
+    matchIndex = LogIndexMap.initialize(members, -1)
   }
 
   def sendEntries(follower: ActorRef, m: LeaderMeta) {
