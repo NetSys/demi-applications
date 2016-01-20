@@ -84,6 +84,12 @@ object RunnerUtils {
                   case r: ReplayException =>
                     logger.info("doesn't replay deterministically..." + r)
                     deterministic = false
+                  case s: IllegalStateException =>
+                    // Usually:
+                    // java.lang.IllegalStateException: sendsQueue is empty, (EventTrace.scala:273
+                    // which we still haven't figured out...
+                    logger.error("non-deterministic bug in DEMi:" + s)
+                    deterministic = false
                 } finally {
                   replayer.shutdown()
                 }
@@ -433,6 +439,7 @@ object RunnerUtils {
       messageDeserializer: MessageDeserializer,
       scheduler: ExternalEventInjector[_] with Scheduler=null, // if null, use dummy
       traceFile:String=ExperimentSerializer.event_trace,
+      externalsFile:String=ExperimentSerializer.mcs,
       loader:ClassLoader=ClassLoader.getSystemClassLoader()) :
                   Tuple3[EventTrace, ViolationFingerprint, Option[Graph[Unique, DiEdge]]] = {
     val deserializer = new ExperimentDeserializer(experiment_dir, loader=loader)
@@ -444,7 +451,8 @@ object RunnerUtils {
     _scheduler.setActorNamePropPairs(deserializer.get_actors)
     val violation = deserializer.get_violation(messageDeserializer)
     val trace = deserializer.get_events(messageDeserializer,
-                  Instrumenter().actorSystem, traceFile=traceFile)
+                  Instrumenter().actorSystem, traceFile=traceFile,
+                  externalsFile=externalsFile)
     val dep_graph = deserializer.get_dep_graph()
     if (scheduler == null) {
       _scheduler.shutdown
@@ -480,11 +488,13 @@ object RunnerUtils {
   def replayExperiment(experiment_dir: String,
                        schedulerConfig: SchedulerConfig,
                        messageDeserializer: MessageDeserializer,
-                       traceFile:String=ExperimentSerializer.event_trace): EventTrace = {
+                       traceFile:String=ExperimentSerializer.event_trace,
+                       externalsFile:String=ExperimentSerializer.mcs): EventTrace = {
     val replayer = new ReplayScheduler(schedulerConfig, false)
     val (trace, _, _) = RunnerUtils.deserializeExperiment(experiment_dir,
                                         messageDeserializer, replayer,
-                                        traceFile=traceFile)
+                                        traceFile=traceFile,
+                                        externalsFile=externalsFile)
 
     return RunnerUtils.replayExperiment(trace, schedulerConfig,
       Seq.empty, _replayer=Some(replayer))
@@ -1156,7 +1166,7 @@ object RunnerUtils {
   }
 
   def countOptimalEvents(dir: String, messageDeserializer: MessageDeserializer,
-                         messageFingerprinter: FingerprintFactory) {
+                         messageFingerprinter: FingerprintFactory): Tuple3[Int,Int,Int] = {
     var deserializer = new ExperimentDeserializer(dir)
     val dummy_sched = new ReplayScheduler(SchedulerConfig())
     Instrumenter().scheduler = dummy_sched
@@ -1165,6 +1175,14 @@ object RunnerUtils {
     val (deliveries, externals, timers) = RunnerUtils.extractDeliveryStats(origTrace, messageFingerprinter)
     println(s"Optimal: ${deliveries.size} ($externals externals, $timers timers)")
     dummy_sched.shutdown
+    return ((deliveries.size, externals, timers))
+  }
+
+  def recordOptimalEvents(dir: String, deliveries: Int, externals: Int, timers: Int) {
+    val stats = new MinimizationStats
+    stats.updateStrategy("Manual", "Optimal")
+    stats.recordDeliveryStats(deliveries, externals, timers)
+    ExperimentSerializer.recordMinimizationStats(dir, stats)
   }
 
   def getDeliveries(trace: EventTrace): Seq[Event] = {
