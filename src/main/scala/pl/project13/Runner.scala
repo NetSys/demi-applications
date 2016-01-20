@@ -199,7 +199,7 @@ object Main extends App {
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(200, weights, messageGen, prefix)
 
-  val fuzz = true
+  val fuzz = false
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -259,45 +259,16 @@ object Main extends App {
     val mcs_dir =
     "experiments/akka-raft-fuzz-long_2015_08_30_20_59_21_DDMin_STSSchedNoPeek"
 
-    // val msgSerializer = new RaftMessageSerializer
-    // val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
-
-    // def shouldRerunDDMin(externals: Seq[ExternalEvent]) =
-    //   externals.exists({
-    //     case s: Send => s.messageCtor.isInstanceOf[AppendWordConstuctor]
-    //     case _ => false
-    //   })
-
-    // RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
-    //   msgDeserializer, shouldRerunDDMin=shouldRerunDDMin)
-
     val msgSerializer = new RaftMessageSerializer
     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
-    RunnerUtils.replayExperiment(mcs_dir, schedulerConfig, msgDeserializer, traceFile=ExperimentSerializer.minimizedInternalTrace, externalsFile=ExperimentSerializer.mcs)
+    def shouldRerunDDMin(externals: Seq[ExternalEvent]) =
+      externals.exists({
+        case s: Send => s.messageCtor.isInstanceOf[AppendWordConstuctor]
+        case _ => false
+      })
 
-    val deserializer = new ExperimentDeserializer(mcs_dir)
-    val violation = deserializer.get_violation(msgDeserializer)
-    val externals = deserializer.get_mcs
-
-    println("externals:")
-    externals.foreach { case e => println(e) }
-
-    // TODO(cs): put me in RunnerUtils, along with recording.
-    val sched = new InteractiveScheduler(schedulerConfig)
-    Instrumenter().scheduler = sched
-    val (trace, maybeViolation) = sched.run(externals)
-
-    val serializer = new ExperimentSerializer(
-      fingerprintFactory,
-      msgSerializer)
-
-    val new_dir = serializer.record_experiment("akka-raft-interactive",
-      trace.filterCheckpointMessages())
-
-    //serializer.recordMinimizationStats(dir, stats)
-
-    println("Found failing trace: " + trace.filterCheckpointMessages().size)
-    println("Saved trace at " + new_dir)
+    RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
+      msgDeserializer, shouldRerunDDMin=shouldRerunDDMin)
   }
 }
