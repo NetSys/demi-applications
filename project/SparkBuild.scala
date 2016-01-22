@@ -73,7 +73,7 @@ object SparkBuild extends Build {
     // For 2.10.*:
     libraryDependencies += "org.scala-lang" % "scala-swing" % scalaVersion.value,
     libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.2.3",
-    libraryDependencies += "com.typesafe.akka" %% "akka-cluster" % "2.2.3"
+    libraryDependencies += "com.typesafe.akka" %% "akka-cluster" % "2.2.3",
     libraryDependencies += "org.scala-lang.modules" % "scala-jline" % "2.12.1"
 
     // -- /STS deps --
