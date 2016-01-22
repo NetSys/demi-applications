@@ -29,6 +29,12 @@ import org.apache.spark.deploy.master.Master
 import org.apache.spark.scheduler.cluster.CoarseGrainedClusterMessages
 import org.apache.spark.deploy._
 
+import scalax.collection.mutable.Graph,
+       scalax.collection.GraphEdge.DiEdge,
+              scalax.collection.edge.LDiEdge
+
+
+
 import akka.dispatch.verification._
 
 import org.slf4j.LoggerFactory
@@ -37,6 +43,7 @@ import ch.qos.logback.classic.Logger
 
 import scala.collection.mutable.SynchronizedQueue
 import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.Queue
 
 import org.apache.spark.deploy.DeployMessages
 
@@ -344,11 +351,11 @@ object STSSparkPi {
       shouldShutdownActorSystem=false,
       filterKnownAbsents=false,
       ignoreTimers=false, // XXX
-      invariant_check=Some(CrashUponRecovery.invariant))
+      invariant_check=Some(DuplicateFileCrash.invariant))
 
     val sched = new RandomScheduler(schedulerConfig,
       invariant_check_interval=300, randomizationStrategy=new SrcDstFIFO)
-    sched.setMaxMessages(100000)
+    sched.setMaxMessages(10000)
     Instrumenter().scheduler = sched
 
     val (externals, atomicPairs) = getExternals()
@@ -379,19 +386,24 @@ object STSSparkPi {
           println("Violation was found! Trying replay")
           val depGraph = sched.depTracker.getGraph
           val initialTrace = sched.depTracker.getInitialTrace
+          val filteredTrace = RunnerUtils.pruneConcurrentEvents(initialTrace,
+            initTrace, violation, depGraph)
 
           val sts = new STSScheduler(schedulerConfig, initTrace, false)
           sts.setPreTestCallback(preTest)
           sts.setPostTestCallback(postTest)
 
-          val dag = new UnmodifiedEventDag(initTrace.original_externals flatMap {
+          val truncatedExternals = initTrace.original_externals flatMap {
             case WaitQuiescence() => None
             case WaitCondition(_) => None
             case e => Some(e)
-          })
+          }
+          val dag = new UnmodifiedEventDag(truncatedExternals)
           // Conjoin the HardKill and the subsequent recover
           atomicPairs foreach {
             case ((e1, e2)) =>
+              if ((truncatedExternals contains e1) &&
+                  (truncatedExternals contains e2))
               dag.conjoinAtoms(e1, e2)
           }
 
@@ -423,7 +435,7 @@ object STSSparkPi {
           val dir = serializer.record_experiment("spark-fuzz",
              initTrace, violation,
              depGraph=Some(depGraph), initialTrace=Some(initialTrace),
-             filteredTrace=None)
+             filteredTrace=Some(filteredTrace))
 
           val mcs_dir = serializer.serializeMCS(dir, mcs, stats1,
              verified_mcs, violation, false)
@@ -435,9 +447,9 @@ object STSSparkPi {
 
     if (!fuzz) {
       val dir =
-      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_15_20_44_06"
+      "/Users/cs/Research/UCB/code/demi-applications/experiments/spark-fuzz_2016_01_21_20_03_50"
       val mcs_dir =
-      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_15_20_44_06_DDMin_STSSchedNoPeek"
+      "/Users/cs/Research/UCB/code/demi-applications/experiments/spark-fuzz_2016_01_21_20_03_50_DDMin_STSSchedNoPeek"
 
       val msgSerializer = new BasicMessageSerializer
       val msgDeserializer = new BasicMessageDeserializer(loader=Thread.currentThread.getContextClassLoader)
@@ -445,10 +457,54 @@ object STSSparkPi {
       def shouldRerunDDMin(externals: Seq[ExternalEvent]) =
         false // XXX
 
+        /*
+      val (trace, violation, depGraph: Option[Graph[Unique, DiEdge]]) = RunnerUtils.deserializeExperiment(dir,
+        msgDeserializer,
+        //traceFile=ExperimentSerializer.,
+        loader=Thread.currentThread.getContextClassLoader)
+
+      val deserializer = new ExperimentDeserializer(dir,
+        loader=Thread.currentThread.getContextClassLoader)
+
+      val initialTrace = deserializer.get_initial_trace
+
+      var filtered = new Queue[Unique]
+      val provenenceTracker = new ProvenanceTracker(initialTrace.get,
+        depGraph.get)
+      val origDeliveries = RunnerUtils.countMsgEvents(trace.filterCheckpointMessages.filterFailureDetectorMessages)
+      filtered = provenenceTracker.pruneConcurrentEvents(violation)
+      val numberFiltered = origDeliveries - RunnerUtils.countMsgEvents(filtered.map(u => u.event))
+      // TODO(cs): track this number somewhere. Or reconstruct it from
+      // initialTrace/filtered.
+      println("Pruned " + numberFiltered + "/" + origDeliveries + " concurrent deliveries")
+
+      // val tAsArray : Array[Unique] = filtered.toArray
+      // val traceBuf = JavaSerialization.serialize(tAsArray)
+      // JavaSerialization.writeToFile(dir + ExperimentSerializer.filteredTrace, traceBuf)
+      // JavaSerialization.writeToFile(mcs_dir + ExperimentSerializer.filteredTrace, traceBuf)
+
+      println(s"filteredTrace ${filtered.size}")
+
+      // val (mcs, trace, violation, actors, stats) = RunnerUtils.deserializeMCS(mcs_dir,
+      //    msgDeserializer,
+      //    traceFile=ExperimentSerializer.minimizedInternalTrace,
+      //    loader=Thread.currentThread.getContextClassLoader)
+
+      // RunnerUtils.testWithStsSched(schedulerConfig,
+      //                  mcs,
+      //                  trace,
+      //                  Seq.empty,
+      //                  violation,
+      //                  stats,
+      //       initializationRoutine=Some(runAndCleanup),
+      //       preTest=Some(preTest), postTest=Some(postTest))
+
+      //RunnerUtils.printDeliveries(trace)
+      */
       RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
         msgDeserializer, shouldRerunDDMin=shouldRerunDDMin,
         populateActors=false,
-        atomIndices=Some(Seq((1,8),(3,9),(21,22))),
+        //atomIndices=Some(Seq((1,8),(3,9))), // (21,22)
         loader=Thread.currentThread.getContextClassLoader,
         initializationRoutine=Some(runAndCleanup),
         preTest=Some(preTest), postTest=Some(postTest),

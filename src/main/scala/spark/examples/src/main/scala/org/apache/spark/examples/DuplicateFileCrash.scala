@@ -11,7 +11,7 @@ case class DuplicateFileCrash() extends ViolationFingerprint {
     }
     return true
   }
-  def affectedNodes(): Seq[String] = Seq.empty
+  def affectedNodes(): Seq[String] = Seq("Master")
 }
 
 object DuplicateFileCrash {
