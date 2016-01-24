@@ -1,1 +1,87 @@
 - Check why SendHeartbeats are still there
+
+- 28 event reproducing schedule. [ EndUnignorableEvents after JobSumbitted. ]
+
+
+12
+
+[info] MsgEvent(dGVsbC1yZWdpc3RlckJsb2NrTWFuYWdlci1pbml0aWFsaXpl,BlockManagerMaster,RegisterBlockManager(BlockManagerId(<driver>),1718196633,Actor[akka://new-system-693/user/BlockManagerActor1#-1605129560]))
+[info] MsgEvent(leaderElectionAgent,Master,ElectedLeader)
+[info] MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)
+[info] MsgEvent(c3RhcnQtb3JnJGFwYWNoZSRzcGFyayRTcGFya0NvbnRleHQkJGNyZWF0ZVRhc2tTY2hlZHVsZXItPGluaXQ+,Master,RequestWebUIPort)
+[info] MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)
+[info] MsgEvent(aW5pdGlhbGl6ZUV2ZW50UHJvY2Vzc0FjdG9yLTxpbml0Pi08aW5pdD4=,DAGSchedulerActorSupervisor,Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class org.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>)))
+[info] MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)
+[info] MsgEvent(AppClient,Master,RegisterApplication(ApplicationDescription(Spark Pi)))
+[info] MsgEvent(deadLetters,ScheduleFunctionPlaceholder,ScheduleBlock-AppClient.scala:registerWithMaster-AppClient.scala:preStart-ActorCell.scala:create)
+[info] MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)
+[info] MsgEvent(AppClient,Master,RegisterApplication(ApplicationDescription(Spark Pi)))
+[info] MsgEvent(deadLetters,$a,JobSubmitted(0,MappedRDD[1] at map at STSSparkPi.scala:188,<function2>,[I@48853b23,false,CallSite(reduceNonBlocking at STSSparkPi.scala:192,org.apache.spark.rdd.RDD.reduceNonBlocking(RDD.scala:864)
+[info] org.apache.spark.examples.STSSparkPi$.org$apache$spark$examples$STSSparkPi$$run$1(STSSparkPi.scala:192)
+[info] org.apache.spark.examples.STSSparkPi$.org$apache$spark$examples$STSSparkPi$$runAndCleanup$1(STSSparkPi.scala:253)
+[info] org.apache.spark.examples.STSSparkPi$$anonfun$8.apply$mcV$sp(STSSparkPi.scala:399)
+[info] org.apache.spark.examples.STSSparkPi$$anonfun$8.apply(STSSparkPi.scala:399)
+[info] org.apache.spark.examples.STSSparkPi$$anonfun$8.apply(STSSparkPi.scala:399)
+[info] akka.dispatch.verification.STSScheduler$$anon$1.run(STSScheduler.scala:213)
+[info] java.lang.Thread.run(Thread.java:745)),org.apache.spark.scheduler.JobWaiter@396b2732,null))
+[info] MsgEvent(Worker1,Master,RegisterWorker(Worker1,localhost,12345,1,512,1234,Worker1))
+[info] MsgEvent(Worker2,Master,RegisterWorker(Worker2,localhost,12345,1,512,1234,Worker2))
+[info] MsgEvent(Worker3,Master,RegisterWorker(Worker3,localhost,12345,1,512,1234,Worker3))
+[info] MsgEvent(Master,Worker3,RegisteredWorker(spark://localhost:1,http://localhost:-1))
+[info] MsgEvent(Master,Worker2,RegisteredWorker(spark://localhost:1,http://localhost:-1))
+[info] MsgEvent(Master,Worker2,LaunchExecutor(spark://localhost:1,theOnlyApp,2,ApplicationDescription(Spark Pi),1,512))
+[info] MsgEvent(Master,Worker3,LaunchExecutor(spark://localhost:1,theOnlyApp,3,ApplicationDescription(Spark Pi),1,512))
+[info] MsgEvent(Master,Worker1,RegisteredWorker(spark://localhost:1,http://localhost:-1))
+[info] MsgEvent(executor2,CoarseGrainedScheduler,RegisterExecutor(2,2,1))
+[info] MsgEvent(Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw==,BlockManagerMaster,GetLocationsMultipleBlockIds(rdd_1_0-rdd_1_1-rdd_1_2-rdd_1_3))
+[info] MsgEvent(BlockManagerMaster,Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw==,ArraySeq(List(), List(), List(), List()))
+[info] MsgEvent(Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw==,BlockManagerMaster,GetLocationsMultipleBlockIds(rdd_0_0-rdd_0_1-rdd_0_2-rdd_0_3))
+[info] MsgEvent(BlockManagerMaster,Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw==,ArraySeq(List(), List(), List(), List()))
+[info] MsgEvent(executor3,CoarseGrainedScheduler,RegisterExecutor(3,3,1))
+[info] MsgEvent(Master,Worker1,LaunchExecutor(spark://localhost:1,theOnlyApp,1,ApplicationDescription(Spark Pi),1,512))
+[info] MsgEvent(executor1,CoarseGrainedScheduler,RegisterExecutor(1,1,1))
+
+- I think it should be possible to trigger this with only 1 worker. Here, 27 events.
+
+14
+
+cut out CheckForWorkerTimeout, second ReviveOffers
+
+[info] MsgEvent(dGVsbC1yZWdpc3RlckJsb2NrTWFuYWdlci1pbml0aWFsaXpl,BlockManagerMaster,RegisterBlockManager(BlockManagerId(<driver>),1718196633,Actor[akka://new-system-95/user/BlockManagerActor1#-1062622625]))
+[info] MsgEvent(leaderElectionAgent,Master,ElectedLeader)
+[info] MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)
+[info] MsgEvent(c3RhcnQtb3JnJGFwYWNoZSRzcGFyayRTcGFya0NvbnRleHQkJGNyZWF0ZVRhc2tTY2hlZHVsZXItPGluaXQ+,Master,RequestWebUIPort)
+[info] MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)
+[info] MsgEvent(aW5pdGlhbGl6ZUV2ZW50UHJvY2Vzc0FjdG9yLTxpbml0Pi08aW5pdD4=,DAGSchedulerActorSupervisor,Props(Deploy(,Config(SimpleConfigObject({})),NoRouter,NoScopeGiven,,),class akka.actor.TypedCreatorFunctionConsumer,Vector(class o
+rg.apache.spark.scheduler.DAGSchedulerEventProcessActor, <function0>)))
+[info] MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)
+[info] MsgEvent(AppClient,Master,RegisterApplication(ApplicationDescription(Spark Pi)))
+[info] MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)
+[info] MsgEvent(deadLetters,ScheduleFunctionPlaceholder,ScheduleBlock-AppClient.scala:registerWithMaster-AppClient.scala:preStart-ActorCell.scala:create)
+[info] MsgEvent(Master,AppClient,RegisteredApplication(theOnlyApp,spark://localhost:1))
+[info] MsgEvent(deadLetters,Master,CheckForWorkerTimeOut)
+[info] MsgEvent(deadLetters,CoarseGrainedScheduler,ReviveOffers)
+[info] MsgEvent(deadLetters,$a,JobSubmitted(0,MappedRDD[1] at map at STSSparkPi.scala:188,<function2>,[I@430ffa26,false,CallSite(reduceNonBlocking at STSSparkPi.scala:192,org.apache.spark.rdd.RDD.reduceNonBlocking(RDD.scala:864)
+[info] org.apache.spark.examples.STSSparkPi$.run$1(STSSparkPi.scala:192)
+[info] org.apache.spark.examples.STSSparkPi$.org$apache$spark$examples$STSSparkPi$$runAndCleanup$1(STSSparkPi.scala:253)
+[info] org.apache.spark.examples.STSSparkPi$$anonfun$5.apply$mcV$sp(STSSparkPi.scala:354)
+[info] org.apache.spark.examples.STSSparkPi$$anonfun$5.apply(STSSparkPi.scala:354)
+[info] org.apache.spark.examples.STSSparkPi$$anonfun$5.apply(STSSparkPi.scala:354)
+[info] akka.dispatch.verification.STSScheduler$$anon$1.run(STSScheduler.scala:213)
+[info] java.lang.Thread.run(Thread.java:745)),org.apache.spark.scheduler.JobWaiter@33577047,null))
+[info] MsgEvent(Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw==,BlockManagerMaster,GetLocationsMultipleBlockIds(rdd_1_0-rdd_1_1-rdd_1_2-rdd_1_3))
+[info] MsgEvent(BlockManagerMaster,Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw==,ArraySeq(List(), List(), List(), List()))
+[info] MsgEvent(Worker1,Master,RegisterWorker(Worker1,localhost,12345,1,512,1234,Worker1))
+[info] MsgEvent(Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw==,BlockManagerMaster,GetLocationsMultipleBlockIds(rdd_0_0-rdd_0_1-rdd_0_2-rdd_0_3))
+[info] MsgEvent(Master,Worker1,RegisteredWorker(spark://localhost:1,http://localhost:-1))
+[info] MsgEvent(Master,Worker1,LaunchExecutor(spark://localhost:1,theOnlyApp,1,ApplicationDescription(Spark Pi),1,512))
+[info] MsgEvent(BlockManagerMaster,Z2V0TG9jYXRpb25zLWJsb2NrSWRzVG9CbG9ja01hbmFnZXJzLWdldENhY2hlTG9jcw==,ArraySeq(List(), List(), List(), List()))
+[info] MsgEvent(executor1,CoarseGrainedScheduler,RegisterExecutor(1,1,1))
+[info] MsgEvent(CoarseGrainedScheduler,executor1,RegisteredExecutor)
+[info] MsgEvent(CoarseGrainedScheduler,executor1,LaunchTask(org.apache.spark.util.SerializableBuffer@20543c83))
+[info] MsgEvent(executor1,CoarseGrainedScheduler,StatusUpdate(1,0,FINISHED,org.apache.spark.util.SerializableBuffer@7c48bfc3))
+[info] MsgEvent(CoarseGrainedScheduler,executor1,LaunchTask(org.apache.spark.util.SerializableBuffer@32c58d85))
+[info] MsgEvent(executor1,CoarseGrainedScheduler,StatusUpdate(1,1,FINISHED,org.apache.spark.util.SerializableBuffer@33023128))
+
+Interestingly, in the first execution (above), there were no LaunchTasks or
+StatusUpdates. In this one, there are... seems important to understand why.

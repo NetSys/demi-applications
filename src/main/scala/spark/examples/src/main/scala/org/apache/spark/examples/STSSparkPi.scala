@@ -380,11 +380,11 @@ object STSSparkPi {
     if (!fuzz) {
       val dir =
       //"/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_13_23_15_54"
-      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_22_10_35_51"
+      "/Users/cs/Research/UCB/code/demi-applications/experiments/spark-fuzz_2015_09_22_10_35_51"
       val mcs_dir =
       //"/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_13_23_15_54_DDMin_STSSchedNoPeek"
       //"/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_14_16_08_29_DDMin_STSSchedNoPeek"
-      "/Users/cs/Research/UCB/code/sts2-applications/experiments/spark-fuzz_2015_09_22_10_35_51_DDMin_STSSchedNoPeek"
+      "/Users/cs/Research/UCB/code/demi-applications/experiments/spark-fuzz_2015_09_22_10_35_51_DDMin_STSSchedNoPeek"
 
       val msgSerializer = new BasicMessageSerializer
       val msgDeserializer = new BasicMessageDeserializer(loader=Thread.currentThread.getContextClassLoader)
