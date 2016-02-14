@@ -111,16 +111,26 @@ object RunnerUtils {
     // Before returning, try to prune events that are concurrent with the violation.
     var filtered = new Queue[Unique]
     if (computeProvenance) {
-      logger.info("Pruning events not in provenance of violation. This may take awhile...")
-      val provenenceTracker = new ProvenanceTracker(initialTrace, depGraph)
-      val origDeliveries = countMsgEvents(traceFound.filterCheckpointMessages.filterFailureDetectorMessages)
-      filtered = provenenceTracker.pruneConcurrentEvents(violationFound)
-      val numberFiltered = origDeliveries - countMsgEvents(filtered.map(u => u.event))
-      // TODO(cs): track this number somewhere. Or reconstruct it from
-      // initialTrace/filtered.
-      logger.info("Pruned " + numberFiltered + "/" + origDeliveries + " concurrent deliveries")
+      filtered = RunnerUtils.pruneConcurrentEvents(initialTrace, traceFound,
+        violationFound, depGraph)
     }
     return (traceFound, violationFound, depGraph, initialTrace, filtered)
+  }
+
+  def pruneConcurrentEvents(initialTrace: Queue[Unique],
+    traceFound: EventTrace, violationFound: ViolationFingerprint,
+    depGraph: Graph[Unique, DiEdge]): Queue[Unique] = {
+
+    var filtered = new Queue[Unique]
+    logger.info("Pruning events not in provenance of violation. This may take awhile...")
+    val provenenceTracker = new ProvenanceTracker(initialTrace, depGraph)
+    val origDeliveries = countMsgEvents(traceFound.filterCheckpointMessages.filterFailureDetectorMessages)
+    filtered = provenenceTracker.pruneConcurrentEvents(violationFound)
+    val numberFiltered = origDeliveries - countMsgEvents(filtered.map(u => u.event))
+    // TODO(cs): track this number somewhere. Or reconstruct it from
+    // initialTrace/filtered.
+    logger.info("Pruned " + numberFiltered + "/" + origDeliveries + " concurrent deliveries")
+    return filtered
   }
 
   // Run all the minimizations!
@@ -131,7 +141,7 @@ object RunnerUtils {
   // N.B., invokes System.exit(0) before returning.
   def runTheGamut(original_dir: String,
                   output_dir: String,
-                  schedulerConfig: SchedulerConfig,
+                  _schedulerConfig: SchedulerConfig,
                   msgSerializer: MessageSerializer,
                   msgDeserializer: MessageDeserializer,
                   loader:ClassLoader=ClassLoader.getSystemClassLoader(),
@@ -147,13 +157,32 @@ object RunnerUtils {
                   postTest: Option[STSScheduler.PostTestCallback]=None) {
 
     val serializer = new ExperimentSerializer(
-      schedulerConfig.messageFingerprinter,
+      _schedulerConfig.messageFingerprinter,
       msgSerializer)
 
     // -- mostly for printing stats --
-    val (traceFound, _, _) = RunnerUtils.deserializeExperiment(original_dir, msgDeserializer, loader=loader)
-    val filteredTrace = new ExperimentDeserializer(original_dir, loader=loader).get_filtered_initial_trace
+    val (traceFound, violation, _) = RunnerUtils.deserializeExperiment(original_dir, msgDeserializer, loader=loader)
+    val orig_deserializer = new ExperimentDeserializer(original_dir, loader=loader)
+    val filteredTrace = orig_deserializer.get_filtered_initial_trace
+    val orig_actors = orig_deserializer.get_actors
     // -- --
+
+    // Add in original DepGraph if abortUponDivergence
+    var schedulerConfig = _schedulerConfig
+    if (_schedulerConfig.abortUponDivergence) {
+      val stats = new MinimizationStats
+      stats.updateStrategy("Dummy", "Dummy")
+      val depGraph = RunnerUtils.extractFreshDepGraph(_schedulerConfig.copy(abortUponDivergence=false),
+                           traceFound.original_externals,
+                           traceFound,
+                           orig_actors,
+                           violation,
+                           stats,
+                           initializationRoutine=initializationRoutine,
+                           preTest=preTest,
+                           postTest=postTest)
+      schedulerConfig = _schedulerConfig.copy(originalDepGraph=Some(depGraph))
+    }
 
     trait Minimizer
     abstract class ExternalMinimizer(val name: String) extends Minimizer {
@@ -299,7 +328,7 @@ object RunnerUtils {
             postTest=postTest)
       }),
       // wildcard DDMin without backtracks.
-      if (!paranoid) None else
+      if (!paranoid || schedulerConfig.abortUponDivergence) None else
       Some(new ExternalMinimizer("WildCardDDMinNoBacktracks") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           if (shouldRerunDDMin(currentExternals))
@@ -323,7 +352,7 @@ object RunnerUtils {
             ((currentExternals, currentStats, Some(currentTrace), violationFound))
       }),
       // wildcard DDMin without backtracks, but focus on the last item first.
-      if (!paranoid) None else
+      if (!paranoid || schedulerConfig.abortUponDivergence) None else
       Some(new ExternalMinimizer("WildCardDDMinLastOnly") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           if (shouldRerunDDMin(currentExternals))
@@ -348,7 +377,7 @@ object RunnerUtils {
             ((currentExternals, currentStats, Some(currentTrace), violationFound))
       }),
       // Without backtracks first
-      if (!paranoid) None else
+      if (!paranoid || schedulerConfig.abortUponDivergence) None else
       Some(new InternalMinimizer("WildcardsNoBackTracks") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           new WildcardMinimizer(schedulerConfig,
@@ -362,7 +391,7 @@ object RunnerUtils {
             postTest=postTest).minimize
       }),
       // Without backtracks, but focus on the last match.
-      if (!paranoid) None else
+      if (!paranoid || schedulerConfig.abortUponDivergence) None else
       Some(new InternalMinimizer("WildcardsLastOnly") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           new WildcardMinimizer(schedulerConfig,
@@ -377,7 +406,8 @@ object RunnerUtils {
             postTest=postTest).minimize
       }),
       // internal clocks with full backtracks
-      Some(new InternalMinimizer("Wildcards") {
+      if (schedulerConfig.abortUponDivergence) None else Some(
+          new InternalMinimizer("Wildcards") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           new WildcardMinimizer(schedulerConfig, currentExternals,
             currentTrace, actors, violationFound,
@@ -390,7 +420,8 @@ object RunnerUtils {
             postTest=postTest).minimize
       }),
       // Wildcards DDMin with all
-      Some(new ExternalMinimizer("WildcardDDMin") {
+      if (schedulerConfig.abortUponDivergence) None else Some(
+          new ExternalMinimizer("WildcardDDMin") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           if (shouldRerunDDMin(currentExternals))
             RunnerUtils.wildcardDDMin(schedulerConfig,
@@ -439,7 +470,7 @@ object RunnerUtils {
       messageDeserializer: MessageDeserializer,
       scheduler: ExternalEventInjector[_] with Scheduler=null, // if null, use dummy
       traceFile:String=ExperimentSerializer.event_trace,
-      externalsFile:String=ExperimentSerializer.mcs,
+      externalsFile:String=ExperimentSerializer.original_externals,
       loader:ClassLoader=ClassLoader.getSystemClassLoader()) :
                   Tuple3[EventTrace, ViolationFingerprint, Option[Graph[Unique, DiEdge]]] = {
     val deserializer = new ExperimentDeserializer(experiment_dir, loader=loader)
@@ -462,6 +493,7 @@ object RunnerUtils {
 
   def deserializeMCS(experiment_dir: String,
       messageDeserializer: MessageDeserializer,
+      traceFile:String=ExperimentSerializer.minimizedInternalTrace,
       scheduler: ExternalEventInjector[_] with Scheduler=null,
       skipStats: Boolean=false, // if null, use dummy
       loader:ClassLoader=ClassLoader.getSystemClassLoader()) :
@@ -475,7 +507,8 @@ object RunnerUtils {
     Instrumenter().scheduler = _scheduler
     _scheduler.populateActorSystem(deserializer.get_actors)
     val violation = deserializer.get_violation(messageDeserializer)
-    val trace = deserializer.get_events(messageDeserializer, Instrumenter().actorSystem)
+    val trace = deserializer.get_events(messageDeserializer,
+      Instrumenter().actorSystem, traceFile=traceFile)
     val mcs = deserializer.get_mcs
     val actorNameProps = deserializer.get_actors
     val stats = if (!skipStats) deserializer.get_stats else null
@@ -584,7 +617,7 @@ object RunnerUtils {
                     postTest: Option[STSScheduler.PostTestCallback]=None,
                     dag: Option[EventDag]=None,
                     stats: Option[MinimizationStats]=None,
-                    checkUnmodified:Boolean=false) :
+                    checkUnmodified:Boolean=true) :
         Tuple4[Seq[ExternalEvent], MinimizationStats, Option[EventTrace], ViolationFingerprint] = {
     val sched = if (_sched != None) _sched.get else
                 new STSScheduler(schedulerConfig, trace, allowPeek)
@@ -874,6 +907,40 @@ object RunnerUtils {
       case _ =>
     }
     return sched.test(mcs, violation, stats, initializationRoutine=initializationRoutine)
+  }
+
+  // TODO(cs): redundant with above.
+  def extractFreshDepGraph(schedulerConfig: SchedulerConfig,
+                           mcs: Seq[ExternalEvent],
+                           trace: EventTrace,
+                           actorNameProps: Seq[Tuple2[Props, String]],
+                           violation: ViolationFingerprint,
+                           stats: MinimizationStats,
+                           initializationRoutine: Option[() => Any]=None,
+                           preTest: Option[STSScheduler.PreTestCallback]=None,
+                           postTest: Option[STSScheduler.PostTestCallback]=None,
+                           absentIgnored: Option[STSScheduler.IgnoreAbsentCallback]=None)
+                     : Graph[Unique,DiEdge] = {
+    val sched = new STSScheduler(schedulerConfig, trace, false)
+    Instrumenter().scheduler = sched
+    sched.setActorNamePropPairs(actorNameProps)
+    preTest match {
+      case Some(callback) =>
+        sched.setPreTestCallback(callback)
+      case _ =>
+    }
+    postTest match {
+      case Some(callback) =>
+        sched.setPostTestCallback(callback)
+      case _ =>
+    }
+    absentIgnored match {
+      case Some(callback) =>
+        sched.setIgnoreAbsentCallback(callback)
+      case _ =>
+    }
+    sched.test(mcs, violation, stats, initializationRoutine=initializationRoutine)
+    return sched.depTracker.depGraph
   }
 
   // pre: replay(verified_mcs) reproduces the violation.
