@@ -200,7 +200,7 @@ object Main extends App {
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(100, weights, messageGen, prefix)
 
-  val fuzz = false
+  val mode = RunnerUtils.getExecutionMode(args)
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -208,7 +208,7 @@ object Main extends App {
   var initialTrace : Queue[Unique] = null
   var filteredTrace : Queue[Unique] = null
 
-  if (fuzz) {
+  if (mode == ExecutionMode.FUZZ) {
     def replayerCtor() : ReplayScheduler = {
       val replayer = new ReplayScheduler(schedulerConfig)
       return replayer
@@ -239,7 +239,7 @@ object Main extends App {
     filteredTrace = tuple._5
   }
 
-  if (fuzz) {
+  if (mode == ExecutionMode.FUZZ) {
     var provenanceTrace = traceFound.intersection(filteredTrace, fingerprintFactory)
 
     val serializer = new ExperimentSerializer(
@@ -265,7 +265,7 @@ object Main extends App {
     println("verified_mcs.size: " +
       RunnerUtils.getDeliveries(verified_mcs.get).size)
     println("MCS DIR: " + mcs_dir)
-  } else { // !fuzz
+  } else if (mode == ExecutionMode.MINIMIZE) {
     val dir =
     //"experiments/akka-raft-fuzz-long_2015_09_02_12_48_32"
     "experiments/akka-raft-fuzz-long_2016_01_10_13_47_46"
@@ -284,5 +284,35 @@ object Main extends App {
 
     RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
       msgDeserializer, shouldRerunDDMin=shouldRerunDDMin)
+  } else if (mode == ExecutionMode.INTERACTIVE) {
+    val mcs_dir =
+    "experiments/akka-raft-fuzz-long_2016_01_10_13_47_46_DDMin_STSSchedNoPeek"
+
+    val msgSerializer = new RaftMessageSerializer
+    val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
+
+    val deserializer = new ExperimentDeserializer(mcs_dir)
+    val violation = deserializer.get_violation(msgDeserializer)
+    val externals = deserializer.get_mcs
+
+    println("externals:")
+    externals.foreach { case e => println(e) }
+
+    // TODO(cs): put me in RunnerUtils, along with recording.
+    val sched = new InteractiveScheduler(schedulerConfig)
+    Instrumenter().scheduler = sched
+    val (trace, maybeViolation) = sched.run(externals)
+
+    val serializer = new ExperimentSerializer(
+      fingerprintFactory,
+      msgSerializer)
+
+    val new_dir = serializer.record_experiment("akka-raft-interactive",
+      trace.filterCheckpointMessages())
+
+    //serializer.recordMinimizationStats(dir, stats)
+
+    println("Found failing trace: " + trace.filterCheckpointMessages().size)
+    println("Saved trace at " + new_dir)
   }
 }
