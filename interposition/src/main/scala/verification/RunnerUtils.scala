@@ -26,9 +26,38 @@ import org.slf4j.LoggerFactory,
 //  -> minimizeInternals
 //  -> replayExperiment <- loop
 
+object ExecutionMode extends Enumeration {
+  type Mode = Value
+  val FUZZ = Value
+  val MINIMIZE = Value
+  val INTERACTIVE = Value
+}
+
 // Utilities for writing Runner.scala files.
 object RunnerUtils {
   val logger = LoggerFactory.getLogger("RunnerUtils")
+
+  def getExecutionMode(args: Array[String]): ExecutionMode.Mode = {
+    args.isEmpty match {
+      case true => ExecutionMode.MINIMIZE
+      case false =>
+        args(0) match {
+          case "--fuzz" => ExecutionMode.FUZZ
+          case "-fuzz" => ExecutionMode.FUZZ
+          case "--fuzz=true" => ExecutionMode.FUZZ
+          case "-fuzz=true" => ExecutionMode.FUZZ
+          case "--fuzz=false" => ExecutionMode.INTERACTIVE
+          case "-fuzz=false" => ExecutionMode.INTERACTIVE
+          case "--interactive" => ExecutionMode.INTERACTIVE
+          case "-interactive" => ExecutionMode.INTERACTIVE
+          case "--minimize" => ExecutionMode.MINIMIZE
+          case "-minimize" => ExecutionMode.MINIMIZE
+          case "--minimize=true" => ExecutionMode.MINIMIZE
+          case "-minimize=true" => ExecutionMode.MINIMIZE
+          case _ => ExecutionMode.MINIMIZE
+        }
+    }
+  }
 
   def fuzz(fuzzer: Fuzzer, invariant: TestOracle.Invariant,
            schedulerConfig: SchedulerConfig,
@@ -168,11 +197,15 @@ object RunnerUtils {
     // -- --
 
     // Add in original DepGraph if abortUponDivergence
+    val abortUponDivergence = (_schedulerConfig.abortUponDivergence ||
+                                _schedulerConfig.abortUponDivergenceLax)
+
     var schedulerConfig = _schedulerConfig
-    if (_schedulerConfig.abortUponDivergence) {
+    if (abortUponDivergence) {
       val stats = new MinimizationStats
       stats.updateStrategy("Dummy", "Dummy")
-      val depGraph = RunnerUtils.extractFreshDepGraph(_schedulerConfig.copy(abortUponDivergence=false),
+      val depGraph = RunnerUtils.extractFreshDepGraph(
+                           _schedulerConfig.copy(abortUponDivergence=false,abortUponDivergenceLax=false),
                            traceFound.original_externals,
                            traceFound,
                            orig_actors,
@@ -328,7 +361,7 @@ object RunnerUtils {
             postTest=postTest)
       }),
       // wildcard DDMin without backtracks.
-      if (!paranoid || schedulerConfig.abortUponDivergence) None else
+      if (!paranoid || abortUponDivergence) None else
       Some(new ExternalMinimizer("WildCardDDMinNoBacktracks") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           if (shouldRerunDDMin(currentExternals))
@@ -352,7 +385,7 @@ object RunnerUtils {
             ((currentExternals, currentStats, Some(currentTrace), violationFound))
       }),
       // wildcard DDMin without backtracks, but focus on the last item first.
-      if (!paranoid || schedulerConfig.abortUponDivergence) None else
+      if (!paranoid || abortUponDivergence) None else
       Some(new ExternalMinimizer("WildCardDDMinLastOnly") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           if (shouldRerunDDMin(currentExternals))
@@ -377,7 +410,7 @@ object RunnerUtils {
             ((currentExternals, currentStats, Some(currentTrace), violationFound))
       }),
       // Without backtracks first
-      if (!paranoid || schedulerConfig.abortUponDivergence) None else
+      if (!paranoid || abortUponDivergence) None else
       Some(new InternalMinimizer("WildcardsNoBackTracks") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           new WildcardMinimizer(schedulerConfig,
@@ -391,7 +424,7 @@ object RunnerUtils {
             postTest=postTest).minimize
       }),
       // Without backtracks, but focus on the last match.
-      if (!paranoid || schedulerConfig.abortUponDivergence) None else
+      if (!paranoid || abortUponDivergence) None else
       Some(new InternalMinimizer("WildcardsLastOnly") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           new WildcardMinimizer(schedulerConfig,
@@ -406,7 +439,7 @@ object RunnerUtils {
             postTest=postTest).minimize
       }),
       // internal clocks with full backtracks
-      if (schedulerConfig.abortUponDivergence) None else Some(
+      if (abortUponDivergence) None else Some(
           new InternalMinimizer("Wildcards") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           new WildcardMinimizer(schedulerConfig, currentExternals,
@@ -420,7 +453,7 @@ object RunnerUtils {
             postTest=postTest).minimize
       }),
       // Wildcards DDMin with all
-      if (schedulerConfig.abortUponDivergence) None else Some(
+      if (abortUponDivergence) None else Some(
           new ExternalMinimizer("WildcardDDMin") {
         def minimize(currentExternals: Seq[ExternalEvent], currentTrace: EventTrace, currentStats: MinimizationStats) =
           if (shouldRerunDDMin(currentExternals))
