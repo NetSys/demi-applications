@@ -250,21 +250,7 @@ object Main extends App {
   val messageGen = new ClientMessageGenerator(members)
   val fuzzer = new Fuzzer(200, weights, messageGen, prefix, postfix=postfix)
 
-  val fuzz = args.isEmpty match {
-    case true => false
-    case false =>
-      args(0) match {
-        case "--fuzz" => true
-        case "-fuzz" => true
-        case "--fuzz=true" => true
-        case "-fuzz=true" => true
-        case "--fuzz=false" => false
-        case "-fuzz=false" => false
-        case "--interactive" => false
-        case "-interactive" => false
-        case _ => false
-      }
-  }
+  val fuzz = false
 
   var traceFound: EventTrace = null
   var violationFound: ViolationFingerprint = null
@@ -327,45 +313,16 @@ object Main extends App {
     val mcs_dir =
     "experiments/akka-raft-fuzz-long_2015_08_30_21_57_21_DDMin_STSSchedNoPeek"
 
-    // val msgSerializer = new RaftMessageSerializer
-    // val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
+     val msgSerializer = new RaftMessageSerializer
+     val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
 
-    // def shouldRerunDDMin(externals: Seq[ExternalEvent]) =
-    //   externals.exists({
-    //     case s: Send => s.messageCtor.isInstanceOf[AppendWordConstuctor]
-    //     case _ => false
-    //   })
+     def shouldRerunDDMin(externals: Seq[ExternalEvent]) =
+       externals.exists({
+         case s: Send => s.messageCtor.isInstanceOf[AppendWordConstuctor]
+         case _ => false
+       })
 
-    // RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
-
-    //   msgDeserializer, shouldRerunDDMin=shouldRerunDDMin)
-      
-    //val mcs_dir =
-    //"experiments/akka-raft-fuzz-long_2015_09_02_12_18_50_DDMin_STSSchedNoPeek"
-
-    val msgSerializer = new RaftMessageSerializer
-    val msgDeserializer = new RaftMessageDeserializer(Instrumenter()._actorSystem)
-
-    val deserializer = new ExperimentDeserializer(mcs_dir)
-    val violation = deserializer.get_violation(msgDeserializer)
-    val externals = deserializer.get_mcs.slice(0,10)
-
-    println("externals:")
-    externals.foreach { case e => println(e) }
-
-    // TODO(cs): put me in RunnerUtils, along with recording.
-    val sched = new InteractiveScheduler(schedulerConfig)
-    Instrumenter().scheduler = sched
-    val (trace, maybeViolation) = sched.run(externals)
-
-    val serializer = new ExperimentSerializer(
-      fingerprintFactory,
-      msgSerializer)
-
-    val new_dir = serializer.record_experiment("akka-raft-interactive",
-      trace.filterCheckpointMessages())
-
-    //serializer.recordMinimizationStats(dir, stats)
-    println("Trace saved to: " + new_dir)
+     RunnerUtils.runTheGamut(dir, mcs_dir, schedulerConfig, msgSerializer,
+       msgDeserializer, shouldRerunDDMin=shouldRerunDDMin)
   }
 }
